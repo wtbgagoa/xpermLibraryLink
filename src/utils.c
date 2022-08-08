@@ -1,7 +1,5 @@
 /*This is free software, distributed under the GNU GPL license.*/
 
-
-#pragma once
 #include "xperm.h" 
 
 /*********************************************************************
@@ -1575,6 +1573,126 @@ void SGSD(int *vds, int vdsl, int *dummies, int dl, int *mQ,
 #endif								/*PPC*/
 }
 
+
+/* TAB */
+void TAB(int *L, int Ll, int *s1, int *d1, int n, struct alphastruct *ALPHA) {
+	int i;
+	int l=0;
+	/* Search ALPHA for the l corresponding to L */
+	for (i=0; i<Ll; i++) l=ALPHA[l].o[L[i]-1];
+	/* Copy permutations of element l */
+	copy_list(ALPHA[l].s, s1, n);
+	copy_list(ALPHA[l].d, d1, n);
+
+} /* End of function TAB */
+
+
+	/* Subroutines F1 and F2 */
+	/* TAB1 is an element of S; TAB2 is an element of D */
+void F2(int *TAB1, int *g, int *TAB2, int *sgd, int n) {
+
+	int *tmp= (int*)malloc(n*sizeof(int));
+
+	product(TAB1, g, tmp, n);
+	product(tmp, TAB2, sgd, n);
+
+	free(tmp);
+
+} /* End of function F2 */
+
+void F1(int *L, int Ll, int *g, int *list, int *listl, int n, int Deltabl, int *Deltab, int oi, int *DeltaD, struct alphastruct *ALPHA) {
+
+	int c, c1, c2;
+	int *sgd=  (int*)malloc(n*sizeof(int));
+	int *TAB1= (int*)malloc(n*sizeof(int));
+	int *TAB2= (int*)malloc(n*sizeof(int));
+	int *tmp=  (int*)malloc(n*sizeof(int));
+
+	TAB(L, Ll, TAB1, TAB2, n, ALPHA);
+
+	/* Compute s.g.d */
+	F2(TAB1, g, TAB2, sgd, n);
+#ifdef VERBOSE_DOUBLE						/*PPC*/
+	printf("With L="); print_list(L, Ll, 0);		/*PPC*/
+	printf(" we get sgd: "); print_perm(sgd, n, 1);		/*PPC*/
+#endif								/*PPC*/
+	/* Images of Deltab under sgd. Note that tmp has length Deltabl */
+	for (c=0; c<Deltabl; c++)
+		tmp[c] = onpoints(Deltab[c], sgd, n);
+#ifdef VERBOSE_DOUBLE						/*PPC*/
+	printf(" which maps slots in Deltab to indices list: ");/*PPC*/
+	print_list(tmp, Deltabl, 1);			/*PPC*/
+#endif								/*PPC*/
+		/* Orbits of DeltaD containing the points in tmp */
+	for (c1=0; c1<Deltabl; c1++) {
+		oi = DeltaD[tmp[c1]-1];
+		if(oi) {
+		for(c2=0; c2<n; c2++) {
+			if ((DeltaD[c2]==oi) && (!position(c2+1, list, *listl)))
+				 list[(*listl)++] = c2+1;
+		}
+		}
+	}
+#ifdef VERBOSE_DOUBLE						/*PPC*/
+	printf(" whose points belong to orbits ");		/*PPC*/
+	print_list(list, *listl, 1);				/*PPC*/
+#endif								/*PPC*/
+	free(sgd);
+	free(TAB1);
+	free(TAB2);
+	free(tmp);
+} /* End of function F1 */
+
+        /* Consistency check */
+	int consistency(int *array, int m, int n) {
+
+		int *arrayp= (int*)malloc(m*n*sizeof(int)), arraypl;
+		int *arrayn= (int*)malloc(m*n*sizeof(int)), arraynl;
+		int i, ip, in, ret;
+
+#ifdef VERBOSE_DOUBLE						/*PPC*/
+	printf("Checking consistency in m:%d, n:%d\n", m, n);	/*PPC*/
+	print_array_perm(array, m, n, 1);			/*PPC*/
+#endif								/*PPC*/
+
+		/* Detect sign of permutation */
+		arraypl=0;
+		arraynl=0;
+		for(i=0; i<m; i++) {
+		    if (array[i*n+n-2]<array[i*n+n-1]) /* Positive */
+			copy_list(array+i*n, arrayp+(arraypl++)*n, n);
+		    else                               /* Negative */
+			copy_list(array+i*n, arrayn+(arraynl++)*n, n);
+		}
+#ifdef VERBOSE_DOUBLE						/*PPC*/
+	printf("Found positive perms: %d\n", arraypl);		/*PPC*/
+	printf("Found negative perms: %d\n", arraynl);		/*PPC*/
+#endif								/*PPC*/
+		/* Here there are arraynl*arraypl comparisons. This
+                   should be improved with a better intersection
+                   algorithm which sorts the lists in advance */
+		ret = 1; /* True */
+		for (in=0; in<arraynl; in++) {
+		    for (ip=0; ip<arraypl; ip++) {
+			if (equal_list(arrayp+ip*n, arrayn+in*n, n-2)) {
+			    ret = 0; /* False */
+			    break;
+			}
+		    }
+		}
+#ifdef VERBOSE_DOUBLE						/*PPC*/
+	if (ret) printf("Found no problem in check\n");		/*PPC*/
+	else printf("Found perm with two signs.\n");		/*PPC*/
+#endif								/*PPC*/
+		free(arrayp);
+		free(arrayn);
+		return(ret);
+
+	} /* End of funcion consistency */
+
+
+
+
 /**********************************************************************/
 
 /* double_coset_rep. JMM, 1-5 July 2003.
@@ -1657,150 +1775,18 @@ void double_coset_rep(int *g, int n, int *base, int bl, int *GS, int m,
 	   to the n possible extensions of L.
 	 */
 
-	/* Define ALPHA and TAB */
-	struct alphastruct {
-		/* L */
-		int L[n]; 	/* We assume that elements of L cannot
-				   be repeated. I only have experimental
-				   evidence for this */
-		int Ll;
-		/* s, d */
-		int s[n];
-		int d[n];
-		/* other */
-		int o[n];
-				   
-	} *ALPHA;
 	int ALPHAl;
 	int *ALPHAstep= (int*)malloc(n*sizeof(int));
 
 	/* Initialize ALPHA to {} and TAB to {id, id} */
 	ALPHAl= 1;
+	struct alphastruct *ALPHA;
 	ALPHA= (struct alphastruct*)malloc(sizeof(struct alphastruct));
 	ALPHA[0].Ll=0;
 	range(ALPHA[0].s, n);
 	range(ALPHA[0].d, n);
 	ALPHAstep[0]=0;
 	ALPHAstep[1]=1;
-
-	/* TAB */
-	void TAB(int *L, int Ll, int *s1, int *d1, int n) {
-
-		int i;
-		int l=0;
-		
-		/* Search ALPHA for the l corresponding to L */
-		for (i=0; i<Ll; i++) l=ALPHA[l].o[L[i]-1];
-		/* Copy permutations of element l */
-		copy_list(ALPHA[l].s, s1, n);
-		copy_list(ALPHA[l].d, d1, n);
-
-	} /* End of function TAB */
-
-	/* Subroutines F1 and F2 */
-	/* TAB1 is an element of S; TAB2 is an element of D */
-	void F2(int *TAB1, int *g, int *TAB2, int *sgd, int n) {
-
-		int *tmp= (int*)malloc(n*sizeof(int));
-
-		product(TAB1, g, tmp, n);
-		product(tmp, TAB2, sgd, n);
-
-		free(tmp);
-
-	} /* End of function F2 */
-
-	void F1(int *L, int Ll, int *g, int *list, int *listl, int n) {
-
-		int c, c1, c2;
-		int *sgd=  (int*)malloc(n*sizeof(int));
-		int *TAB1= (int*)malloc(n*sizeof(int));
-		int *TAB2= (int*)malloc(n*sizeof(int));
-		int *tmp=  (int*)malloc(n*sizeof(int));
-
-		TAB(L, Ll, TAB1, TAB2, n);
-
-		/* Compute s.g.d */
-		F2(TAB1, g, TAB2, sgd, n);
-#ifdef VERBOSE_DOUBLE						/*PPC*/
-	printf("With L="); print_list(L, Ll, 0);		/*PPC*/
-	printf(" we get sgd: "); print_perm(sgd, n, 1);		/*PPC*/
-#endif								/*PPC*/
-		/* Images of Deltab under sgd. Note that tmp has length
-		   Deltabl */
-		for (c=0; c<Deltabl; c++)
-			tmp[c] = onpoints(Deltab[c], sgd, n);
-#ifdef VERBOSE_DOUBLE						/*PPC*/
-	printf(" which maps slots in Deltab to indices list: ");/*PPC*/
-		print_list(tmp, Deltabl, 1);			/*PPC*/
-#endif								/*PPC*/
-		/* Orbits of DeltaD containing the points in tmp */
-		for (c1=0; c1<Deltabl; c1++) {
-		    oi = DeltaD[tmp[c1]-1];
-		    if(oi) {
-			for(c2=0; c2<n; c2++) {
-			    if ((DeltaD[c2]==oi) && 
-				(!position(c2+1, list, *listl)))
-				 list[(*listl)++] = c2+1;
-			}
-		    }
-		}
-#ifdef VERBOSE_DOUBLE						/*PPC*/
-	printf(" whose points belong to orbits ");		/*PPC*/
-	print_list(list, *listl, 1);				/*PPC*/
-#endif								/*PPC*/
-		free(sgd);
-		free(TAB1);
-		free(TAB2);
-		free(tmp);
-	} /* End of function F1 */
-
-        /* Consistency check */
-	int consistency(int *array, int m, int n) {
-
-		int *arrayp= (int*)malloc(m*n*sizeof(int)), arraypl;
-		int *arrayn= (int*)malloc(m*n*sizeof(int)), arraynl;
-		int i, ip, in, ret;
-
-#ifdef VERBOSE_DOUBLE						/*PPC*/
-	printf("Checking consistency in m:%d, n:%d\n", m, n);	/*PPC*/
-	print_array_perm(array, m, n, 1);			/*PPC*/
-#endif								/*PPC*/
-
-		/* Detect sign of permutation */
-		arraypl=0;
-		arraynl=0;
-		for(i=0; i<m; i++) {
-		    if (array[i*n+n-2]<array[i*n+n-1]) /* Positive */
-			copy_list(array+i*n, arrayp+(arraypl++)*n, n);
-		    else                               /* Negative */
-			copy_list(array+i*n, arrayn+(arraynl++)*n, n);
-		}
-#ifdef VERBOSE_DOUBLE						/*PPC*/
-	printf("Found positive perms: %d\n", arraypl);		/*PPC*/
-	printf("Found negative perms: %d\n", arraynl);		/*PPC*/
-#endif								/*PPC*/
-		/* Here there are arraynl*arraypl comparisons. This
-                   should be improved with a better intersection
-                   algorithm which sorts the lists in advance */
-		ret = 1; /* True */
-		for (in=0; in<arraynl; in++) {
-		    for (ip=0; ip<arraypl; ip++) {
-			if (equal_list(arrayp+ip*n, arrayn+in*n, n-2)) {
-			    ret = 0; /* False */
-			    break;
-			}
-		    }
-		}
-#ifdef VERBOSE_DOUBLE						/*PPC*/
-	if (ret) printf("Found no problem in check\n");		/*PPC*/
-	else printf("Found perm with two signs.\n");		/*PPC*/
-#endif								/*PPC*/
-		free(arrayp);
-		free(arrayn);
-		return(ret);
-
-	} /* End of funcion consistency */
 
         /**************************************************************
          *               CONSTRUCTION OF BASES
@@ -1897,7 +1883,7 @@ void double_coset_rep(int *g, int n, int *base, int bl, int *GS, int m,
                Deltab and DeltaD are used by F1 */
 	    IMAGESl=0;
 	    for (c=ALPHAstep[i-1]; c<ALPHAstep[i]; c++)
-	    	F1(ALPHA[c].L, ALPHA[c].Ll, g, IMAGES, &IMAGESl, n);
+	    	F1(ALPHA[c].L, ALPHA[c].Ll, g, IMAGES, &IMAGESl, n, Deltabl, Deltab, oi, DeltaD, ALPHA);
 #ifdef VERBOSE_DOUBLE						/*PPC*/
 	printf("At slot %d we can have indices IMAGES: ", b);	/*PPC*/
 	print_list(IMAGES, IMAGESl, 1);				/*PPC*/

@@ -373,3 +373,28 @@ void interchange_chain(int **base, int *bl, int **GS, int *m, int n, int ***chai
 
 void search(int *base, int bl, int *GS, int m, int n, int prop, int *info, int infol,
         int s, int **GSK, int *mK, int *num);
+
+
+/* Auxiliary variables & functions */
+
+/* ALPHA */
+	struct alphastruct {
+		/* L */
+		int *L; 	/* We assume that elements of L cannot
+				   be repeated. I only have experimental
+				   evidence for this */
+		int Ll;
+		/* s, d */
+		int *s;
+		int *d;
+		/* other */
+		int *o;				   
+	};
+	
+/* TAB */
+void TAB(int *L, int Ll, int *s1, int *d1, int n, struct alphastruct *ALPHA);
+
+/* Subroutines F1 and F2 */
+void F2(int *TAB1, int *g, int *TAB2, int *sgd, int n);
+
+void F1(int *L, int Ll, int *g, int *list, int *listl, int n, int Deltabl, int *Deltab, int oi, int *DeltaD, struct alphastruct *ALPHA);
