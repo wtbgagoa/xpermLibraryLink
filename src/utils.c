@@ -2,6 +2,7 @@
 
 #include "xperm.h" 
 
+struct alphastruct;
 /*********************************************************************
  *                         PRINTING FUNCTIONS                        *
  *********************************************************************/
@@ -1751,6 +1752,7 @@ void double_coset_rep(int *g, int n, int *base, int bl, int *GS, int m,
 	int *L1=            (int*)malloc(  n*sizeof(int)), L1l;
 	int *s=             (int*)malloc(  n*sizeof(int));
 	int *d=             (int*)malloc(  n*sizeof(int));
+	int *o=             (int*)malloc(  n*sizeof(int));
 	int *list1=         (int*)malloc(  n*sizeof(int)), list1l;
 	int *list2=         (int*)malloc(  n*sizeof(int)), list2l;
 	int *perm1=         (int*)malloc(  n*sizeof(int));
@@ -1774,15 +1776,24 @@ void double_coset_rep(int *g, int n, int *base, int bl, int *GS, int m,
 	   for a given L contains a list of values of l corresponding
 	   to the n possible extensions of L.
 	 */
-
+	struct alphastruct *ALPHA;
 	int ALPHAl;
 	int *ALPHAstep= (int*)malloc(n*sizeof(int));
 
 	/* Initialize ALPHA to {} and TAB to {id, id} */
 	ALPHAl= 1;
-	struct alphastruct *ALPHA;
-	ALPHA= (struct alphastruct*)malloc(sizeof(struct alphastruct));
+	ALPHA = (struct alphastruct*)malloc(sizeof(struct alphastruct));
+	ALPHA[0].L = L;
+	ALPHA[0].L[0] = 0;
 	ALPHA[0].Ll=0;
+	ALPHA[0].d = d;
+	ALPHA[0].d[0] = 0;
+	ALPHA[0].s = s;
+	ALPHA[0].s[0] = 0;
+	ALPHA[0].d = d;
+	ALPHA[0].d[0] = 0;
+	ALPHA[0].o = o;
+	ALPHA[0].o[0] = 0;
 	range(ALPHA[0].s, n);
 	range(ALPHA[0].d, n);
 	ALPHAstep[0]=0;
@@ -1982,8 +1993,7 @@ void double_coset_rep(int *g, int n, int *base, int bl, int *GS, int m,
 		    ALPHA[l].o[j-1] = kk;
 		    ALPHAl++;
 		    ALPHAstep[i+1]++;
-		    ALPHA = (struct alphastruct*)realloc(ALPHA, ALPHAl*
-				    sizeof(struct alphastruct));
+		    ALPHA = (struct alphastruct*)realloc(ALPHA, ALPHAl*sizeof(struct alphastruct));
 		    copy_list(L1, ALPHA[kk].L, L1l);
 		    ALPHA[kk].Ll = L1l;
 		    copy_list(s1, ALPHA[kk].s, n);
