@@ -1684,26 +1684,8 @@ void SGSD(int *vds, int vdsl, int *dummies, int dl, int *mQ,
 #endif								/*PPC*/
 	}
 
-/**********************************************************************/
 
-/* double_coset_rep. JMM, 1-5 July 2003.
-* JMM, 9 November 2005. Corrected treatment of SGS of group D.
-* JMM, 26 June 2007. Large extension to consider several dummysets and
-*      several repeatedsets.
-*
-* This algorithm is encoded from Renato Portugal et al, with the
-* extensions to repeatedsets.
-*
-* This function gives a canonical representant for the n-permutation g
-* in the double coset S.g.D given by the groups S, described by a SGS
-* (pair base, GS) and the group D, described by the direct product of
-* the pair symmetric dpl pairs of dummies and the S_k groups of k
-* repeated indices. Each dummyset has a metric_symmetry sign: if mQ=1
-* the metric is symmetric. If mQ=-1 the metric is antisymmetric
-* (spinor calculus). If mQ=0 there is no metric.
-* Note that n = dl + dr. The result is stored in dcr.
-*/
-
+/* The class alphastruct has been contributed by the Cadabra project */
 class alphastruct {
 	public:
 		alphastruct();
@@ -1867,6 +1849,26 @@ int consistency(int *array, int m, int n)
 	free(arrayn);
 	return(ret);
 	}
+
+/**********************************************************************/
+
+/* double_coset_rep. JMM, 1-5 July 2003.
+* JMM, 9 November 2005. Corrected treatment of SGS of group D.
+* JMM, 26 June 2007. Large extension to consider several dummysets and
+*      several repeatedsets.
+*
+* This algorithm is encoded from Renato Portugal et al, with the
+* extensions to repeatedsets.
+*
+* This function gives a canonical representant for the n-permutation g
+* in the double coset S.g.D given by the groups S, described by a SGS
+* (pair base, GS) and the group D, described by the direct product of
+* the pair symmetric dpl pairs of dummies and the S_k groups of k
+* repeated indices. Each dummyset has a metric_symmetry sign: if mQ=1
+* the metric is symmetric. If mQ=-1 the metric is antisymmetric
+* (spinor calculus). If mQ=0 there is no metric.
+* Note that n = dl + dr. The result is stored in dcr.
+*/
 
 
 void double_coset_rep(int *g, int n, int *base, int bl, int *GS, int m,
