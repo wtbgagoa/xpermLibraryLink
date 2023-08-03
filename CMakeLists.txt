@@ -6,22 +6,25 @@ include(FindWolframLanguage)
 include(FindWSTP)
 include(FindWolframLibrary)
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+
 #=============================================
 #== xperm Target LibraryLink shared library ========
 #=============================================
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_library(xperm STATIC ${CMAKE_CURRENT_SOURCE_DIR}/src/xperm.cpp)
 
-add_library(xperm SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/xperm.cpp)
+add_library(xpermLL SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/LLInterface.cpp)
 
 #=============================================
 #===== Linking xperm to WSTP and LibraryLink
 #=============================================
 
 
-target_link_libraries(xperm WSTP::WSTP WolframLibrary::WolframLibrary)
+target_link_libraries(xpermLL WSTP::WSTP WolframLibrary::WolframLibrary xperm)
 
 #=============================================
 #===== Install targets  ========
 #=============================================
-install(TARGETS xperm DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(TARGETS xpermLL DESTINATION ${CMAKE_INSTALL_PREFIX})
