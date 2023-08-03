@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-project(xperm-LL LANGUAGES C)
+project(xperm-LL LANGUAGES C CXX)
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 include(FindWolframLanguage)
 include(FindWSTP)
@@ -12,7 +12,7 @@ include(FindWolframLibrary)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-add_library(xperm SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/xperm.c ${CMAKE_CURRENT_SOURCE_DIR}/src/utils.c)
+add_library(xperm SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/xperm.cpp)
 
 #=============================================
 #===== Linking xperm to WSTP and LibraryLink
