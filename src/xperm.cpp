@@ -2484,6 +2484,258 @@ void canonical_perm_ext(int *PERM, int n,
 #endif								/*PPC*/
 	}
 
+/**********************************************************************
+ *
+ * Backtrack search
+ *
+ * We give a SGS and a property identifying a subgroup K of it.
+ * We return a SGS for K with the same base.
+ * So far properties can be:
+ *      1. Centralizer of a permutation
+ *      2. Normalizer of a subgroup
+ *      3. Intersection of two subgroups
+ *      4. SetStabilizer of a set
+ */
+
+void sorted_schreier_orbit(int point,
+                int *base, int bl, int *GS, int m, int n,
+                int *orbit, int *ol, int *nu, int *w, int init) {
+
+        int *tmp  = (int *)malloc(n*sizeof(int)), tmpl;
+        int *tmp2 = (int *)malloc(n*sizeof(int));
+
+        one_orbit(point, GS, m, n, tmp, &tmpl);
+        sortB(tmp, tmp2, tmpl, base, bl);
+        one_schreier_orbit(tmp2[0],GS,m,n,orbit,ol,nu,w,init);
+
+        free(tmp);
+        free(tmp2);
+
+}
+
+void sorted_schreier_vector(int point, int *base, int bl, int *GS, int m, int n, int *nu, int *w){
+
+        int i;    /* Point counter (from 1 to n) */
+        int *orbit=      (int*)malloc(n*sizeof(int));
+        int *usedpoints= (int*)malloc(n*sizeof(int));
+        int j=0;  /* Counter of used points */
+        int ol;
+
+        /* First orbit */
+        sorted_schreier_orbit(point, base, bl, GS, m, n, orbit, &ol, nu, w, 1);
+        while(ol--) usedpoints[j++] = orbit[ol];
+        /* Other orbits. Do not initialize vector */
+        for(i=1; i<=n; i++) {
+                if (!position(i, usedpoints, j)) {
+                        sorted_schreier_orbit(i, base, bl, GS, m, n, orbit, &ol, nu, w, 0);
+                        while(ol--) usedpoints[j++] = orbit[ol];
+                }
+        }
+        /* Free allocated memory */
+        free(orbit);
+        free(usedpoints);
+
+}
+
+
+/* This function constructs the permutation corresponding to
+   some list of images (with length ll<=bl). At the end the
+   list is identical to the first ll points of base.
+ */
+
+void from_base_image(int *images, int ll,
+        int *base, int bl, int *GS, int m, int n, int *perm) {
+
+        int *list= (int *)malloc(bl*    sizeof(int));
+        int *nu=   (int *)malloc(   n*n*sizeof(int));
+        int *w=    (int *)malloc(     n*sizeof(int));
+        int *u=    (int *)malloc(     n*sizeof(int));
+        int *tmp=  (int *)malloc(     n*sizeof(int));
+        int *stab= (int *)malloc(   m*n*sizeof(int)), sl;
+        int i,j;
+
+        copy_list(images,list,ll);
+        range(perm,n);
+        for (i=0; i<ll; i++) {
+                /* It would be better to stabilize stabilizers,
+                   instead of stabilizing the original set GS.
+                   I think we are computing this stabilizers too
+                   many times */
+                stabilizer(base,i,GS,m,n,stab,&sl);
+                sorted_schreier_vector(list[i], base+i, bl-i, stab, sl, n, nu, w);
+                trace_schreier(list[i], nu, w, u, n);
+                product(u,perm,tmp,n);
+                copy_list(tmp,perm,n);
+                inverse(u,tmp,n);
+                for (j=0; j<ll; j++) {
+                        list[j]=onpoints(list[j],tmp,n);
+                }
+        }
+
+        free(list);
+        free(nu);
+        free(w);
+        free(u);
+        free(tmp);
+        free(stab);
+
+}
+
+int property(int *g, int n, int prop, int *info, int infol) {
+
+        int *perm1= (int*)malloc(n*sizeof(int));
+        int *perm2= (int*)malloc(n*sizeof(int));
+        int i;
+        int ret=0; /* By default we do not accept g */
+
+        if (prop==1) { /* Centralizer. info is the permutation to centralize
+                          infol is the length of the perm cycle used in the base. Not used to check property */
+                product(g,info,perm1,n);
+                product(info,g,perm2,n);
+                ret=equal_list(perm1,perm2,n);
+        } else if (prop==2) { /* Normalizer */
+        } else if (prop==3) { /* Group intersection. */
+        } else if (prop==4) { /* SetStabilizer. info is the list of set-points as a characteristic function
+                                 infol is the number of points in the original list, not in the characteristic function (which is n) */
+                for(i=0; i<n; i++) {
+                        if(info[i]) {
+                                ret=info[onpoints(i+1,g,n)-1];
+                                if(!ret) break;
+                        }
+                }
+        }
+
+        free(perm1);
+        free(perm2);
+        
+        return ret;
+
+}
+
+void generate(int *base, int bl, int *GS, int m, int n, int prop, int *info, int infol,
+        int s, int i, int *list, int ll, int **GSK, int *mK, int *mark, int *num) {
+
+        int *g=     (int *)malloc(  n*sizeof(int));
+        int *stab=  (int *)malloc(m*n*sizeof(int)), sl;
+        int *orbit= (int *)malloc(  n*sizeof(int)), ol;
+        int *tmp=   (int *)malloc(  n*sizeof(int));
+        int j,gamma;
+
+/*
+        FILE *file;
+*/
+
+        from_base_image(list, ll, base, bl, GS, m, n, g);
+
+        if (i==bl+1) {
+                (*num)++;
+/*
+        file = fopen("/home/jmm/setwise","a");
+        fprintf(file,"generate at level s=%d and i=%d. We have list=",s,i);
+        fprint_list(file, list, ll, 0);
+        fprintf(file," and permutation ");
+        fprint_perm(file, g, n, 1);
+        fclose(file);
+*/
+                if(!isid(g,n) && property(g,n,prop,info,infol)) {
+                        /* Append permutation g to SGSK */
+                        if (*mK>=m) {
+                                *GSK = (int *)realloc(*GSK, (*mK+1)*n*sizeof(int));
+                        }
+                        copy_list(g,(*GSK)+(*mK)*n,n);
+                        (*mK)++;
+                        *mark=1;
+                }
+        } else {
+                stabilizer(base,i-1,GS,m,n, stab, &sl);
+                one_orbit(base[i-1],stab,sl,n, orbit, &ol);
+/*
+        file = fopen("/home/jmm/setwise","a");
+        fprintf(file,"generating over points ");
+        fprint_list(file, orbit, ol, 1);
+        fclose(file);
+*/
+                for (j=0; j<ol; j++) {
+                        gamma = onpoints(orbit[j], g, n);
+                        if(prop==1 && onpoints(list[ll-1],info,n)!=gamma && ll<infol) continue;
+/* This needs to be commented out because otherwise this case does not work:
+SetStabilizer[{1, 4}, StrongGenSet[{1, 3},
+       GenSet[Cycles[{1, 2}], Cycles[{3, 4}], Cycles[{1, 3}, {2, 4}]]] */
+                        /* if(prop==4 && !info[gamma-1] && ll<infol) continue; */
+                        copy_list(list, tmp, ll);
+                        tmp[ll]=gamma;
+                        generate(base,bl,GS,m,n, prop,info,infol, s, i+1, tmp, ll+1, GSK, mK, mark, num);
+                        if (*mark) break;
+                }
+        }
+
+        free(g);
+        free(stab);
+        free(orbit);
+        free(tmp);
+
+}
+
+void search(int *base, int bl, int *GS, int m, int n, int prop, int *info, int infol,
+        int s, int **GSK, int *mK, int *num) {
+
+        int *stab=  (int *)malloc(m*n*sizeof(int)), sl;
+        int *orbit= (int *)malloc(  n*sizeof(int)), ol;
+        int *tmp=   (int *)malloc(  n*sizeof(int));
+        int *Korbit=(int *)malloc(  n*sizeof(int)), Kol;
+        int *list  =(int *)malloc(  n*sizeof(int)), ll;
+        int gammas, minKorbit, i, mark;
+/*
+        FILE *file;
+
+        file = fopen("/home/jmm/setwise","a");
+        fprintf(file,"search: s=%d with %d points in base and degree %d\n",s,bl,n);
+        fclose(file);
+*/
+        if (s==bl+1) {
+                /* Initialize with the identity group */
+                *mK=0;
+        } else {
+                search(base, bl, GS, m, n, prop,info,infol, s+1, GSK, mK, num);
+                stabilizer(base, s-1, GS, m, n, stab, &sl);
+                one_orbit(base[s-1],stab,sl,n,orbit,&ol);
+/*
+        file = fopen("/home/jmm/setwise","a");
+        fprintf(file,"branching over points ");
+        fprint_list(file, orbit, ol, 1);
+        fclose(file);
+*/
+                /* Note that we do not consider the first point to avoid rechecking permutations. Not in Butler */
+                for (i=1; i<ol; i++) {
+                        gammas=orbit[i];
+                        one_orbit(gammas,*GSK,*mK,n,Korbit,&Kol);
+                        sortB(Korbit,tmp, Kol, base, bl);
+                        minKorbit=tmp[0];
+/*
+        file = fopen("/home/jmm/setwise","a");
+        fprintf(file,"search: i=%d, gammas=%d, minKorbit=%d\n",i, gammas, minKorbit);
+        fclose(file);
+*/
+        
+                        if (minKorbit==gammas) {
+                                /* First point in orbit */
+                                copy_list(base,list,s-1);
+                                list[s-1]=gammas;
+                                ll=s;
+                                mark=0;
+                                generate(base,bl,GS,m,n,prop,info,infol, s,s+1,list,ll, GSK,mK,&mark, num);
+                        }
+                }
+        }
+
+        free(stab);
+        free(orbit);
+        free(tmp);
+        free(Korbit);
+        free(list);
+
+}
+
 
 
 /* stab_chain. TB, 1 February 2014
