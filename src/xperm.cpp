@@ -2483,3 +2483,485 @@ void canonical_perm_ext(int *PERM, int n,
 	printf("************ END OF ALGORITHM ***********\n");	/*PPC*/
 #endif								/*PPC*/
 	}
+
+
+
+/* stab_chain. TB, 1 February 2014
+ *
+ * Computes the stabilizer chain from the SGS given by
+ * base (length bl) and GS (m n-permutations)
+ * The result is chain a list of pointers to lists 
+ * containing the positions of the generators within GS.
+ * The lengths of the lists are given by cl, which is a list 
+ * with length bl. Observe that we do not save the last elemet 
+ * in the chain which should always be empty.
+ * We assume that enough space is already allocated for cl 
+ * (bl integers), and for chain (bl pointers) 
+ * 
+ */
+
+void stab_chain(int *base, int bl, int *GS, int m, int n, int **chain, int *cl) {
+
+	int i, j;
+	int gsp[m]; 
+
+/* The first GenSet should be the full list.
+ */
+
+	cl[0] = m;
+	chain[0] = (int *) malloc(m*sizeof(int));
+	
+	j = m;
+	while(j--) chain[0][j] = j;
+
+
+/* For the rest we need to check which perms that fixes the 
+   previous base point and is in the previous stabilizer.
+ */
+
+	for(i = 1; i<bl; i++) {
+		for(j=0; j<cl[i-1]; j++) {
+			if (onpoints(base[i-1],&GS[n*(chain[i-1][j])],n) == base[i-1]) {
+				gsp[cl[i]]=chain[i-1][j];
+				cl[i]++;
+			}
+		}
+		chain[i] = (int*) malloc(cl[i]*sizeof(int));
+		memmove(chain[i], gsp, cl[i]*sizeof(int));
+	} 
+}
+
+
+/* one_orbit_chain. TB, 16 March 2014
+ *
+ * Does the same thing as one_orbit, but instead of giving the 
+ * generating set as a simple list, it is given as a list GS together with
+ * a list of positions poslist with length poslistl. 
+ *
+ */
+
+
+void one_orbit_chain(int point, int *GS, int *poslist, int poslistl, int n, int *orbit, int *ol) {
+
+	int np=0;  /* Index of current element in the orbit */
+	int gamma; /* Current element in the orbit */
+	int mp;    /* Index of current permutation in poslist */
+	int newgamma;
+
+	orbit[0] = point;
+	*ol = 1;
+	while(np < *ol) {
+		gamma = orbit[np];
+		for(mp=0; mp<poslistl; mp++) {
+			newgamma = onpoints(gamma, &(GS[poslist[mp]*n]), n);
+			if (!position(newgamma, orbit, *ol))
+				orbit[(*ol)++] = newgamma;
+		}
+		np++;
+	}
+
+}
+
+
+/* one_schreier_orbit_chain. TB, 16 March 2014
+ *
+ * Does the same thing as one_schreier_orbit, but instead of giving the 
+ * generating set as a simple list, it is given as a list GS together with
+ * a list of positions poslist with length poslistl. 
+ *
+ */
+
+
+void one_schreier_orbit_chain(int point, int *GS, int *poslist, int poslistl,
+	int n, int *orbit, int *ol, int *nu, int *w, int init) {
+
+	int np;    /* Index of current element in the orbit */
+	int gamma; /* Current element in the orbit */
+	int mp;    /* Index of current permutation in poslistl */
+	int *perm= (int*)malloc(n*sizeof(int));
+	int newgamma;
+
+	/* Initialize schreier with zeros if required */
+	memset(orbit, 0, n*sizeof(int));
+	if (init) {
+		memset(nu, 0, n*n*sizeof(int));
+		memset(w, 0, n*sizeof(int));
+	}
+	/* First element of orbit. There is no backward pointer */
+	orbit[0] = point;
+	*ol = 1;
+	/* Other elements of orbit */
+	np = 0;
+	while(np < *ol) {
+		gamma = orbit[np];
+		for(mp=0; mp<poslistl; mp++) {
+			copy_list(&(GS[poslist[mp]*n]), perm, n);
+			newgamma = onpoints(gamma, perm, n);
+			if (position(newgamma, orbit, *ol));
+			else {
+				/* Append to orbit */
+				orbit[(*ol)++] = newgamma;
+				/* Perm moving gamma to newgamma */
+				copy_list(perm, nu+(newgamma-1)*n, n);
+				/* Gamma backward pointer of newgamma */
+				*(w+newgamma-1) = gamma;
+			}
+		}
+		np++;
+	}
+	/* Free allocated memory */
+	free(perm);
+
+}
+
+
+
+/* conjugate_chain. TB, 16 February 2014
+ *
+ * Conjugates the stabilizer chain with respect to the 
+ * permutation p.
+ * 
+ */
+
+void conjugate_chain(int *base, int bl, int *GS, int m, int n, int *p) {
+	int j;
+	int tmpperm[n];
+	int ip[n];
+	
+	inverse(p, ip, n);
+
+
+/* Transform the base */
+	for(j = 0; j < bl; j++) {
+		base[j] = onpoints(base[j], p, n);
+	}
+
+/* Transform the GenSet */
+	for(j = 0; j < m; j++) {
+		product(&GS[n*j], p, tmpperm, n);
+		product(ip, tmpperm, &GS[n*j], n);
+	}
+
+}
+
+
+/* basechange_chain. TB, 12 March 2014
+ *
+ * Changes the base in the stabilizer chain.
+ * 
+ */
+
+void basechange_chain(int **base, int *bl, int **GS, int *m, int n, int ***chain, int **cl, int *newbase, int newbl) {
+
+	int orbit[n], ol;
+	int more=0;
+	int nu[n*n];
+	int w[n];
+	int g[n];
+	int invg[n];
+	int g2[n];
+	int g3[n];
+	int i,j, point;
+/*	int GSK[(*m)*n];*/
+	int pos;
+/*	FILE *file;*/
+	
+	i=1;
+
+	if(newbl>0){
+		one_schreier_orbit((*base)[0], *GS, *m, n, orbit, &ol, nu, w, 1);
+		more=position(newbase[0], orbit, ol);
+	}
+	else{
+		more=0;
+	}
+	if(more>0){
+		trace_schreier(newbase[0], nu, w, g, n);
+		while(more>0 && i<*bl && i<newbl){
+/*			for(j=0; j < (*cl)[i]; j++) {
+				memmove(&GSK[n*j], &(*GS)[n*((*chain)[i][j])], n*sizeof(int));
+			}*/
+			inverse(g, invg, n);
+			point=onpoints(newbase[i], invg, n);
+/*			one_schreier_orbit((*base)[i], GSK, (*cl)[i], n, orbit, &ol, nu, w, 1);*/
+			one_schreier_orbit_chain((*base)[i], *GS, (*chain)[i], (*cl)[i], n, orbit, &ol, nu, w, 1);
+			more=position(point, orbit, ol);
+			if(more>0){
+				trace_schreier(point, nu, w, g2, n);
+				product(g2,g,g3,n);
+				memmove(g, g3, n*sizeof(int));
+			} 
+			i=i+1;
+		}
+	conjugate_chain(*base, *bl, *GS, *m, n, g); 
+	}
+	for(j=i-1; j < newbl; j++) {
+		pos=position(newbase[j], *base, *bl);
+		if(pos==0){
+			appendbasepoint_chain(base, bl, chain, cl, newbase[j]);
+			pos=*bl;
+		}
+/*	        file = fopen("xpermlog.txt","a");
+        	fprintf(file,"i=%d, j=%d, pos=%d \n", i, j, pos);
+		fprint_list(file, *base, *bl, 1);
+        	fclose(file);*/
+
+		while((pos!=(j+1))&&(pos>1)){
+/*		        file = fopen("xpermlog.txt","a");
+	        	fprintf(file,"interchange_chain, pos=%d \n", pos);
+        		fclose(file);*/
+
+			interchange_chain(base, bl, GS, m, n, chain, cl, --pos);
+		}
+	}
+
+
+}
+
+/* appendbasepoint_chain. TB, 12 March 2014
+ *
+ * Appends a point to the end of the base in the stabilizer chain structure.
+ * 
+ */
+
+void appendbasepoint_chain(int **base, int *bl, int ***chain, int **cl, int newbasepoint) {
+
+	(*bl)++;
+	*base=(int *)realloc(*base, (*bl)*sizeof(int));
+	*cl=(int *)realloc(*cl, (*bl)*sizeof(int));
+	*chain=(int* *)realloc(*chain, (*bl)*sizeof(int*));
+	(*base)[(*bl)-1]=newbasepoint;
+	(*cl)[(*bl)-1]=0;
+	(*chain)[(*bl)-1]=NULL;
+
+}
+
+/* interchange_chain. TB, 13 March 2014
+ *
+ * Interchanges the point j and j+1 in the base using the stabilizer chain structure.
+ * 
+ */
+
+void interchange_chain(int **base, int *bl, int **GS, int *m, int n, int ***chain, int **cl, int j) {
+	
+	int basej, basejp1;
+	int Deltaj[n], Deltajl;
+	int nuj[n*n];
+	int wj[n];
+	int Deltajp1[n], Deltajp1l;
+	int orbitjp1jm1l;
+	int nujp1[n*n];
+	int wjp1[n];
+	int i,k;
+	int GSK[(*m)*n];
+	int LDeltaBarjp1;
+	int *T=NULL;
+	int Tl=0;
+	int *Gamma=NULL;
+	int Gammal;
+	int Delta[n];
+	int Deltal, gamma, p, pos;
+	int g1[n];
+	int invg1[n];
+	int g2[n], g2g1[n];
+	int orbitgammaT[n], orbitgammaTl;
+	int *newT=NULL;
+	int newTl, oldm;
+	int *gsp=NULL; 
+
+/*	FILE *file;*/
+
+
+	basej=(*base)[j-1];
+	basejp1=(*base)[j];
+	oldm=*m;
+
+/*        file = fopen("xpermlog.txt","a");
+       	fprintf(file,"Inside interchange_chain: m=%d, basej=%d, basejp1=%d \n",*m, basej, basejp1);
+	fprintf(file,"base=");
+	fprint_list(file, *base, *bl, 1);
+       	fclose(file);
+
+        file = fopen("xpermlog.txt","a");
+	fprintf(file,"cl=");
+	fprint_list(file, *cl, *bl, 1);
+       	fclose(file);*/
+
+
+/*	for(i=0; i < (*cl)[j]; i++) {
+		memmove(&GSK[n*i], &(*GS)[n*((*chain)[j][i])], n*sizeof(int));
+	}
+	one_schreier_orbit(basejp1, GSK, (*cl)[j], n, Deltajp1, &Deltajp1l, nujp1, wjp1, 1);
+*/
+
+	one_schreier_orbit_chain(basejp1, *GS,(*chain)[j], (*cl)[j], n, Deltajp1, &Deltajp1l, nujp1, wjp1, 1);
+
+
+/*        file = fopen("xpermlog.txt","a");
+	fprintf(file,"Deltajp1=");
+	fprint_list(file, Deltajp1, Deltajp1l, 1);
+       	fclose(file);*/
+
+	
+/*	for(i=0; i < (*cl)[j-1]; i++) {
+		memmove(&GSK[n*i], &(*GS)[n*((*chain)[j-1][i])], n*sizeof(int));
+	}
+
+	one_orbit(basejp1, GSK, (*cl)[j-1], n, Deltaj, &orbitjp1jm1l);
+
+	one_schreier_orbit(basej, GSK, (*cl)[j-1], n, Deltaj, &Deltajl, nuj, wj, 1);
+*/
+
+	one_orbit_chain(basejp1, *GS, (*chain)[j-1], (*cl)[j-1], n, Deltaj, &orbitjp1jm1l);
+
+	one_schreier_orbit_chain(basej, *GS,(*chain)[j-1], (*cl)[j-1], n, Deltaj, &Deltajl, nuj, wj, 1);
+
+/*        file = fopen("xpermlog.txt","a");
+	fprintf(file,"Deltaj=");
+	fprint_list(file, Deltaj, Deltajl, 1);
+       	fclose(file);*/
+
+
+	LDeltaBarjp1=Deltajp1l*Deltajl/orbitjp1jm1l;	
+
+	if(j+1<*bl){
+		T=(int *)malloc(((*cl)[j+1])*n*sizeof(int));
+		Tl=(*cl)[j+1];
+		for(i=0; i < (*cl)[j+1]; i++) {
+			memmove(&T[n*i], &(*GS)[n*((*chain)[j+1][i])], n*sizeof(int));
+		}
+	}
+	
+	Gamma=(int *)malloc(Deltajl*sizeof(int));
+	Gammal=0;
+
+	sort(Deltaj, Gamma, Deltajl);
+
+	for(i=0; i<Deltajl; i++){
+		if((Gamma[i]!=basej)&&(Gamma[i]!=basejp1)){
+			Gamma[Gammal++]=Gamma[i];
+		}
+	}
+	Delta[0]=basej;
+	Deltal=1;
+	
+/*        file = fopen("xpermlog.txt","a");
+       	fprintf(file,"Delta=");
+	fprint_list(file, Delta, Deltal, 1);
+       	fclose(file);*/
+
+
+	while(Deltal < LDeltaBarjp1){
+
+		gamma=Gamma[0];
+		trace_schreier(gamma, nuj, wj, g1, n);
+		inverse(g1, invg1, n);
+		p=onpoints(basejp1, invg1, n);
+
+/*	        file = fopen("xpermlog.txt","a");
+       		fprintf(file,"gamma=%d, p=%d\n", gamma, p);
+       		fclose(file);*/
+
+		pos=position(p, Deltajp1, Deltajp1l);
+		if(pos==0){
+/*		        file = fopen("xpermlog.txt","a");
+	       		fprintf(file,"p in Deltajp1\n");
+       			fclose(file);*/
+
+			one_orbit(gamma, T, Tl, n, orbitgammaT, &orbitgammaTl);
+			k=0;
+			for(i=0; i<Gammal; i++){
+				if(position(Gamma[i],orbitgammaT, orbitgammaTl)==0){
+					Gamma[k++]=Gamma[i];
+				}
+			}
+			Gammal=k;
+		}
+		else{
+/*		        file = fopen("xpermlog.txt","a");
+	       		fprintf(file,"p not in Deltajp1\n");
+       			fclose(file);*/
+
+			trace_schreier(p, nujp1, wjp1, g2, n);
+			product(g2,g1,g2g1,n);
+			Tl++;
+			T=(int *)realloc(T,Tl*n*sizeof(int));
+			memmove(&T[n*(Tl-1)], g2g1, n*sizeof(int));
+			one_orbit(basej, T, Tl, n, Delta, &Deltal);
+
+			
+			k=0;
+			for(i=0; i<Gammal; i++){
+				if(position(Gamma[i], Delta, Deltal)==0){
+					Gamma[k++]=Gamma[i];
+				}
+			}
+			Gammal=k;
+
+		}
+
+		
+	}
+
+/*        file = fopen("xpermlog.txt","a");
+       	fprintf(file,"After loop: Tl=%d\n", Tl);
+	fprint_list(file,T,Tl*n,1);
+       	fclose(file);*/
+
+	newT=(int *)malloc(Tl*n*sizeof(int));
+	newTl=0;
+
+	for(i=0; i < (*cl)[j-1]; i++) {
+		memmove(&GSK[n*i], &(*GS)[n*((*chain)[j-1][i])], n*sizeof(int));
+	}
+
+	if(j+1<*bl){
+		complement(&T[n*((*cl)[j+1])], Tl-(*cl)[j+1], GSK, (*cl)[j-1], n, newT, &newTl);
+	}
+	else{
+		complement(T, Tl, GSK, (*cl)[j-1], n, newT, &newTl);
+	}
+	
+
+	(*GS)=(int *)realloc(*GS, (newTl+oldm)*n*sizeof(int));
+	memmove(&((*GS)[n*(*m)]), newT, newTl*n*sizeof(int));
+	(*m)=newTl+oldm;
+
+	(*base)[j-1]=basejp1;
+	(*base)[j]=basej;
+
+/*        file = fopen("xpermlog.txt","a");
+       	fprintf(file,"newTl=%d\n", newTl);
+	fprint_list(file,newT,newTl*n,1);
+       	fclose(file);*/
+
+
+	for(i=0;i<j;i++){
+		(*chain)[i] = (int *)realloc((*chain)[i],(newTl+(*cl)[i])*sizeof(int));
+		for(k=0;k<newTl;k++){
+			(*chain)[i][k+(*cl)[i]]=k+oldm;
+		}
+		(*cl)[i]=newTl+(*cl)[i];
+		
+	}
+
+	gsp=(int*)malloc(((*cl)[j-1])*sizeof(int));
+
+	(*cl)[j]=0;
+
+	for(i=0; i<(*cl)[j-1]; i++) {
+		if (onpoints(basejp1, &((*GS)[n*((*chain)[j-1][i])]),n) == basejp1) {
+			gsp[(*cl)[j]]=(*chain)[j-1][i];
+			(*cl)[j]++;
+		}
+	}
+	(*chain)[j] = (int*)realloc((*chain)[j],((*cl)[j])*sizeof(int));
+	memmove((*chain)[j], gsp, (*cl)[j]*sizeof(int));
+
+	free(gsp);
+
+	free(T);
+	free(newT);
+	free(Gamma);
+
+}
