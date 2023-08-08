@@ -140,3 +140,19 @@ void interchange_chain(int **base, int *bl, int **GS, int *m, int n, int ***chai
 
 void search(int *base, int bl, int *GS, int m, int n, int prop, int *info, int infol,
         int s, int **GSK, int *mK, int *num);
+
+/* Backtrack search */
+void sorted_schreier_orbit(int point, int *base, int bl, int *GS, int m, int n,
+        int *orbit, int *ol, int *nu, int *w, int init);
+
+void sorted_schreier_vector(int point, int *base, int bl, int *GS, int m, int n, int *nu, int *w);
+
+void from_base_image(int *images, int ll, int *base, int bl, int *GS, int m, int n, int *perm);
+
+int property(int *g, int n, int prop, int *info, int infol);
+
+void generate(int *base, int bl, int *GS, int m, int n, int prop, int *info, int infol,
+        int s, int i, int *list, int ll, int **GSK, int *mK, int *mark, int *num);
+
+void search(int *base, int bl, int *GS, int m, int n, int prop, int *info, int infol,
+        int s, int **GSK, int *mK, int *num);
