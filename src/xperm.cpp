@@ -1879,44 +1879,58 @@ void double_coset_rep(int *g, int n, int *base, int bl, int *GS, int m,
 	int i, j, l, jj, kk, c;         /* Counters */
 	int result;
 	/* Inverse of permutation g */
-	int *ig=            (int*)malloc(  n*sizeof(int));
+	int *ig=            new int[n]; //(int*)malloc(  n*sizeof(int))
 	/* All drummies, both the pair-dummies and the repes */
-	int *drummies=      (int*)malloc(  n*sizeof(int)), dril;
+	int *drummies=      new int[n]; //(int*)malloc(  n*sizeof(int)), 
+	int dril;
 	/* The initial slots of all those dummies */
-	int *drummyslots=   (int*)malloc(  n*sizeof(int));
+	int *drummyslots=   new int[n]; //(int*)malloc(  n*sizeof(int));
 	/* Temporary space for sorting */
-	int *drummytmp=     (int*)malloc(  n*sizeof(int)), drummytmpl;
-	int *drummytmp2=    (int*)malloc(  n*sizeof(int));
+	int *drummytmp=     new int[n]; //(int*)malloc(  n*sizeof(int)), 
+	int drummytmpl;
+	int *drummytmp2=    new int[n]; //(int*)malloc(  n*sizeof(int));
 	/* Bases for group S */
-	int *bS=            (int*)malloc(  n*sizeof(int)), bSl;
-	int *bSsort=        (int*)malloc(  n*sizeof(int));
+	int *bS=            new int[n]; // (int*)malloc(  n*sizeof(int)), 
+	int bSl;
+	int *bSsort=        new int[n]; //(int*)malloc(  n*sizeof(int));
 	/* gs for group S. It cannot be larger than GS */
-	int *KS=            (int*)malloc(m*n*sizeof(int)), KSl;
+	int *KS=            new int[m*n]; //(int*)malloc(m*n*sizeof(int)), 
+	int KSl;
 	/* gs for group D. The number dl+dr is an upper bound */
-	int *KD=            (int*)malloc(n*n*sizeof(int)), KDl;
-	int *bD=            (int*)malloc(  n*sizeof(int)), bDl;
-	int *nu=            (int*)malloc(n*n*sizeof(int));
-	int *w=             (int*)malloc(  n*sizeof(int));
-	int *Deltab=        (int*)malloc(  n*sizeof(int)), Deltabl;
-	int *DeltaD=        (int*)malloc(  n*sizeof(int));
-	int *IMAGES=        (int*)malloc(  n*sizeof(int)), IMAGESl;
-	int *IMAGESsorted=  (int*)malloc(  n*sizeof(int));
-	int *p=             (int*)malloc(  n*sizeof(int));
-	int *nuD=           (int*)malloc(n*n*sizeof(int));
-	int *wD=            (int*)malloc(  n*sizeof(int));
-	int *Deltap=        (int*)malloc(  n*sizeof(int)), Deltapl;
-	int *NEXT=          (int*)malloc(  n*sizeof(int)), NEXTl;
-	int *L=             (int*)malloc(  n*sizeof(int)), Ll;
-	int *L1=            (int*)malloc(  n*sizeof(int)), L1l;
-	int *s=             (int*)malloc(  n*sizeof(int));
-	int *d=             (int*)malloc(  n*sizeof(int));
-	int *list1=         (int*)malloc(  n*sizeof(int)), list1l;
-	int *list2=         (int*)malloc(  n*sizeof(int)), list2l;
-	int *perm1=         (int*)malloc(  n*sizeof(int));
-	int *perm2=         (int*)malloc(  n*sizeof(int));
-	int *perm3=         (int*)malloc(  n*sizeof(int));
-	int *s1=            (int*)malloc(  n*sizeof(int));
-	int *d1=            (int*)malloc(  n*sizeof(int));
+	int *KD=            new int[n*n];// (int*)malloc(n*n*sizeof(int)), 
+	int KDl;
+	int *bD=            new int[n]; //(int*)malloc(  n*sizeof(int)), 
+	int bDl;
+	int *nu=            new int[n*n]; //(int*)malloc(n*n*sizeof(int));
+	int *w=             new int[n]; // (int*)malloc(  n*sizeof(int));
+	int *Deltab=        new int[n]; //(int*)malloc(  n*sizeof(int)), 
+	int Deltabl;
+	int *DeltaD=        new int[n]; //(int*)malloc(  n*sizeof(int));
+	int *IMAGES=        new int[n]; //(int*)malloc(  n*sizeof(int)), 
+	int IMAGESl;
+	int *IMAGESsorted=  new int[n]; //(int*)malloc(  n*sizeof(int));
+	int *p=             new int[n]; //(int*)malloc(  n*sizeof(int));
+	int *nuD=           new int[n*n]; //(int*)malloc(n*n*sizeof(int));
+	int *wD=            new int[n]; //(int*)malloc(  n*sizeof(int));
+	int *Deltap=        new int[n]; //(int*)malloc(  n*sizeof(int)), 
+	int Deltapl;
+	int *NEXT=          new int[n]; //(int*)malloc(  n*sizeof(int)), 
+	int NEXTl;
+	int *L=             new int[n]; //(int*)malloc(  n*sizeof(int)), 
+	int Ll;
+	int *L1=            new int[n]; //(int*)malloc(  n*sizeof(int)), 
+	int L1l;
+	int *s=             new int[n]; //(int*)malloc(  n*sizeof(int));
+	int *d=             new int[n]; //(int*)malloc(  n*sizeof(int));
+	int *list1=         new int[n]; //(int*)malloc(  n*sizeof(int)), 
+	int list1l;
+	int *list2=         new int[n]; //(int*)malloc(  n*sizeof(int)), 
+	int list2l;
+	int *perm1=         new int[n]; //(int*)malloc(  n*sizeof(int));
+	int *perm2=         new int[n]; //(int*)malloc(  n*sizeof(int));
+	int *perm3=         new int[n]; //(int*)malloc(  n*sizeof(int));
+	int *s1=            new int[n]; //(int*)malloc(  n*sizeof(int));
+	int *d1=            new int[n]; //(int*)malloc(  n*sizeof(int));
 
 
 	/* We use Renato's notation, with g mapping slots to indices */
@@ -1937,7 +1951,7 @@ void double_coset_rep(int *g, int n, int *base, int bl, int *GS, int m,
 	/* Define ALPHA and TAB */
 
 	int ALPHAl;
-	int *ALPHAstep= (int*)malloc(n*sizeof(int));
+	int *ALPHAstep= new int[n]; //(int*)malloc(n*sizeof(int));
 
 	/* Initialize ALPHA to {} and TAB to {id, id} */
 	ALPHAl= 1;
@@ -2183,8 +2197,7 @@ void double_coset_rep(int *g, int n, int *base, int bl, int *GS, int m,
 			{
 			/* Verify if there are 2 equal permutations
 			of opposite sign in SgD */
-			int *array= (int*)malloc(n*(ALPHAstep[i+1]-ALPHAstep[i])
-			                         *sizeof(int));
+			int *array= new int[n*(ALPHAstep[i+1]-ALPHAstep[i])]; //(int*)malloc(n*(ALPHAstep[i+1]-ALPHAstep[i])*sizeof(int));
 			int arrayl= 0;
 #ifdef VERBOSE_DOUBLE						/*PPC*/
 			printf("Astep[i-1]=%d, Astep[i]=%d, Astep[i+1]=%d\n",	/*PPC*/
@@ -2201,7 +2214,7 @@ void double_coset_rep(int *g, int n, int *base, int bl, int *GS, int m,
 #ifdef VERBOSE_DOUBLE						/*PPC*/
 			printf("Result of check: %d\n", result);		/*PPC*/
 #endif								/*PPC*/
-			free(array);
+			delete[] array; //free(array);
 			if (!result) break;
 			}
 		/* Find the stabilizers S^(i+1) and D^(i+1) */
@@ -2227,39 +2240,39 @@ void double_coset_rep(int *g, int n, int *base, int bl, int *GS, int m,
 
 	/* Free allocated memory */
 	//	free(ALPHA);
-	free(ALPHAstep);
-	free(ig);
-	free(drummies);
-	free(drummyslots);
-	free(drummytmp);
-	free(drummytmp2);
-	free(bS);
-	free(bSsort);
-	free(KS);
-	free(KD);
-	free(bD);
-	free(nu);
-	free(w);
-	free(Deltab);
-	free(DeltaD);
-	free(IMAGES);
-	free(IMAGESsorted);
-	free(p);
-	free(nuD);
-	free(wD);
-	free(Deltap);
-	free(NEXT);
-	free(L);
-	free(L1);
-	free(s);
-	free(d);
-	free(list1);
-	free(list2);
-	free(perm1);
-	free(perm2);
-	free(perm3);
-	free(s1);
-	free(d1);
+	delete[] ALPHAstep; //free(ALPHAstep);
+	delete[] ig; //free(ig);
+	delete[] drummies; //free(drummies);
+	delete[] drummyslots; //free(drummyslots);
+	delete[] drummytmp; //free(drummytmp);
+	delete[] drummytmp2; //free(drummytmp2);
+	delete[] bS; //free(bS);
+	delete[] bSsort; //free(bSsort);
+	delete[] KS; //free(KS);
+	delete[] KD; //free(KD);
+	delete[] bD; // free(bD);
+	delete[] nu; // free(nu);
+	delete[] w; //free(w);
+	delete[] Deltab; //free(Deltab);
+	delete[] DeltaD; //free(DeltaD);
+	delete[] IMAGES; //free(IMAGES);
+	delete[] IMAGESsorted; //(IMAGESsorted);
+	delete[] p; //free(p);
+	delete[] nuD; //free(nuD);
+	delete[] wD; //free(wD);
+	delete[] Deltap; //free(Deltap);
+	delete[] NEXT; //free(NEXT);
+	delete[] L; //free(L);
+	delete[] L1; //free(L1);
+	delete[] s; //free(s);
+	delete[] d; //free(d);
+	delete[] list1; //free(list1);
+	delete[] list2; //free(list2);
+	delete[] perm1; //free(perm1);
+	delete[] perm2; //free(perm2);
+	delete[] perm3; //free(perm3);
+	delete[] s1; //free(s1);
+	delete[] d1; //dfree(d1);
 	}
 
 /**********************************************************************/
@@ -2387,17 +2400,18 @@ void canonical_perm_ext(int *PERM, int n,
 	{
 
 	int i;
-	int *freeps=    (int*)malloc(fl*sizeof(int));
-	int *PERM1=     (int*)malloc(n *sizeof(int));
-	int *PERM2=     (int*)malloc(n *sizeof(int));
-	int *newbase=   (int*)malloc(n *sizeof(int)), newbl;
-	int **newGS = NULL;
-	int *pointer;
+	int *freeps=    new int[fl]; // (int*)malloc(fl*sizeof(int));
+	int *PERM1=     new int[n]; //(int*)malloc(n *sizeof(int));
+	int *PERM2=     new int[n]; //(int*)malloc(n *sizeof(int));
+	int *newbase=   new int[n]; //(int*)malloc(n *sizeof(int)),
+	int newbl;
+	int **newGS = nullptr;
+	int *pointer=   new int[m*n];
 	int newm;
-	int *tmpbase=   (int*)malloc(n *sizeof(int)), tmpbl;
+	int *tmpbase=   new int[n]; //(int*)malloc(n *sizeof(int)),
+	int tmpbl; 
 	int num=0;
 
-	pointer= (int*)malloc(m*n*sizeof(int));
 	newGS= &pointer;
 
 #ifdef VERBOSE_CANON						/*PPC*/
@@ -2472,12 +2486,12 @@ void canonical_perm_ext(int *PERM, int n,
 		}
 
 	/* Free allocated memory */
-	free(freeps);
-	free(PERM1);
-	free(PERM2);
-	free(newbase);
-	free(tmpbase);
-	free(*newGS);
+	delete [] freeps; // free(freeps);
+	delete [] PERM1; //free(PERM1);
+	delete [] PERM2; // free(PERM2);
+	delete [] newbase; //free(newbase);
+	delete[] tmpbase; //free(tmpbase);
+	delete [] pointer; //free(*newGS);
 
 #ifdef VERBOSE_CANON						/*PPC*/
 	printf("************ END OF ALGORITHM ***********\n");	/*PPC*/

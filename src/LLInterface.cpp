@@ -37,12 +37,11 @@ void ML_schreier_sims( int *base, long bl, int *GS, long m, int n, WSLINK stdlin
 
 	int newbase[n];
 	int nbl;
-	int **newGS = NULL;
-	int *pointer = NULL;
+	int **newGS = nullptr;
+	int *pointer = new int[m*n];
 	int nm;
 	int num=0;
 
-	pointer = (int*)malloc(m*n*sizeof(int));
 	newGS = &pointer;
 
 	schreier_sims(base, bl, GS, m/n, n, newbase, &nbl, newGS, &nm, &num);
@@ -51,7 +50,7 @@ void ML_schreier_sims( int *base, long bl, int *GS, long m, int n, WSLINK stdlin
 	WSPutIntegerList(stdlink, *newGS, nm*n);
 	WSPutInteger(stdlink, n);
 
-	free(pointer);
+	delete [] pointer;
 
 	return;
 
@@ -170,7 +169,7 @@ void ML_canonical_perm(
         int *vrs, long vrsl,
         int *repes, long rl, WSLINK stdlink) {
 
-	int *cperm= (int*)malloc(nn*sizeof(int));
+	int *cperm= new int[nn];
 	int error;
 
 	canonical_perm_ext(
@@ -192,7 +191,7 @@ void ML_canonical_perm(
 		WSPutInteger(stdlink, deg-2);
 	}
 
-	free(cperm);
+	delete [] cperm;
 	return;
 }
 
@@ -241,10 +240,9 @@ void ML_set_stabilizer(
         int *charac=NULL, i;
         int *pointer=NULL;
         int **GSK=NULL, mK;
-        pointer= (int*)malloc(m*sizeof(int));
+        pointer= new int[m];
         GSK = &pointer;
-        charac= (int*)malloc(n*sizeof(int));
-
+        charac= new int[n];
         /* Convert list of points into a characteristic function */
         zeros(charac,n);
         for(i=0; i<nn; i++) {
@@ -261,8 +259,8 @@ void ML_set_stabilizer(
 	WSPutIntegerList(stdlink, *GSK, mK*n);
 	WSPutInteger(stdlink, n);
 
-        free(pointer);
-        free(charac);
+        delete [] pointer;
+        delete [] charac;
         
 	return;
 
@@ -409,7 +407,7 @@ void ML_basechange(
 	
 	int i, k;
 	int *cl=NULL;
-	int **chain=NULL;
+	int **chain= new int*[bl];
 	int *GSK=NULL;
 	int nbl;
 	int *nGS=NULL;
@@ -418,15 +416,14 @@ void ML_basechange(
 
 	nbase = (int *)malloc(bl*sizeof(int));
 	cl=(int *)malloc(bl*sizeof(int));
-	chain=(int* *)malloc(bl*sizeof(int*));
 	nGS=(int *)malloc(m*sizeof(int));
 
 	nbl=bl;
 
 	zeros(cl,bl);
 
-	for(i=0; i < nbl; i++) {
-		chain[i]=NULL;
+	for(i=0; i < bl; i++) {
+		chain[i]= new int[nbl];
 	}
 
 	stab_chain(base, nbl, GS, gslen, n, chain, cl); 
@@ -447,14 +444,14 @@ void ML_basechange(
 	WSPutInteger(stdlink, n);
 	
 
-	for(i=0; i < nbl; i++) {
-		free(chain[i]);
+	for(i=0; i < bl; i++) {
+		delete [] chain[i];
 	}
 	free(nbase);
 	free(nGS);
 	free(GSK);
 	free(cl);
-	free(chain);
+	delete [] chain;
 
 }
 
