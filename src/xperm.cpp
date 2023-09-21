@@ -2769,7 +2769,7 @@ void search(int *base, int bl, int *GS, int m, int n, int prop, int *info, int i
 void stab_chain(int *base, int bl, int *GS, int m, int n, int **chain, int *cl) {
 
 	int i, j;
-	int gsp[m]; 
+	int *gsp = new int[m]; 
 
 /* The first GenSet should be the full list.
  */
@@ -2794,7 +2794,8 @@ void stab_chain(int *base, int bl, int *GS, int m, int n, int **chain, int *cl) 
 		}
 		chain[i] = (int*) malloc(cl[i]*sizeof(int));
 		memmove(chain[i], gsp, cl[i]*sizeof(int));
-	} 
+	}
+	delete [] gsp;
 }
 
 
@@ -2891,8 +2892,8 @@ void one_schreier_orbit_chain(int point, int *GS, int *poslist, int poslistl,
 
 void conjugate_chain(int *base, int bl, int *GS, int m, int n, int *p) {
 	int j;
-	int tmpperm[n];
-	int ip[n];
+	int *tmpperm = new int[n];
+	int *ip = new int[n];
 	
 	inverse(p, ip, n);
 
@@ -2908,6 +2909,8 @@ void conjugate_chain(int *base, int bl, int *GS, int m, int n, int *p) {
 		product(ip, tmpperm, &GS[n*j], n);
 	}
 
+	delete [] tmpperm;
+	delete [] ip;
 }
 
 
@@ -2919,14 +2922,15 @@ void conjugate_chain(int *base, int bl, int *GS, int m, int n, int *p) {
 
 void basechange_chain(int **base, int *bl, int **GS, int *m, int n, int ***chain, int **cl, int *newbase, int newbl) {
 
-	int orbit[n], ol;
+	int *orbit = new int[n];
+	int ol; 
 	int more=0;
-	int nu[n*n];
-	int w[n];
-	int g[n];
-	int invg[n];
-	int g2[n];
-	int g3[n];
+	int *nu = new int[n*n];
+	int *w = new int[n];
+	int *g = new int[n];
+	int *invg = new int[n];
+	int *g2 = new int[n];
+	int *g3 = new int[n];
 	int i,j, point;
 /*	int GSK[(*m)*n];*/
 	int pos;
@@ -2981,6 +2985,14 @@ void basechange_chain(int **base, int *bl, int **GS, int *m, int n, int ***chain
 		}
 	}
 
+	delete [] orbit;
+	delete [] nu;
+	delete [] w;
+	delete [] g;
+	delete [] invg;
+	delete [] g2;
+	delete [] g3;
+
 
 }
 
@@ -3011,26 +3023,30 @@ void appendbasepoint_chain(int **base, int *bl, int ***chain, int **cl, int newb
 void interchange_chain(int **base, int *bl, int **GS, int *m, int n, int ***chain, int **cl, int j) {
 	
 	int basej, basejp1;
-	int Deltaj[n], Deltajl;
-	int nuj[n*n];
-	int wj[n];
-	int Deltajp1[n], Deltajp1l;
+	int *Deltaj = new int[n]; 
+	int Deltajl;
+	int *nuj = new int[n*n];
+	int *wj = new int[n];
+	int *Deltajp1 = new int[n]; 
+	int Deltajp1l;
 	int orbitjp1jm1l;
-	int nujp1[n*n];
-	int wjp1[n];
+	int *nujp1 = new int[n*n];
+	int *wjp1 = new int[n];
 	int i,k;
-	int GSK[(*m)*n];
+	int *GSK = new int[(*m)*n];
 	int LDeltaBarjp1;
 	int *T=NULL;
 	int Tl=0;
 	int *Gamma=NULL;
 	int Gammal;
-	int Delta[n];
+	int *Delta = new int[n];
 	int Deltal, gamma, p, pos;
-	int g1[n];
-	int invg1[n];
-	int g2[n], g2g1[n];
-	int orbitgammaT[n], orbitgammaTl;
+	int *g1 = new int[n];
+	int *invg1 = new int[n];
+	int *g2 = new int[n]; 
+	int *g2g1 = new int[n];
+	int *orbitgammaT = new int[n]; 
+	int orbitgammaTl;
 	int *newT=NULL;
 	int newTl, oldm;
 	int *gsp=NULL; 
@@ -3229,5 +3245,19 @@ void interchange_chain(int **base, int *bl, int **GS, int *m, int n, int ***chai
 	free(T);
 	free(newT);
 	free(Gamma);
+
+		delete [] Deltaj;
+	delete [] nuj;
+	delete [] wj;
+	delete [] nujp1;
+	delete [] wjp1;
+	delete [] GSK;
+	delete [] Delta;
+	delete [] g1;
+	delete [] invg1;
+	delete [] g2;
+	delete [] g2g1;
+	delete [] orbitgammaT;
+
 
 }
