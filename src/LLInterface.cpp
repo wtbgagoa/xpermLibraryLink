@@ -35,7 +35,7 @@ EXTERN_C DLLEXPORT int LL_schreier_sims(WolframLibraryData libData, WSLINK wslp)
 
 void ML_schreier_sims( int *base, long bl, int *GS, long m, int n, WSLINK stdlink) {
 
-	int newbase[n];
+	int *newbase = new int[n];
 	int nbl;
 	int **newGS = nullptr;
 	int *pointer = new int[m*n];
@@ -51,6 +51,7 @@ void ML_schreier_sims( int *base, long bl, int *GS, long m, int n, WSLINK stdlin
 	WSPutInteger(stdlink, n);
 
 	delete [] pointer;
+	delete [] newbase;
 
 	return;
 
@@ -82,11 +83,14 @@ EXTERN_C DLLEXPORT int LL_orbit(WolframLibraryData libData, WSLINK wslp){
 
 void ML_orbit( int point, int *GS, long m, int n, WSLINK stdlink) {
 
-	int orbit[n];
+	int *orbit = new int[n];
 	int ol;
 
 	one_orbit(point, GS, m/n, n, orbit, &ol);
 	WSPutIntegerList(stdlink, orbit, ol);
+
+	delete  [] orbit;
+
 	return;
 }
 
