@@ -17,12 +17,6 @@ of the directories that is in the `$LibraryPath` variable (this is a Mathematica
 check from within a Mathematica session).
 
 
-# Precompiled library
-If you just want a ready to use compiled library you can simply download it from the `binaries` folder
-(choose the library that is in the subfolder corresponding to your platform). You should then copy the
-library to one of the directories that is in the `$LibraryPath` variable
-(this is a Mathematica variable that you can check from within a Mathematica session).
-
 # General build and installation instructions
 ## Linux and MacOS
 This follows the standard `cmake` procedure and as a result a shared library is built.
