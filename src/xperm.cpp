@@ -1613,7 +1613,8 @@ void droprepeatedset(int firstd,
 
 	for (i=0; i<vrsl; i++) {
 		if (repes[itotal]==firstd && vrs[i]!=0) {
-			for (j=itotal; j<*rl; j++) {
+// ******** BUGFIX 2026-10-02: j<*rl changed to j<*rl-1
+			for (j=itotal; j<*rl-1; j++) {
 				repes[j] = repes[j+1];
 				}
 			vrs[i] = vrs[i]-1;
@@ -1951,7 +1952,9 @@ void double_coset_rep(int *g, int n, int *base, int bl, int *GS, int m,
 	/* Define ALPHA and TAB */
 
 	int ALPHAl;
-	int *ALPHAstep= new int[n]; //(int*)malloc(n*sizeof(int));
+// ****** BUGFIX 2026-10-02: [n] changed to [n+2] *******
+// ALPHAstep is accessed through index i+1 below
+	int *ALPHAstep= new int[n+2]; //(int*)malloc(n*sizeof(int)); 
 
 	/* Initialize ALPHA to {} and TAB to {id, id} */
 	ALPHAl= 1;
