@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.5)
 
 set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64")
 project(xperm-LL LANGUAGES C CXX)
@@ -25,7 +25,6 @@ set(XPERM_OPT_FLAGS
     -O3
     -march=native
     -flto
-    -ffast-math
 )
 
 if(ENABLE_PGO_GENERATE)
