@@ -46,11 +46,7 @@
  *********************************************************************
  *********************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include <string.h>
-#include <time.h>
+#include <vector>
 
 
 
@@ -58,11 +54,14 @@
  *                             PROTOTYPES                            *
  *********************************************************************/
 
-/* Output */
-void print_perm(int *p, int n, int nl);
-void print_array_perm(int *perms, int m, int n, int nl);
-void print_list(int *list, int n, int nl);
-void print_array(int *array, int m, int n, int nl);
+/* Debug output: available only in verbose builds. */
+#if defined(VERBOSE_LISTS) || defined(VERBOSE_SCHREIER) || \
+    defined(VERBOSE_COSET) || defined(VERBOSE_DOUBLE) || \
+    defined(VERBOSE_CANON)
+void print_perm(const int *p, int n, int nl);
+void print_array_perm(const int *perms, int m, int n, int nl);
+void print_list(const int *list, int n, int nl);
+#endif
 
 /* Lists */
 int equal_list(int *list1, int *list2, int n);
@@ -75,13 +74,11 @@ void complement(int *all, int al, int *part, int pl, int n,
 		int *com, int *cl);
 void sort(int *list, int *slist, int l);
 void sortB(int *list, int *slist, int l, int *B, int Bl);
-int minim(int *list, int n);
-int maxim(int *list, int n);
 void intersection(int *list1, int l1, int *list2, int l2, int *list,
 		int *l);
 
 /* Permutations */
-int isid(int *list, int n );
+int isid(const int *list, int n );
 void product(int *p1, int *p2, int *p, int n);
 void inverse(int *p, int *ip, int n);
 int onpoints(int point, int *p, int n);
@@ -100,10 +97,10 @@ void trace_schreier(int point, int *nu, int *w, int *perm, int n);
 long long int order_of_group(int *base, int bl, int *GS, int m, int n);
 int perm_member(int *p, int *base, int bl, int *GS, int m, int n);
 void schreier_sims_step(int *base, int bl, int *GS, int m, int n, int i,
-	int *T, int mm, int *newbase, int *nbl, int **newGS, int *nm,
+	int *T, int mm, int *newbase, int *nbl, std::vector<int>& newGS, int *nm,
 	int *num);
 void schreier_sims(int *base, int bl, int *GS, int m, int n,
-	int *newbase, int *nbl, int **newGS, int *nm, int *num);
+	int *newbase, int *nbl, std::vector<int>& newGS, int *nm, int *num);
 void coset_rep(int *p, int n, int *base, int bl, int *GS, int *m,
 	int *freeps, int fl, int *cr);
 void SGSD(int *vds, int vdsl, int *dummies, int dl, int *mQ,
@@ -123,7 +120,11 @@ void canonical_perm_ext(int *perm, int n,
         int *vrs, int vrsl, int *repes, int rl,
 	int *cperm);
 
-void stab_chain(int *base, int bl, int *GS, int m, int n, int **chain, int *cl);
+
+using IntList = std::vector<int>;
+using StabilizerChain = std::vector<IntList>;
+
+void stab_chain(int *base, int bl, int *GS, int m, int n, StabilizerChain& chain);
 
 void one_orbit_chain(int point, int *GS, int *poslist, int poslistl, int n, int *orbit, int *ol);
 
@@ -132,14 +133,18 @@ void one_schreier_orbit_chain(int point, int *GS, int *poslist, int poslistl,
 
 void conjugate_chain(int *base, int bl, int *GS, int m, int n, int *p);
 
-void basechange_chain(int **base, int *bl, int **GS, int *m, int n, int ***chain, int **cl, int *newbase, int newbl);
 
-void appendbasepoint_chain(int **base, int *bl, int ***chain, int **cl, int newbasepoint);
+void basechange_chain(std::vector<int>& base, std::vector<int>& GS,
+                      int n, StabilizerChain& chain,
+                      const int *newbase, int newbl);
 
-void interchange_chain(int **base, int *bl, int **GS, int *m, int n, int ***chain, int **cl, int j);
+void appendbasepoint_chain(std::vector<int>& base, StabilizerChain& chain, int newbasepoint);
+
+void interchange_chain(std::vector<int>& base, std::vector<int>& GS, int n, StabilizerChain& chain, int j);
+
 
 void search(int *base, int bl, int *GS, int m, int n, int prop, int *info, int infol,
-        int s, int **GSK, int *mK, int *num);
+        int s, std::vector<int>& GSK, int *mK, int *num);
 
 /* Backtrack search */
 void sorted_schreier_orbit(int point, int *base, int bl, int *GS, int m, int n,
@@ -152,7 +157,7 @@ void from_base_image(int *images, int ll, int *base, int bl, int *GS, int m, int
 int property(int *g, int n, int prop, int *info, int infol);
 
 void generate(int *base, int bl, int *GS, int m, int n, int prop, int *info, int infol,
-        int s, int i, int *list, int ll, int **GSK, int *mK, int *mark, int *num);
+        int s, int i, int *list, int ll, std::vector<int>& GSK, int *mK, int *mark, int *num);
 
 void search(int *base, int bl, int *GS, int m, int n, int prop, int *info, int infol,
-        int s, int **GSK, int *mK, int *num);
+        int s, std::vector<int>& GSK, int *mK, int *num);

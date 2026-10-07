@@ -47,18 +47,29 @@
 
 
 /* KP */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <vector>
-#include <iostream>
 #include "xperm.h"
+
+#include <algorithm>
+#include <cstddef>
+#include <cstring>
+#include <numeric>
+#include <vector>
+
+#if defined(VERBOSE_LISTS) || defined(VERBOSE_SCHREIER) || \
+    defined(VERBOSE_COSET) || defined(VERBOSE_DOUBLE) || \
+    defined(VERBOSE_CANON)
+#include <cstdio>
+#define XPERM_VERBOSE_OUTPUT_ENABLED 1
+#endif
+
+
 
 
 /*********************************************************************
 *                         PRINTING FUNCTIONS                        *
 *********************************************************************/
 
+#ifdef XPERM_VERBOSE_OUTPUT_ENABLED
 /**********************************************************************/
 
 /* print_perm. JMM, 22 June 2003
@@ -66,19 +77,19 @@
 * This function prints a permutation p of degree n. If nl=1(0) adds
 * (does not) a newline. */
 
-void print_perm(int *p, int n, int nl)
+void print_perm(const int *p, int n, int nl)
 	{
 	int i;
-	if (isid(p,n)) printf("id");
+	if (isid(p,n)) std::printf("id");
 	else {
-		printf("(");
-		printf("%d", p[0]);          /* No comma */
+		std::printf("(");
+		std::printf("%d", p[0]);          /* No comma */
 		for (i=1; i<n; i++) {
-			printf(",%d", p[i]); /* Comma separated */
+			std::printf(",%d", p[i]); /* Comma separated */
 			}
-		printf(")");
+		std::printf(")");
 		}
-	if (nl) printf("\n");
+	if (nl) std::printf("\n");
 	}
 
 /**********************************************************************/
@@ -89,17 +100,17 @@ void print_perm(int *p, int n, int nl)
 * If nl=1 (0) adds (does not) a newline after each row.
 * There are no commas between permutations. */
 
-void print_array_perm(int *perms, int m, int n, int nl)
+void print_array_perm(const int *perms, int m, int n, int nl)
 	{
 	int j;
-	printf("{");
-	if (nl) printf("\n");
+	std::printf("{");
+	if (nl) std::printf("\n");
 	for(j=0; j<m; j++) {
-		printf(" ");
+		std::printf(" ");
 		print_perm(perms+j*n, n, nl);
 		}
-	if (nl) printf("}\n");
-	else printf(" }\n");
+	if (nl) std::printf("}\n");
+	else std::printf(" }\n");
 	}
 
 /**********************************************************************/
@@ -109,39 +120,21 @@ void print_array_perm(int *perms, int m, int n, int nl)
 * This function prints a list of length n in curly brackets.
 * If nl=1 (0) it adds (does not) a newline. */
 
-void print_list(int *list, int n, int nl)
+void print_list(const int *list, int n, int nl)
 	{
 	int i;
-	printf("{");
-	if (n>0) printf("%d", list[0]);            /* No comma */
-	for (i=1; i<n; i++) printf(",%d", list[i]);/* Comma separated */
-	printf("}");
-	if (nl) printf("\n");
+	std::printf("{");
+	if (n>0) std::printf("%d", list[0]);            /* No comma */
+	for (i=1; i<n; i++) std::printf(",%d", list[i]);/* Comma separated */
+	std::printf("}");
+	if (nl) std::printf("\n");
 	}
 
-/**********************************************************************/
 
-/* print_array. JMM, 22 June 2003
-*
-* This function prints an array of dimensions m x n in curly brackets.
-* If nl=1 (0) adds (does not) a newline after each row.
-* There are no commas between lists. */
 
-void print_array(int *array, int m, int n, int nl)
-	{
-	int j;
-	printf("{");
-	if(nl) printf("\n");
-	for(j=0; j<m; j++) {
-		printf(" ");
-		print_list(array+j*n, n, nl);
-		}
-	if (!nl) printf(" ");
-	printf("}\n");
-	}
 
-/**********************************************************************/
 
+#endif
 
 /*********************************************************************
 *                          GENERIC FUNCTIONS                        *
@@ -167,9 +160,7 @@ int equal_list(int *list1, int *list2, int n) {
 /* KP, 7 May 2006 */
 int equal_list(int *list1, int *list2, int n)
 	{
-	if (n==0) return 1;
-	if (memcmp(list1, list2, n*sizeof(int))==0) return 1;
-	else return 0;
+	return std::equal(list1, list1 + n, list2) ? 1 : 0;
 	}
 
 /**********************************************************************/
@@ -190,7 +181,7 @@ void copy_list(int *list1, int *list2, int n) {
 void copy_list(int *list1, int *list2, int n)
 	{
 	if (n==0) return;
-	memmove(list2, list1, n*sizeof(int));
+	std::memmove(list2, list1, n*sizeof(int));
 	}
 
 /**********************************************************************/
@@ -250,13 +241,12 @@ void zeros(int *list, int n) {
 /* KP, 7 May 2006 */
 void zeros(int *list, int n)
 	{
-	if (n==0) return;
-	memset(list, 0, n*sizeof(int));
+	std::fill_n(list, n, 0);
 	}
 
 void range(int *list, int n)
 	{
-	while(n--) *(list+n) = n+1;
+	std::iota(list, list + n, 1);
 	}
 
 /**********************************************************************/
@@ -298,7 +288,7 @@ void sort(int *list, int *slist, int l)
 	int tmp, mini; /* mini is a position, not an element of list */
 
 #ifdef VERBOSE_LISTS						/*PPC*/
-	printf("sort: Sorting list ");
+	std::printf("sort: Sorting list ");
 	print_list(list, l, 1);	/*PPC*/
 #endif								/*PPC*/
 	copy_list(list, slist, l);
@@ -315,7 +305,7 @@ void sort(int *list, int *slist, int l)
 		slist[mini] = tmp;
 		}
 #ifdef VERBOSE_LISTS						/*PPC*/
-	printf("sort: with result ");
+	std::printf("sort: with result ");
 	print_list(slist, l, 1);	/*PPC*/
 #endif								/*PPC*/
 	}
@@ -329,70 +319,33 @@ void sort(int *list, int *slist, int l)
 
 void sortB(int *list, int *slist, int l, int *B, int Bl)
 	{
-
-	int sl;
-	int *tmp=  (int*)malloc(l*sizeof(int)), tmpl;
-	int *stmp= (int*)malloc(l*sizeof(int));
+    int sl;
+    int tmpl;
+    std::vector<int> tmp(l);
+    std::vector<int> stmp(l);
 
 #ifdef VERBOSE_LISTS						/*PPC*/
-	printf("sortB: Sorting list ");
+	std::printf("sortB: Sorting list ");
 	print_list(list, l, 1);	/*PPC*/
-	printf("sortB: using base ");
+	std::printf("sortB: using base ");
 	print_list(B, Bl, 1);	/*PPC*/
 #endif								/*PPC*/
 	/* Elements of list in B, keeping order of B, moved to slist */
 	intersection(B, Bl, list, l, slist, &sl);
 	/* Other elements of list are appended to slist */
-	complement(list, l, B, Bl, 1, tmp, &tmpl);
+    complement(list, l, B, Bl, 1, tmp.data(), &tmpl);
 	/* Check that tmpl+sl==l */
-	if(tmpl+sl != l) printf("Error in sortB\n");
+	
 	/* Sort the latter integers using sort */
-	sort(tmp, stmp, tmpl);
-	copy_list(stmp, slist+sl, tmpl);
+    sort(tmp.data(), stmp.data(), tmpl);
+    copy_list(stmp.data(), slist+sl, tmpl);
 #ifdef VERBOSE_LISTS						/*PPC*/
-	printf("sortB: with result ");
+	std::printf("sortB: with result ");
 	print_list(slist, l, 1);	/*PPC*/
 #endif								/*PPC*/
-	/* Free allocated memory */
-	free(tmp);
-	free(stmp);
-
 	}
 
-/**********************************************************************/
 
-/* minim, maxim. JMM, 2 July 2003
-*
-* These functions find the minimum and maximum elements of a given
-* list of length n, using normal integer ordering. Names min, max are
-* reserved.
-*/
-
-int minim(int *list, int n)
-	{
-
-	int m=list[n-1];
-
-	while(n--) {
-		if (list[n]<m) m=list[n];
-		}
-	return(m);
-
-	}
-
-int maxim(int *list, int n)
-	{
-
-	int m=list[n-1];
-
-	while(n--) {
-		if (list[n]>m) m=list[n];
-		}
-	return(m);
-
-	}
-
-/**********************************************************************/
 
 /* intersection. JMM, 3 July 2003
 *
@@ -436,7 +389,7 @@ void intersection(int *list1, int l1, int *list2, int l2, int *list,
 * This function detects whether the n-permutation p is the identity
 * (returning 1) or not (returning 0). */
 
-int isid(int *p, int n )
+int isid(const int *p, int n )
 	{
 
 	while(n--) {
@@ -486,12 +439,10 @@ void product(int *p1, int *p2, int *p, int n)
 /* TAB1 is an element of S; TAB2 is an element of D */
 void F2(int *TAB1, int *g, int *TAB2, int *sgd, int n)
 	{
-	int *tmp= (int*)malloc(n*sizeof(int));
+    std::vector<int> tmp(n);
 
-	product(TAB1, g, tmp, n);
-	product(tmp, TAB2, sgd, n);
-
-	free(tmp);
+	product(TAB1, g, tmp.data(), n);
+	product(tmp.data(), TAB2, sgd, n);
 	} /* End of function F2 */
 
 /**********************************************************************/
@@ -690,27 +641,24 @@ void all_orbits(int *GS, int m, int n, int *orbits)
 	{
 
 	int i, j;                                   /* Counters */
-	int *orbit= (int*)malloc(n*sizeof(int)), ol;/* Computed orbit */
+    std::vector<int> orbit(n);
+    int ol;
 	int orbit_index=1;                                   /* Orbit index */
 
 	/* Initialize orbits */
-	memset(orbits, 0, n*sizeof(int));
+	std::memset(orbits, 0, n*sizeof(int));
 
 	/* Compute orbits */
 	for (i=1; i<=n; i++) { /* Points */
 		if(orbits[i-1]==0) { /* New orbit condition */
 			/* Compute new orbit */
-			one_orbit(i, GS, m, n, orbit, &ol);
+            one_orbit(i, GS, m, n, orbit.data(), &ol);
 			/* Mark points of new orbit with index or */
 			for (j=0; j<ol; j++) orbits[orbit[j]-1] = orbit_index;
 			/* Increment index for next orbit */
 			orbit_index++;
 			}
 		}
-
-	/* Free allocated memory */
-	free(orbit);
-
 	}
 
 /**********************************************************************/
@@ -732,14 +680,14 @@ void one_schreier_orbit(int point, int *GS, int m, int n,
 	int np;    /* Index of current element in the orbit */
 	int gamma; /* Current element in the orbit */
 	int mp;    /* Index of current permutation in GS */
-	int *perm= (int*)malloc(n*sizeof(int));
+    std::vector<int> perm(n);
 	int newgamma;
 
 	/* Initialize schreier with zeros if required */
-	memset(orbit, 0, n*sizeof(int));
+	std::memset(orbit, 0, n*sizeof(int));
 	if (init) {
-		memset(nu, 0, n*n*sizeof(int));
-		memset(w, 0, n*sizeof(int));
+		std::memset(nu, 0, n*n*sizeof(int));
+		std::memset(w, 0, n*sizeof(int));
 		}
 	/* First element of orbit. There is no backward pointer */
 	orbit[0] = point;
@@ -749,23 +697,20 @@ void one_schreier_orbit(int point, int *GS, int m, int n,
 	while(np < *ol) {
 		gamma = orbit[np];
 		for(mp=0; mp<m; mp++) {
-			copy_list(GS+mp*n, perm, n);
-			newgamma = onpoints(gamma, perm, n);
+            copy_list(GS+mp*n, perm.data(), n);
+            newgamma = onpoints(gamma, perm.data(), n);
 			if (position(newgamma, orbit, *ol));
 			else {
 				/* Append to orbit */
 				orbit[(*ol)++] = newgamma;
 				/* Perm moving gamma to newgamma */
-				copy_list(perm, nu+(newgamma-1)*n, n);
+                copy_list(perm.data(), nu+(newgamma-1)*n, n);
 				/* Gamma backward pointer of newgamma */
 				*(w+newgamma-1) = gamma;
 				}
 			}
 		np++;
 		}
-	/* Free allocated memory */
-	free(perm);
-
 	}
 
 /**********************************************************************/
@@ -782,8 +727,8 @@ void schreier_vector(int point, int *GS, int m, int n, int *nu, int *w)
 	{
 
 	int i;    /* Point counter (from 1 to n) */
-	int *orbit=      (int*)malloc(n*sizeof(int));
-	int *usedpoints= (int*)malloc(n*sizeof(int));
+	int *orbit=      new int[n];
+	int *usedpoints= new int[n];
 	int j=0;  /* Counter of used points */
 	int ol;
 
@@ -798,8 +743,8 @@ void schreier_vector(int point, int *GS, int m, int n, int *nu, int *w)
 			}
 		}
 	/* Free allocated memory */
-	free(orbit);
-	free(usedpoints);
+	delete[] orbit;
+	delete[] usedpoints;
 
 	}
 
@@ -817,7 +762,7 @@ void trace_schreier(int point, int *nu, int *w, int *perm, int n)
 
 	int i;
 	int found=0;
-	int *newperm= (int*)malloc(n*sizeof(int));
+	int *newperm= new int[n];
 
 	for(i=0; i<n; i++) {
 		if (*(w+point-1) == 0) {
@@ -830,7 +775,7 @@ void trace_schreier(int point, int *nu, int *w, int *perm, int n)
 		trace_schreier(*(w+point-1), nu, w, newperm, n);
 		product(newperm, nu+(point-1)*n, perm, n);
 		}
-	free(newperm);
+	delete[] newperm;
 
 	}
 
@@ -850,13 +795,13 @@ long long int order_of_group(int *base, int bl, int *GS, int m, int n)
 
 	if (m==0) return(1);
 	else {
-		int *stab=  (int*)malloc(m*n*sizeof(int)), sl;
-		int *orbit= (int*)malloc(  n*sizeof(int)), ol;
+		int *stab=  new int[m*n], sl;
+		int *orbit= new int[n], ol;
 		one_orbit(base[0], GS, m, n, orbit, &ol);
 		stabilizer(base, 1, GS, m, n, stab, &sl);
 		long long int ret=ol* order_of_group(base+1,bl-1,stab,sl,n);
-		free(stab);
-		free(orbit);
+		delete[] stab;
+		delete[] orbit;
 		return ret;
 		}
 	}
@@ -877,12 +822,12 @@ int perm_member(int *p, int *base, int bl, int *GS, int m, int n)
 
 	if (bl==0 || m==0) return( isid(p, n) );
 	else {
-		int *pp=    (int*)malloc(  n*sizeof(int));
-		int *ip=    (int*)malloc(  n*sizeof(int));
-		int *orbit= (int*)malloc(  n*sizeof(int)), ol;
-		int *w=     (int*)malloc(  n*sizeof(int));
-		int *nu=    (int*)malloc(n*n*sizeof(int));
-		int *stab=  (int*)malloc(m*n*sizeof(int)), sl;
+		int *pp=    new int[n];
+		int *ip=    new int[n];
+		int *orbit= new int[n], ol;
+		int *w=     new int[n];
+		int *nu=    new int[n*n];
+		int *stab=  new int[m*n], sl;
 		int point, ret;
 
 		one_schreier_orbit(base[0], GS,m,n, orbit,&ol, nu,w, 1);
@@ -896,12 +841,12 @@ int perm_member(int *p, int *base, int bl, int *GS, int m, int n)
 			}
 		else ret = 0;
 
-		free(pp);
-		free(ip);
-		free(orbit);
-		free(w);
-		free(nu);
-		free(stab);
+		delete[] pp;
+		delete[] ip;
+		delete[] orbit;
+		delete[] w;
+		delete[] nu;
+		delete[] stab;
 
 		return(ret);
 		}
@@ -918,32 +863,28 @@ int perm_member(int *p, int *base, int bl, int *GS, int m, int n)
 * and the code computes all the others. There are possibly (and
 * probably) redundant points in the final base. n=0 is not consistent
 * here.
-* We assume that enough space (at least, and typically, m*n integers)
-* has been already allocated for newGS. We also assume that newGS can
-* be reallocated. That's why we do not send a pointer, but a pointer
-* to that pointer. That is, it needs to be reallocated in a different
-* subroutine, and that cannot be done with a normal pointer!
+* newGS owns its storage and retains spare capacity between appends.
 */
 
 void schreier_sims(int *base, int bl, int *GS, int m, int n,
-                   int *newbase, int *nbl, int **newGS, int *nm, int *num)
+                   int *newbase, int *nbl, std::vector<int>& newGS, int *nm, int *num)
 	{
 
 #ifdef VERBOSE_SCHREIER						/*PPC*/
-	printf("******** SCHREIER-SIMS ALGORITHM ********\n");	/*PPC*/
+	std::printf("******** SCHREIER-SIMS ALGORITHM ********\n");	/*PPC*/
 #endif								/*PPC*/
 	/* Note the cycle: base -> newbase -> base2 -> newbase -> ... */
 
 	/* Copy base into newbase, adding more points if needed */
 	nonstable_points(base, bl, GS, m, n, newbase, nbl);
 #ifdef VERBOSE_SCHREIER						/*PPC*/
-	printf("Original base:");
+	std::printf("Original base:");
 	print_list(base, bl, 1);	/*PPC*/
-	printf("New base:");
+	std::printf("New base:");
 	print_list(newbase, *nbl, 1);	/*PPC*/
 #endif								/*PPC*/
 	/* Initialize newGS=GS */
-	copy_list(GS, *newGS, m*n);
+	newGS.assign(GS, GS + static_cast<std::size_t>(m) * n);
 	*nm = m;
 	if (*nbl==0) { /* Problem. Return input sets  */
 		copy_list(base, newbase, bl);
@@ -953,38 +894,34 @@ void schreier_sims(int *base, int bl, int *GS, int m, int n,
 
 	/* Allocate memory for intermediate SGS and stabilizer */
 	int i;                                         /* Base index */
-	int *base2= (int*)malloc(  n*sizeof(int)), bl2;/* Interm base */
-	int *GS2=   (int*)malloc(m*n*sizeof(int)), m2; /* Interm GS */
-	int *stab=  (int*)malloc(m*n*sizeof(int)), mm; /* Stabilizer */
+	std::vector<int> base2(n); int bl2; /* Interm base */
+	std::vector<int> GS2(static_cast<std::size_t>(m) * n); int m2; /* Interm GS */
+	std::vector<int> stab(static_cast<std::size_t>(m) * n); int mm = m; /* Stabilizer */
 
 	/* Main loop */
 	m2 = *nm; /* Initially GS2 will be just newGS */
 	for(i=(*nbl); i>0; i--) {
 #ifdef VERBOSE_SCHREIER						/*PPC*/
-		printf("\nComputing SGS for H^(%d)\n", i-1);		/*PPC*/
+		std::printf("\nComputing SGS for H^(%d)\n", i-1);		/*PPC*/
 #endif								/*PPC*/
-		if (*nm > m2) { /* Reallocate GS2 and stab */
-			GS2 =  (int*)realloc(GS2,  (*nm)*n*sizeof(int));
-			stab = (int*)realloc(stab, (*nm)*n*sizeof(int));
-			}
+		if (*nm > m2) {
+			GS2.resize(static_cast<std::size_t>(*nm) * n);
+			stab.resize(static_cast<std::size_t>(*nm) * n);
+		}
 		/* Copy newbase into base2 */
-		copy_list(newbase, base2, *nbl);
+		copy_list(newbase, base2.data(), *nbl);
 		bl2=*nbl;
-		copy_list(*newGS, GS2, (*nm)*n);
+		copy_list(newGS.data(), GS2.data(), (*nm)*n);
 		m2=*nm;
 		/* Compute newbase from base2 */
-		stabilizer(base2, i-1, GS2, m2, n, stab, &mm);
-		schreier_sims_step(base2, bl2, GS2, m2, n, i,
-		                   stab, mm, newbase, nbl, newGS, nm, num);
+		stabilizer(base2.data(), i-1, GS2.data(), m2, n, stab.data(), &mm);
+		schreier_sims_step(base2.data(), bl2, GS2.data(), m2, n, i,
+		                   stab.data(), mm, newbase, nbl, newGS, nm, num);
 		}
 
-	/* Free allocated memory */
-	free(base2);
-	free(GS2);
-	free(stab);
 
 #ifdef VERBOSE_SCHREIER						/*PPC*/
-	printf("************ END OF ALGORITHM ***********\n");	/*PPC*/
+	std::printf("************ END OF ALGORITHM ***********\n");	/*PPC*/
 #endif								/*PPC*/
 	}
 
@@ -1011,63 +948,71 @@ void schreier_sims(int *base, int bl, int *GS, int m, int n,
 
 void schreier_sims_step(int *base, int bl, int *GS, int m, int n,
                         int i, int *T, int mm,
-                        int *newbase, int *nbl, int **newGS, int *nm, int *num)
+                        int *newbase, int *nbl, std::vector<int>& newGS, int *nm, int *num)
 	{
+
+	/* A recursive call can use newGS as both input and output. Keep a stable
+	 * snapshot because appending to newGS may invalidate newGS.data(). */
+	std::vector<int> input_generators;
+	if (GS == newGS.data()) {
+		input_generators.assign(GS, GS + static_cast<std::size_t>(m) * n);
+		GS = input_generators.data();
+	}
 
 	/* Declarations */
 	/* Counters */
 	int c, j=0, jj, level;
 	/* Intermediate permutations */
-	int *p=   (int*)malloc(n*sizeof(int));
-	int *ip=  (int*)malloc(n*sizeof(int));
-	int *pp=  (int*)malloc(n*sizeof(int));
-	int *ppp= (int*)malloc(n*sizeof(int));
+	int *p=   new int[n];
+	int *ip=  new int[n];
+	int *pp=  new int[n];
+	int *ppp= new int[n];
 	/* Stabilizer of base[1...i-1] */
-	int *Si= (int*)malloc(m*n*sizeof(int)), Sil;
+	int *Si= new int[m*n], Sil;
 	/* Old stabilizer. Here we could use mm*n rather than m*n */
-	int *oldSi= (int *)malloc(m*n*sizeof(int)), oldSil;
+	int *oldSi= new int[m*n], oldSil;
 	/* Orbit of base[i] */
-	int *Deltai= (int*)malloc(  n*sizeof(int)), Deltail;
-	int *w=      (int*)malloc(  n*sizeof(int));
-	int *nu=     (int*)malloc(n*n*sizeof(int));
+	int *Deltai= new int[n], Deltail;
+	int *w=      new int[n];
+	int *nu=     new int[n*n];
 	/* Old orbit */
-	int *oldDeltai= (int*)malloc(  n*sizeof(int)), oldDeltail;
-	int *oldw=      (int*)malloc(  n*sizeof(int));
-	int *oldnu=     (int*)malloc(n*n*sizeof(int));
+	int *oldDeltai= new int[n], oldDeltail;
+	int *oldw=      new int[n];
+	int *oldnu=     new int[n*n];
 	/* Generators to check */
-	int *genset= (int*)malloc(m*n*sizeof(int)), gensetl;
+	int *genset= new int[m*n], gensetl;
 	/* Loops */
 	int gamma, gn, sn;
-	int *s= (int*)malloc(n*sizeof(int));
-	int *g= (int*)malloc(n*sizeof(int));
+	int *s= new int[n];
+	int *g= new int[n];
 	/* Stabilizer */
-	int *stab =  (int*)malloc(m*n*sizeof(int)), stabl;
-	int *stabps= (int*)malloc(  n*sizeof(int)), stabpsl;
+	std::vector<int> stab(static_cast<std::size_t>(m) * n); int stabl;
+	int *stabps= new int[n], stabpsl;
 
 #ifdef VERBOSE_SCHREIER						/*PPC*/
-	printf("******** schreier_sims_step ********\n");	/*PPC*/
-	printf("base:");
+	std::printf("******** schreier_sims_step ********\n");	/*PPC*/
+	std::printf("base:");
 	print_list(base, bl, 1);		/*PPC*/
-	printf("GS (%d perms of degree %d):", m, n);		/*PPC*/
+	std::printf("GS (%d perms of degree %d):", m, n);		/*PPC*/
 	print_array_perm(GS, m, n, 1);				/*PPC*/
 #endif								/*PPC*/
 	/* Initialize newbase=base and newGS=GS (and their lengths) */
 	/* They are already equal on input. Always true? */
 	copy_list(base, newbase, bl);
 	*nbl = bl;
-	copy_list(GS, *newGS, m*n);
+	newGS.assign(GS, GS + static_cast<std::size_t>(m) * n);
 	*nm = m;
 	/* Original generating sets. We get Sil<=m and oldSil<=mm */
 	stabilizer(base, i-1, GS, m, n, Si, &Sil);
 #ifdef VERBOSE_SCHREIER						/*PPC*/
-	printf("Stabilizer of first %d points of base ", i-1);	/*PPC*/
+	std::printf("Stabilizer of first %d points of base ", i-1);	/*PPC*/
 	print_list(base, i-1, 0);
-	printf(" :\n");		/*PPC*/
+	std::printf(" :\n");		/*PPC*/
 	print_array_perm(Si, Sil, n, 1);			/*PPC*/
 #endif								/*PPC*/
 	complement(Si, Sil, T, mm, n, oldSi, &oldSil);
 #ifdef VERBOSE_SCHREIER						/*PPC*/
-	printf("Previous stabilizer of %d points:\n", i-1);	/*PPC*/
+	std::printf("Previous stabilizer of %d points:\n", i-1);	/*PPC*/
 	print_array_perm(oldSi, oldSil, n, 1);			/*PPC*/
 #endif								/*PPC*/
 	/* Basic orbits */
@@ -1079,14 +1024,14 @@ void schreier_sims_step(int *base, int bl, int *GS, int m, int n,
 	for(c=0; c<n; c++) {
 		if(w[c]!=oldw[c] && oldw[c]!=0) {
 #ifdef VERBOSE_SCHREIER						/*PPC*/
-			printf("Deltai[%d] modified to match oldDeltai\n", c);  /*PPC*/
+			std::printf("Deltai[%d] modified to match oldDeltai\n", c);  /*PPC*/
 #endif								/*PPC*/
 			copy_list(oldnu+c*n, nu+c*n, n);
 			w[c] = oldw[c];
 			}
 		}
 #ifdef VERBOSE_SCHREIER						/*PPC*/
-	printf("Orbit: ");
+	std::printf("Orbit: ");
 	print_list(Deltai, Deltail, 1);	/*PPC*/
 #endif								/*PPC*/
 
@@ -1096,7 +1041,7 @@ void schreier_sims_step(int *base, int bl, int *GS, int m, int n,
 		gamma = Deltai[gn];
 
 #ifdef VERBOSE_SCHREIER						/*PPC*/
-		printf("  gamma=%d\n", gamma);				/*PPC*/
+		std::printf("  gamma=%d\n", gamma);				/*PPC*/
 #endif								/*PPC*/
 		/* In both cases here we get gensetl<=m */
 		if (position(gamma, oldDeltai, oldDeltail)) {
@@ -1121,28 +1066,26 @@ void schreier_sims_step(int *base, int bl, int *GS, int m, int n,
 			product(p, s, ppp, n);
 			product(ppp, ip, g, n);
 #ifdef VERBOSE_SCHREIER						/*PPC*/
-			printf("    g(%d)=", *num);
+			std::printf("    g(%d)=", *num);
 			print_perm(g, n, 1);	/*PPC*/
 #endif								/*PPC*/
 
 			/* Compute stabilizer. Reallocate to maximum size */
-			stab = (int*)realloc(stab, (*nm)*n*sizeof(int));
-			stabilizer(newbase, i, *newGS, *nm, n, stab, &stabl);
+			stab.resize(static_cast<std::size_t>(*nm) * n);
+			stabilizer(newbase, i, newGS.data(), *nm, n, stab.data(), &stabl);
 			/* If g is not in subgroup H^(i) */
 			if(!isid(g, n)) {
-				if ((stabl==0)||(!perm_member(g, newbase+i,*nbl-i, stab,stabl, n))) {
+				if ((stabl==0)||(!perm_member(g, newbase+i,*nbl-i, stab.data(),stabl, n))) {
 #ifdef VERBOSE_SCHREIER						/*PPC*/
-					printf("      g not in H^(%d)\n", i);			/*PPC*/
+					std::printf("      g not in H^(%d)\n", i);			/*PPC*/
 #endif								/*PPC*/
-					/* Enlarge newGS. We need reallocation */
-					*newGS = (int*)realloc(*newGS, ((*nm)+1)*n*sizeof(int));
-					copy_list(g, (*newGS)+(*nm)*n, n);
-					(*nm)++;
+					newGS.insert(newGS.end(), g, g + n);
+					*nm = static_cast<int>(newGS.size() / static_cast<std::size_t>(n));
 					/* Extend newbase if needed, so that no strong
 					* generator fixes all base points. */
 					stable_points(g, n, stabps, &stabpsl);
 #ifdef VERBOSE_SCHREIER						/*PPC*/
-					printf("      Stable under g: "); 			/*PPC*/
+					std::printf("      Stable under g: "); 			/*PPC*/
 					print_list(stabps, stabpsl, 1);				/*PPC*/
 #endif								/*PPC*/
 					/* If g moves a point of newbase then set j */
@@ -1150,7 +1093,7 @@ void schreier_sims_step(int *base, int bl, int *GS, int m, int n,
 						if(!position(newbase[jj], stabps, stabpsl)) {
 							j = jj+1;
 #ifdef VERBOSE_SCHREIER						/*PPC*/
-							printf("      g moves %d in newbase\n", newbase[jj]);	/*PPC*/
+							std::printf("      g moves %d in newbase\n", newbase[jj]);	/*PPC*/
 #endif								/*PPC*/
 							break;
 							}
@@ -1164,7 +1107,7 @@ void schreier_sims_step(int *base, int bl, int *GS, int m, int n,
 								newbase[*nbl]=jj;
 								(*nbl)++;
 #ifdef VERBOSE_SCHREIER						/*PPC*/
-								printf("      Point %d added to newbase\n", jj);	/*PPC*/
+								std::printf("      Point %d added to newbase\n", jj);	/*PPC*/
 #endif								/*PPC*/
 								break;
 								}
@@ -1174,14 +1117,14 @@ void schreier_sims_step(int *base, int bl, int *GS, int m, int n,
 					* H^(i+1) */
 					for(level=j; level>i; level--) {
 #ifdef VERBOSE_SCHREIER						/*PPC*/
-						printf("\nEnsuring H^(%d) at level %d\n", i+1, level);	/*PPC*/
+						std::printf("\nEnsuring H^(%d) at level %d\n", i+1, level);	/*PPC*/
 #endif								/*PPC*/
-						schreier_sims_step(newbase,*nbl,*newGS,*nm, n,
+						schreier_sims_step(newbase,*nbl,newGS.data(),*nm, n,
 						                   level, g, 1,
 						                   newbase,nbl,newGS,nm,num);
 						}
 #ifdef VERBOSE_SCHREIER						/*PPC*/
-					printf("***** Finished check of H(%d) ******\n\n", i+1);/*PPC*/
+					std::printf("***** Finished check of H(%d) ******\n\n", i+1);/*PPC*/
 #endif								/*PPC*/
 					}
 				}
@@ -1189,23 +1132,23 @@ void schreier_sims_step(int *base, int bl, int *GS, int m, int n,
 		}
 
 	/* Free allocated memory */
-	free(p);
-	free(ip);
-	free(pp);
-	free(ppp);
-	free(Si);
-	free(oldSi);
-	free(Deltai);
-	free(w);
-	free(nu);
-	free(oldDeltai);
-	free(oldw);
-	free(oldnu);
-	free(genset);
-	free(s);
-	free(g);
-	free(stab);
-	free(stabps);
+	delete[] p;
+	delete[] ip;
+	delete[] pp;
+	delete[] ppp;
+	delete[] Si;
+	delete[] oldSi;
+	delete[] Deltai;
+	delete[] w;
+	delete[] nu;
+	delete[] oldDeltai;
+	delete[] oldw;
+	delete[] oldnu;
+	delete[] genset;
+	delete[] s;
+	delete[] g;
+	
+	delete[] stabps;
 
 	}
 
@@ -1246,10 +1189,10 @@ void coset_rep(int *p, int n,
 	{
 
 #ifdef VERBOSE_COSET						/*PPC*/
-	printf("***** RIGHT-COSET-REP ALGORITHM ****\n");	/*PPC*/
-	printf("Permutation ");
+	std::printf("***** RIGHT-COSET-REP ALGORITHM ****\n");	/*PPC*/
+	std::printf("Permutation ");
 	print_perm(p, n, 1);		/*PPC*/
-	printf("Base: ");
+	std::printf("Base: ");
 	print_list(base, bl, 1);		/*PPC*/
 #endif								/*PPC*/
 	/* Trivial case without symmetries */
@@ -1260,17 +1203,17 @@ void coset_rep(int *p, int n,
 	/* else */
 
 	int i, j, k, b, pp;
-	int *deltap=       (int*)malloc(  n*sizeof(int)), deltapl;
-	int *deltapsorted= (int*)malloc(  n*sizeof(int));
-	int *om=           (int*)malloc(  n*sizeof(int));
-	int *PERM=         (int*)malloc(  n*sizeof(int));
-	int *perm2=        (int*)malloc(  n*sizeof(int));
-	int *orbit=        (int*)malloc(  n*sizeof(int)), ol;
-	int *orbit1=       (int*)malloc(  n*sizeof(int)), o1l;
-	int *w=            (int*)malloc(  n*sizeof(int));
-	int *nu=           (int*)malloc(n*n*sizeof(int));
-	int *genset=       (int*)malloc(*m*n*sizeof(int)), gensetl;
-	int *stab=         (int*)malloc(*m*n*sizeof(int)), mm;
+	int *deltap=       new int[n], deltapl;
+	int *deltapsorted= new int[n];
+	int *om=           new int[n];
+	int *PERM=         new int[n];
+	int *perm2=        new int[n];
+	int *orbit=        new int[n], ol;
+	int *orbit1=       new int[n], o1l;
+	int *w=            new int[n];
+	int *nu=           new int[n*n];
+	int *genset=       new int[*m*n], gensetl;
+	int *stab=         new int[*m*n], mm;
 
 	/* Copy p to PERM and GS to genset, to avoid side effects. */
 	copy_list(p, PERM, n);
@@ -1283,15 +1226,15 @@ void coset_rep(int *p, int n,
 		one_schreier_orbit(b, genset, gensetl, n,
 		                   orbit, &ol, nu, w, 1);
 #ifdef VERBOSE_COSET						/*PPC*/
-		printf("\nAnalyzing slot %d\n", b);			/*PPC*/
-		printf("orbit: ");
+		std::printf("\nAnalyzing slot %d\n", b);			/*PPC*/
+		std::printf("orbit: ");
 		print_list(orbit, ol, 1);		/*PPC*/
-		printf("freeps: ");
+		std::printf("freeps: ");
 		print_list(freeps, fl, 1);		/*PPC*/
 #endif								/*PPC*/
 		intersection(orbit, ol, freeps, fl, orbit1, &o1l);
 #ifdef VERBOSE_COSET						/*PPC*/
-		printf("Free slots that can go to that slot: ");	/*PPC*/
+		std::printf("Free slots that can go to that slot: ");	/*PPC*/
 		print_list(orbit1, o1l, 1);				/*PPC*/
 #endif								/*PPC*/
 		if (o1l==0) continue; /* Slot with no symmetries */
@@ -1301,30 +1244,30 @@ void coset_rep(int *p, int n,
 			}
 		deltapl=o1l;
 #ifdef VERBOSE_COSET						/*PPC*/
-		printf("At those slots we resp. find indices deltap: ");/*PPC*/
+		std::printf("At those slots we resp. find indices deltap: ");/*PPC*/
 		print_list(deltap, deltapl, 1);			/*PPC*/
 #endif								/*PPC*/
 		sortB(deltap, deltapsorted, deltapl, base, bl);
 		k = position(deltapsorted[0], deltap, deltapl);
 #ifdef VERBOSE_COSET						/*PPC*/
-		printf("Least index: %d, at position k: %d of deltap\n",/*PPC*/
+		std::printf("Least index: %d, at position k: %d of deltap\n",/*PPC*/
 		       deltap[k-1], k);			/*PPC*/
 #endif								/*PPC*/
 		pp = orbit1[k-1];
 #ifdef VERBOSE_COSET						/*PPC*/
-		printf("That index is at tensor slot pp: %d\n", pp);	/*PPC*/
+		std::printf("That index is at tensor slot pp: %d\n", pp);	/*PPC*/
 #endif								/*PPC*/
 		/* Compute permutation om such that b^om = pp */
 		trace_schreier(pp, nu, w, om, n);
 #ifdef VERBOSE_COSET						/*PPC*/
-		printf("We can move slot %d to slot %d with perm om:",	/*PPC*/
+		std::printf("We can move slot %d to slot %d with perm om:",	/*PPC*/
 		       pp, b);					/*PPC*/
 		print_perm(om, n, 0);
-		printf(" in S\n");	/*PPC*/
+		std::printf(" in S\n");	/*PPC*/
 #endif								/*PPC*/
 		product(om, PERM, perm2, n);
 #ifdef VERBOSE_COSET						/*PPC*/
-		printf("New list of indices: ");			/*PPC*/
+		std::printf("New list of indices: ");			/*PPC*/
 		print_perm(perm2, n, 1);			/*PPC*/
 #endif								/*PPC*/
 		copy_list(perm2, PERM, n);
@@ -1334,7 +1277,7 @@ void coset_rep(int *p, int n,
 			freeps[j] = onpoints(freeps[j], perm2, n);
 			}
 #ifdef VERBOSE_COSET						/*PPC*/
-		printf("Removing those perms that move slot %d\n", b);	/*PPC*/
+		std::printf("Removing those perms that move slot %d\n", b);	/*PPC*/
 #endif								/*PPC*/
 		/* Note that we do not change base to have i as first
 			member of base. This is not general, but I think
@@ -1349,21 +1292,21 @@ void coset_rep(int *p, int n,
 	copy_list(genset, GS, gensetl*n);
 	*m=gensetl;
 #ifdef VERBOSE_COSET						/*PPC*/
-	printf("************ END OF ALGORITHM ***********\n");	/*PPC*/
+	std::printf("************ END OF ALGORITHM ***********\n");	/*PPC*/
 #endif								/*PPC*/
 
 	/* Free allocated memory */
-	free(deltap);
-	free(deltapsorted);
-	free(om);
-	free(PERM);
-	free(perm2);
-	free(orbit);
-	free(orbit1);
-	free(w);
-	free(nu);
-	free(genset);
-	free(stab);
+	delete[] deltap;
+	delete[] deltapsorted;
+	delete[] om;
+	delete[] PERM;
+	delete[] perm2;
+	delete[] orbit;
+	delete[] orbit1;
+	delete[] w;
+	delete[] nu;
+	delete[] genset;
+	delete[] stab;
 
 	}
 
@@ -1394,17 +1337,17 @@ void SGSofdummyset(int *dummies, int dl, int sym, int n,
 
 	/* Number of pairs of dummies: dpl */
 	int dpl = dl/2;
-	int *range_perm = (int*)malloc(    n*sizeof(int));
-	int *KD1 =        (int*)malloc(dpl*n*sizeof(int));
-	int *KD2 =        (int*)malloc(dpl*n*sizeof(int));
+	std::vector<int> range_perm(n);
+	std::vector<int> KD1(dpl*n);
+	std::vector<int> KD2(dpl*n);
 	int i;
 
-	range(range_perm, n);
+	range(range_perm.data(), n);
 	/* KD1: exchange indices. Ex: Cycles[{1,3},{2,4}]
 	     There are always dpl-1 permutations */
 	for (i=0; i<dpl-1; i++) {
 		/* Copy the identity */
-		copy_list(range_perm, KD1+i*n, n);
+		copy_list(range_perm.data(), KD1.data()+i*n, n);
 		/* Swap elements of consecutive pairs */
 		KD1[ i*n+dummies[2*i  ]-1 ] = dummies[2*i+2];
 		KD1[ i*n+dummies[2*i+2]-1 ] = dummies[2*i  ];
@@ -1416,7 +1359,7 @@ void SGSofdummyset(int *dummies, int dl, int sym, int n,
 	if (sym == 1) { /* Symmetric metric */
 		for (i=0; i<dpl; i++) {
 			/* Copy the identity */
-			copy_list(range_perm, KD2+i*n, n);
+			copy_list(range_perm.data(), KD2.data()+i*n, n);
 			/* Swap elements of pair */
 			KD2[i*n+dummies[2*i]-1] = dummies[2*i+1];
 			KD2[i*n+dummies[2*i+1]-1] = dummies[2*i];
@@ -1427,7 +1370,7 @@ void SGSofdummyset(int *dummies, int dl, int sym, int n,
 	else if (sym == -1) {
 		for (i=0; i<dpl; i++) {
 			/* Copy the identity */
-			copy_list(range_perm, KD2+i*n, n);
+			copy_list(range_perm.data(), KD2.data()+i*n, n);
 			/* Swap elements of pair */
 			KD2[i*n+dummies[2*i]-1] = dummies[2*i+1];
 			KD2[i*n+dummies[2*i+1]-1] = dummies[2*i];
@@ -1445,22 +1388,19 @@ void SGSofdummyset(int *dummies, int dl, int sym, int n,
 		/* Unknown value of sym */
 		}
 	/* KD */
-	copy_list(KD1, KD, (dpl-1)*n);
-	if (sym!=0) copy_list(KD2, KD+(dpl-1)*n, dpl*n);
+	copy_list(KD1.data(), KD, (dpl-1)*n);
+	if (sym!=0) copy_list(KD2.data(), KD+(dpl-1)*n, dpl*n);
 	/* base of group D */
 	for (i=0; i<dpl; i++) {
 		bD[i] = dummies[2*i];
 		}
 	*bDl=dpl;
 #ifdef VERBOSE_DOUBLE						/*PPC*/
-	printf("KD: ");
+	std::printf("KD: ");
 	print_array_perm(KD, *KDl, n, 1);	/*PPC*/
-	printf("bD: ");
+	std::printf("bD: ");
 	print_list(bD, *bDl, 1);		/*PPC*/
 #endif								/*PPC*/
-	free(range_perm);
-	free(KD1);
-	free(KD2);
 	}
 
 /* SGS for a repeatedset. List repes not modified */
@@ -1469,8 +1409,8 @@ void SGSofrepeatedset(int *repes, int rl, int n,
 	{
 
 #ifdef VERBOSE_DOUBLE						/*PPC*/
-	printf("From SGSofrepeatedset:\n");			/*PPC*/
-	printf("repes: ");
+	std::printf("From SGSofrepeatedset:\n");			/*PPC*/
+	std::printf("repes: ");
 	print_list(repes, rl, 1);
 #endif								/*PPC*/
 	if (rl==0) {
@@ -1479,13 +1419,13 @@ void SGSofrepeatedset(int *repes, int rl, int n,
 		return;
 		} /* else */
 
-	int *range_perm = (int*)malloc(    n*sizeof(int));
+	std::vector<int> range_perm(n);
 	int i;
 
-	range(range_perm, n);
+	range(range_perm.data(), n);
 	for (i=0; i<rl-1; i++) {
 		/* Copy the identity */
-		copy_list(range_perm, KD+i*n, n);
+		copy_list(range_perm.data(), KD+i*n, n);
 		/* Swap elements of pair */
 		KD[i*n+repes[i]-1] = repes[i+1];
 		KD[i*n+repes[i+1]-1] = repes[i];
@@ -1495,12 +1435,11 @@ void SGSofrepeatedset(int *repes, int rl, int n,
 	copy_list(repes, bD, rl-1);
 	*bDl = rl-1;
 #ifdef VERBOSE_DOUBLE						/*PPC*/
-	printf("KD: ");
+	std::printf("KD: ");
 	print_array_perm(KD, *KDl, n, 1);	/*PPC*/
-	printf("bD: ");
+	std::printf("bD: ");
 	print_list(bD, *bDl, 1);		/*PPC*/
 #endif								/*PPC*/
-	free(range_perm);
 	}
 
 /* Move index in a dummyset. List dummies reordered */
@@ -1510,7 +1449,7 @@ void movedummyset(int firstd, int *dummies, int dl, int)
 	/* Find position of dummy and relative
 		position of its pair */
 #ifdef VERBOSE_DOUBLE						/*PPC*/
-	printf("Rearrange dummies for %d. dummies: ", firstd);	/*PPC*/
+	std::printf("Rearrange dummies for %d. dummies: ", firstd);	/*PPC*/
 	print_list(dummies, dl, 1);				/*PPC*/
 #endif								/*PPC*/
 	int pos, j;
@@ -1548,7 +1487,7 @@ void movedummyset(int firstd, int *dummies, int dl, int)
 			}
 		}
 #ifdef VERBOSE_DOUBLE						/*PPC*/
-	printf("Now dummies: ");                        	/*PPC*/
+	std::printf("Now dummies: ");                        	/*PPC*/
 	print_list(dummies, dl, 1);				/*PPC*/
 #endif								/*PPC*/
 	}
@@ -1560,7 +1499,7 @@ void moverepeatedset(int firstd, int *repes, int rl)
 	/* Find position of dummy and relative
 		position of its pair */
 #ifdef VERBOSE_DOUBLE						/*PPC*/
-	printf("Rearrange dummies for %d. repes: ", firstd);	/*PPC*/
+	std::printf("Rearrange dummies for %d. repes: ", firstd);	/*PPC*/
 	print_list(repes, rl, 1);				/*PPC*/
 #endif								/*PPC*/
 	int pos;
@@ -1579,7 +1518,7 @@ void moverepeatedset(int firstd, int *repes, int rl)
 			}
 		}
 #ifdef VERBOSE_DOUBLE						/*PPC*/
-	printf("Now repes: ");	                        	/*PPC*/
+	std::printf("Now repes: ");	                        	/*PPC*/
 	print_list(repes, rl, 1);				/*PPC*/
 #endif								/*PPC*/
 	}
@@ -1638,8 +1577,8 @@ void SGSD(int *vds, int vdsl, int *dummies, int dl, int *mQ,
 		} /* else */
 
 	int *tmp, tmpl;
-	int *tmpGS   = (int*)malloc(n*n*sizeof(int)), tmpGSl;
-	int *tmpbase = (int*)malloc(  n*sizeof(int)), tmpbasel;
+	int *tmpGS   = new int[n*n], tmpGSl;
+	int *tmpbase = new int[n], tmpbasel;
 	int i, itotal;
 
 	/* Loop over all dummysets */
@@ -1674,13 +1613,13 @@ void SGSD(int *vds, int vdsl, int *dummies, int dl, int *mQ,
 		*bDl = *bDl + tmpbasel;
 		}
 
-	free(tmpGS);
-	free(tmpbase);
+	delete[] tmpGS;
+	delete[] tmpbase;
 
 #ifdef VERBOSE_DOUBLE
-	printf("base of D:");
+	std::printf("base of D:");
 	print_list(bD, *bDl, 1);		/*PPC*/
-	printf("GS of D (%d perms of degree %d):", *KDl, n);	/*PPC*/
+	std::printf("GS of D (%d perms of degree %d):", *KDl, n);	/*PPC*/
 	print_array_perm(KD, *KDl, n, 1);			/*PPC*/
 #endif								/*PPC*/
 	}
@@ -1759,28 +1698,27 @@ void TAB(std::vector<alphastruct>& ALPHA, int *L, int Ll, int *s1, int *d1, int 
 void F1(std::vector<alphastruct>& ALPHA, int *L, int Ll, int *g, int *list, int *listl, int n, int Deltabl, int *Deltab, int *DeltaD)
 	{
 	int c, c1, c2;
-	int *sgd=  (int*)malloc(n*sizeof(int));
-	int *TAB1= (int*)malloc(n*sizeof(int));
-	int *TAB2= (int*)malloc(n*sizeof(int));
-	int *tmp=  (int*)malloc(n*sizeof(int));
+	std::vector<int> sgd(n);
+	std::vector<int> TAB1(n);
+	std::vector<int> TAB2(n);
+	std::vector<int> tmp(n);
 
-	TAB(ALPHA, L, Ll, TAB1, TAB2, n);
-
+	TAB(ALPHA, L, Ll, TAB1.data(), TAB2.data(), n);
 	/* Compute s.g.d */
-	F2(TAB1, g, TAB2, sgd, n);
+	F2(TAB1.data(), g, TAB2.data(), sgd.data(), n);
 #ifdef VERBOSE_DOUBLE						/*PPC*/
-	printf("With L=");
+	std::printf("With L=");
 	print_list(L, Ll, 0);		/*PPC*/
-	printf(" we get sgd: ");
-	print_perm(sgd, n, 1);		/*PPC*/
+	std::printf(" we get sgd: ");
+	print_perm(sgd.data(), n, 1);		/*PPC*/
 #endif								/*PPC*/
 	/* Images of Deltab under sgd. Note that tmp has length
 	Deltabl */
 	for (c=0; c<Deltabl; c++)
-		tmp[c] = onpoints(Deltab[c], sgd, n);
+		tmp[c] = onpoints(Deltab[c], sgd.data(), n);
 #ifdef VERBOSE_DOUBLE						/*PPC*/
-	printf(" which maps slots in Deltab to indices list: ");/*PPC*/
-	print_list(tmp, Deltabl, 1);			/*PPC*/
+	std::printf(" which maps slots in Deltab to indices list: ");/*PPC*/
+	print_list(tmp.data(), Deltabl, 1);			/*PPC*/
 #endif								/*PPC*/
 	/* Orbits of DeltaD containing the points in tmp */
 	int oi;
@@ -1795,25 +1733,23 @@ void F1(std::vector<alphastruct>& ALPHA, int *L, int Ll, int *g, int *list, int 
 			}
 		}
 #ifdef VERBOSE_DOUBLE						/*PPC*/
-	printf(" whose points belong to orbits ");		/*PPC*/
+	std::printf(" whose points belong to orbits ");		/*PPC*/
 	print_list(list, *listl, 1);				/*PPC*/
 #endif								/*PPC*/
-	free(sgd);
-	free(TAB1);
-	free(TAB2);
-	free(tmp);
 	}
 
 
 /* Consistency check */
 int consistency(int *array, int m, int n)
 	{
-	int *arrayp= (int*)malloc(m*n*sizeof(int)), arraypl;
-	int *arrayn= (int*)malloc(m*n*sizeof(int)), arraynl;
+	std::vector<int> arrayp(m*n);
+	std::vector<int> arrayn(m*n);
+	int arraypl;
+	int arraynl;
 	int i, ip, in, ret;
 
 #ifdef VERBOSE_DOUBLE						/*PPC*/
-	printf("Checking consistency in m:%d, n:%d\n", m, n);	/*PPC*/
+	std::printf("Checking consistency in m:%d, n:%d\n", m, n);	/*PPC*/
 	print_array_perm(array, m, n, 1);			/*PPC*/
 #endif								/*PPC*/
 
@@ -1822,13 +1758,13 @@ int consistency(int *array, int m, int n)
 	arraynl=0;
 	for(i=0; i<m; i++) {
 		if (array[i*n+n-2]<array[i*n+n-1]) /* Positive */
-			copy_list(array+i*n, arrayp+(arraypl++)*n, n);
+			copy_list(array+i*n, arrayp.data()+(arraypl++)*n, n);
 		else                               /* Negative */
-			copy_list(array+i*n, arrayn+(arraynl++)*n, n);
+			copy_list(array+i*n, arrayn.data()+(arraynl++)*n, n);
 		}
 #ifdef VERBOSE_DOUBLE						/*PPC*/
-	printf("Found positive perms: %d\n", arraypl);		/*PPC*/
-	printf("Found negative perms: %d\n", arraynl);		/*PPC*/
+	std::printf("Found positive perms: %d\n", arraypl);		/*PPC*/
+	std::printf("Found negative perms: %d\n", arraynl);		/*PPC*/
 #endif								/*PPC*/
 	/* Here there are arraynl*arraypl comparisons. This
 		should be improved with a better intersection
@@ -1836,18 +1772,16 @@ int consistency(int *array, int m, int n)
 	ret = 1; /* True */
 	for (in=0; in<arraynl; in++) {
 		for (ip=0; ip<arraypl; ip++) {
-			if (equal_list(arrayp+ip*n, arrayn+in*n, n-2)) {
+			if (equal_list(arrayp.data()+ip*n, arrayn.data()+in*n, n-2)) {
 				ret = 0; /* False */
 				break;
 				}
 			}
 		}
 #ifdef VERBOSE_DOUBLE						/*PPC*/
-	if (ret) printf("Found no problem in check\n");		/*PPC*/
-	else printf("Found perm with two signs.\n");		/*PPC*/
+	if (ret) std::printf("Found no problem in check\n");		/*PPC*/
+	else std::printf("Found perm with two signs.\n");		/*PPC*/
 #endif								/*PPC*/
-	free(arrayp);
-	free(arrayn);
 	return(ret);
 	}
 
@@ -1880,58 +1814,58 @@ void double_coset_rep(int *g, int n, int *base, int bl, int *GS, int m,
 	int i, j, l, jj, kk, c;         /* Counters */
 	int result;
 	/* Inverse of permutation g */
-	int *ig=            new int[n]; //(int*)malloc(  n*sizeof(int))
-	/* All drummies, both the pair-dummies and the repes */
-	int *drummies=      new int[n]; //(int*)malloc(  n*sizeof(int)), 
+	std::vector<int> ig(n);
+	/* All drummies.data(), both the pair-dummies and the repes */
+	std::vector<int> drummies(n);
 	int dril;
 	/* The initial slots of all those dummies */
-	int *drummyslots=   new int[n]; //(int*)malloc(  n*sizeof(int));
+	std::vector<int> drummyslots(n);
 	/* Temporary space for sorting */
-	int *drummytmp=     new int[n]; //(int*)malloc(  n*sizeof(int)), 
+	std::vector<int> drummytmp(n);
 	int drummytmpl;
-	int *drummytmp2=    new int[n]; //(int*)malloc(  n*sizeof(int));
+	std::vector<int> drummytmp2(n);
 	/* Bases for group S */
-	int *bS=            new int[n]; // (int*)malloc(  n*sizeof(int)), 
+	std::vector<int> bS(n);
 	int bSl;
-	int *bSsort=        new int[n]; //(int*)malloc(  n*sizeof(int));
+	std::vector<int> bSsort(n);
 	/* gs for group S. It cannot be larger than GS */
-	int *KS=            new int[m*n]; //(int*)malloc(m*n*sizeof(int)), 
+	std::vector<int> KS(m*n);
 	int KSl;
 	/* gs for group D. The number dl+dr is an upper bound */
-	int *KD=            new int[n*n];// (int*)malloc(n*n*sizeof(int)), 
+	std::vector<int> KD(n*n);
 	int KDl;
-	int *bD=            new int[n]; //(int*)malloc(  n*sizeof(int)), 
+	std::vector<int> bD(n);
 	int bDl;
-	int *nu=            new int[n*n]; //(int*)malloc(n*n*sizeof(int));
-	int *w=             new int[n]; // (int*)malloc(  n*sizeof(int));
-	int *Deltab=        new int[n]; //(int*)malloc(  n*sizeof(int)), 
+	std::vector<int> nu(n*n);
+	std::vector<int> w(n);
+	std::vector<int> Deltab(n);
 	int Deltabl;
-	int *DeltaD=        new int[n]; //(int*)malloc(  n*sizeof(int));
-	int *IMAGES=        new int[n]; //(int*)malloc(  n*sizeof(int)), 
+	std::vector<int> DeltaD(n);
+	std::vector<int> IMAGES(n);
 	int IMAGESl;
-	int *IMAGESsorted=  new int[n]; //(int*)malloc(  n*sizeof(int));
-	int *p=             new int[n]; //(int*)malloc(  n*sizeof(int));
-	int *nuD=           new int[n*n]; //(int*)malloc(n*n*sizeof(int));
-	int *wD=            new int[n]; //(int*)malloc(  n*sizeof(int));
-	int *Deltap=        new int[n]; //(int*)malloc(  n*sizeof(int)), 
+	std::vector<int> IMAGESsorted(n);
+	std::vector<int> p(n);
+	std::vector<int> nuD(n*n);
+	std::vector<int> wD(n);
+	std::vector<int> Deltap(n);
 	int Deltapl;
-	int *NEXT=          new int[n]; //(int*)malloc(  n*sizeof(int)), 
+	std::vector<int> NEXT(n);
 	int NEXTl;
-	int *L=             new int[n]; //(int*)malloc(  n*sizeof(int)), 
+	std::vector<int> L(n);
 	int Ll;
-	int *L1=            new int[n]; //(int*)malloc(  n*sizeof(int)), 
+	std::vector<int> L1(n);
 	int L1l;
-	int *s=             new int[n]; //(int*)malloc(  n*sizeof(int));
-	int *d=             new int[n]; //(int*)malloc(  n*sizeof(int));
-	int *list1=         new int[n]; //(int*)malloc(  n*sizeof(int)), 
+	std::vector<int> s(n);
+	std::vector<int> d(n);
+	std::vector<int> list1(n);
 	int list1l;
-	int *list2=         new int[n]; //(int*)malloc(  n*sizeof(int)), 
+	std::vector<int> list2(n);
 	int list2l;
-	int *perm1=         new int[n]; //(int*)malloc(  n*sizeof(int));
-	int *perm2=         new int[n]; //(int*)malloc(  n*sizeof(int));
-	int *perm3=         new int[n]; //(int*)malloc(  n*sizeof(int));
-	int *s1=            new int[n]; //(int*)malloc(  n*sizeof(int));
-	int *d1=            new int[n]; //(int*)malloc(  n*sizeof(int));
+	std::vector<int> perm1(n);
+	std::vector<int> perm2(n);
+	std::vector<int> perm3(n);
+	std::vector<int> s1(n);
+	std::vector<int> d1(n);
 
 
 	/* We use Renato's notation, with g mapping slots to indices */
@@ -1941,7 +1875,7 @@ void double_coset_rep(int *g, int n, int *base, int bl, int *GS, int m,
 	**************************************************************/
 
 	/* Given a list L={i1, ..., il} the function TAB must return
-	a pair (s1, d1) corresponding to L. The whole collection of
+	a pair (s1.data(), d1.data()) corresponding to L. The whole collection of
 		lists L and their pairs is stored in the array ALPHA of
 		structures alphastruct. Each L in ALPHA is actually
 	identified by its position l in the array. The structure
@@ -1954,12 +1888,11 @@ void double_coset_rep(int *g, int n, int *base, int bl, int *GS, int m,
 	int ALPHAl;
 // ****** BUGFIX 2026-10-02: [n] changed to [n+2] *******
 // ALPHAstep is accessed through index i+1 below
-	int *ALPHAstep= new int[n+2]; //(int*)malloc(n*sizeof(int)); 
+	int *ALPHAstep= new int[n+2]; //new int[n]; 
 
 	/* Initialize ALPHA to {} and TAB to {id, id} */
 	ALPHAl= 1;
 	std::vector<alphastruct> ALPHA(1);
-	//	alphastruct *ALPHA= new alphastruct[1]; //(struct alphastruct*)malloc(sizeof(struct alphastruct));
 	ALPHA[0].init(n);
 	ALPHA[0].Ll=0;
 	Ll=0; // ?
@@ -1974,61 +1907,61 @@ void double_coset_rep(int *g, int n, int *base, int bl, int *GS, int m,
 	**************************************************************/
 
 	/* Join all drummies */
-	copy_list(dummies, drummies, dl);
-	copy_list(repes, drummies+dl, rl);
+	copy_list(dummies, drummies.data(), dl);
+	copy_list(repes, drummies.data()+dl, rl);
 	dril = dl + rl;
 
 	/* Slots of all those drummies */
-	inverse(g, ig, n);
+	inverse(g, ig.data(), n);
 	for (i=0; i<dril; i++) {
-		drummyslots[i] = onpoints(drummies[i], ig, n);
+		drummyslots[i] = onpoints(drummies[i], ig.data(), n);
 		}
 
 	/* Initialize KS */
-	copy_list(GS, KS, m*n);
+	copy_list(GS, KS.data(), m*n);
 	KSl=m;
 
 	/* Extend base to bS to cover all positions of drummies.
 	* We assume that in the intersection we get bS=base really.
-	* We sort the missing drummies, but not the given base  */
-	intersection(base, bl, drummyslots, dril, bS, &bSl);
-	complement(drummyslots,dril, base,bl, 1, drummytmp,&drummytmpl);
-	sort(drummytmp, drummytmp2, drummytmpl);
-	copy_list(drummytmp2, bS+bSl, drummytmpl);
+	* We sort the missing drummies.data(), but not the given base  */
+	intersection(base, bl, drummyslots.data(), dril, bS.data(), &bSl);
+	complement(drummyslots.data(),dril, base,bl, 1, drummytmp.data(),&drummytmpl);
+	sort(drummytmp.data(), drummytmp2.data(), drummytmpl);
+	copy_list(drummytmp2.data(), bS.data()+bSl, drummytmpl);
 	bSl = bSl + drummytmpl;
 #ifdef VERBOSE_DOUBLE						/*PPC*/
-	printf("All drummies: drummies: ");			/*PPC*/
-	print_list(drummies, dril, 1);				/*PPC*/
-	printf("Their slots: drummyslots: ");			/*PPC*/
-	print_list(drummyslots, dril, 1);			/*PPC*/
-	printf("base: ");					/*PPC*/
+	std::printf("All drummies: drummies: ");			/*PPC*/
+	print_list(drummies.data(), dril, 1);				/*PPC*/
+	std::printf("Their slots: drummyslots: ");			/*PPC*/
+	print_list(drummyslots.data(), dril, 1);			/*PPC*/
+	std::printf("base: ");					/*PPC*/
 	print_list(base, bl, 1);				/*PPC*/
-	printf("Complement: drummytmp: ");			/*PPC*/
-	print_list(drummytmp, drummytmpl, 1);			/*PPC*/
-	printf("Sort them: drummytmp2: ");			/*PPC*/
-	print_list(drummytmp2, drummytmpl, 1);			/*PPC*/
-	printf("base extended to bS: ");			/*PPC*/
-	print_list(bS, bSl, 1);					/*PPC*/
+	std::printf("Complement: drummytmp: ");			/*PPC*/
+	print_list(drummytmp.data(), drummytmpl, 1);			/*PPC*/
+	std::printf("Sort them: drummytmp2: ");			/*PPC*/
+	print_list(drummytmp2.data(), drummytmpl, 1);			/*PPC*/
+	std::printf("base extended to bS: ");			/*PPC*/
+	print_list(bS.data(), bSl, 1);					/*PPC*/
 #endif								/*PPC*/
 	/* Generate associated base for sorting names of dummies */
 	/* We choose a particular form of bSsort for aesthetics */
-	sort(drummies,drummytmp2,dril);
-	sort(bS, drummytmp, bSl);
+	sort(drummies.data(),drummytmp2.data(),dril);
+	sort(bS.data(), drummytmp.data(), bSl);
 	for (i=0; i<bSl; i++) {
-		bSsort[i]=drummytmp2[position(bS[i],drummytmp,bSl)-1];
+		bSsort[i]=drummytmp2[position(bS[i],drummytmp.data(),bSl)-1];
 		}
 
 #ifdef VERBOSE_DOUBLE						/*PPC*/
-	printf("drummies: ");					/*PPC*/
-	print_list(drummies, dril, 1);				/*PPC*/
-	printf("Base of SGSS: bS: ");				/*PPC*/
-	print_list(bS, bSl, 1);					/*PPC*/
-	printf("Sorted slots: ");				/*PPC*/
-	print_list(drummytmp2, bSl, 1);				/*PPC*/
-	printf("Sorted base bS: ");				/*PPC*/
-	print_list(drummytmp, bSl, 1);				/*PPC*/
-	printf("Base for sorting: bSsort: ");			/*PPC*/
-	print_list(bSsort, bSl, 1);				/*PPC*/
+	std::printf("drummies: ");					/*PPC*/
+	print_list(drummies.data(), dril, 1);				/*PPC*/
+	std::printf("Base of SGSS: bS: ");				/*PPC*/
+	print_list(bS.data(), bSl, 1);					/*PPC*/
+	std::printf("Sorted slots: ");				/*PPC*/
+	print_list(drummytmp2.data(), bSl, 1);				/*PPC*/
+	std::printf("Sorted base bS: ");				/*PPC*/
+	print_list(drummytmp.data(), bSl, 1);				/*PPC*/
+	std::printf("Base for sorting: bSsort: ");			/*PPC*/
+	print_list(bSsort.data(), bSl, 1);				/*PPC*/
 #endif								/*PPC*/
 
 
@@ -2041,130 +1974,130 @@ void double_coset_rep(int *g, int n, int *base, int bl, int *GS, int m,
 		int b=bS[i-1];
 
 #ifdef VERBOSE_DOUBLE						/*PPC*/
-		printf("\n************** Loop i=%d *************\n", i);/*PPC*/
-		printf("Analyzing slot bS[%d]=%d of tensor\n", i-1, b);	/*PPC*/
+		std::printf("\n************** Loop i=%d *************\n", i);/*PPC*/
+		std::printf("Analyzing slot bS[%d]=%d of tensor\n", i-1, b);	/*PPC*/
 #endif								/*PPC*/
 		/* Schreier vector of S */
-		schreier_vector(b, KS, KSl, n, nu, w);
-		one_orbit(b, KS, KSl, n, Deltab, &Deltabl);
+		schreier_vector(b, KS.data(), KSl, n, nu.data(), w.data());
+		one_orbit(b, KS.data(), KSl, n, Deltab.data(), &Deltabl);
 #ifdef VERBOSE_DOUBLE						/*PPC*/
-		printf("Under S, slot %d go to slots Deltab: ",b);	/*PPC*/
-		print_list(Deltab, Deltabl, 1);				/*PPC*/
+		std::printf("Under S, slot %d go to slots Deltab: ",b);	/*PPC*/
+		print_list(Deltab.data(), Deltabl, 1);				/*PPC*/
 #endif								/*PPC*/
 		/* Compute SGS for group D. Do not rearrange drummies */
 		SGSD(vds, vdsl, dummies, dl, mQ,
 		     vrs, vrsl, repes, rl, n,
-		     0, KD, &KDl, bD, &bDl);
+		     0, KD.data(), &KDl, bD.data(), &bDl);
 		/* Orbits of D */
-		all_orbits(KD, KDl, n, DeltaD);
+		all_orbits(KD.data(), KDl, n, DeltaD.data());
 #ifdef VERBOSE_DOUBLE						/*PPC*/
-		printf("Orbits of indices: DeltaD: ");			/*PPC*/
-		print_list(DeltaD, n, 1);				/*PPC*/
+		std::printf("Orbits of indices: DeltaD: ");			/*PPC*/
+		print_list(DeltaD.data(), n, 1);				/*PPC*/
 #endif								/*PPC*/
 		/* Images of b under elements of S.g.D.
 		Deltab and DeltaD are used by F1 */
 		IMAGESl=0;
 		for (c=ALPHAstep[i-1]; c<ALPHAstep[i]; c++)
-			F1(ALPHA, ALPHA[c].L, ALPHA[c].Ll, g, IMAGES, &IMAGESl, n, Deltabl, Deltab, DeltaD);
+			F1(ALPHA, ALPHA[c].L, ALPHA[c].Ll, g, IMAGES.data(), &IMAGESl, n, Deltabl, Deltab.data(), DeltaD.data());
 #ifdef VERBOSE_DOUBLE						/*PPC*/
-		printf("At slot %d we can have indices IMAGES: ", b);	/*PPC*/
-		print_list(IMAGES, IMAGESl, 1);				/*PPC*/
-		printf("IMAGESl: %d\n", IMAGESl);			/*PPC*/
+		std::printf("At slot %d we can have indices IMAGES: ", b);	/*PPC*/
+		print_list(IMAGES.data(), IMAGESl, 1);				/*PPC*/
+		std::printf("IMAGESl: %d\n", IMAGESl);			/*PPC*/
 #endif								/*PPC*/
 		/* If there are no images we have finished */
 		if(IMAGESl==0) continue;
 
 		/* Find minimum index */
-		sortB(IMAGES, IMAGESsorted, IMAGESl, bSsort, bSl);
+		sortB(IMAGES.data(), IMAGESsorted.data(), IMAGESl, bSsort.data(), bSl);
 		p[i-1] = IMAGESsorted[0];
 #ifdef VERBOSE_DOUBLE						/*PPC*/
-		printf("The least of them is p[i-1]=%d\n", p[i-1]);	/*PPC*/
+		std::printf("The least of them is p[i-1]=%d\n", p[i-1]);	/*PPC*/
 #endif								/*PPC*/
 		/* Recompute SGS of D */
 		if (dl>0 || rl>0) {
 			SGSD(vds, vdsl, dummies, dl, mQ,
 			     vrs, vrsl, repes, rl, n,
-			     p[i-1], KD, &KDl, bD, &bDl);
+			     p[i-1], KD.data(), &KDl, bD.data(), &bDl);
 			}
 		else {   /* Do nothing */
 #ifdef VERBOSE_DOUBLE						/*PPC*/
-			printf("Rearrangement of base of D not required.\n");	/*PPC*/
+			std::printf("Rearrangement of base of D not required.\n");	/*PPC*/
 #endif								/*PPC*/
 			}
 		/* Schreier vector of D */
-		schreier_vector(p[i-1], KD, KDl, n, nuD, wD);
+		schreier_vector(p[i-1], KD.data(), KDl, n, nuD.data(), wD.data());
 		/* Orbit of p[i-1] under D */
-		one_orbit(p[i-1], KD, KDl, n, Deltap, &Deltapl);
+		one_orbit(p[i-1], KD.data(), KDl, n, Deltap.data(), &Deltapl);
 #ifdef VERBOSE_DOUBLE						/*PPC*/
-		printf("The orbit of index %d is Deltap: ", p[i-1]);	/*PPC*/
-		print_list(Deltap, Deltapl, 1);				/*PPC*/
-		printf("Looking for digs moving index %d to slot %d\n",	/*PPC*/
+		std::printf("The orbit of index %d is Deltap: ", p[i-1]);	/*PPC*/
+		print_list(Deltap.data(), Deltapl, 1);				/*PPC*/
+		std::printf("Looking for digs moving index %d to slot %d\n",	/*PPC*/
 		       p[i-1], b);					/*PPC*/
 #endif								/*PPC*/
 		/* Calculate ALPHA and TAB */
 		ALPHAstep[i+1]=ALPHAstep[i];
 		for(l=ALPHAstep[i-1]; l<ALPHAstep[i]; l++) {
 #ifdef VERBOSE_DOUBLE						/*PPC*/
-			printf("Loop with l=%d\n", l);				/*PPC*/
+			std::printf("Loop with l=%d\n", l);				/*PPC*/
 #endif								/*PPC*/
 			Ll=ALPHA[l].Ll;
-			copy_list(ALPHA[l].L, L, Ll);
+			copy_list(ALPHA[l].L, L.data(), Ll);
 #ifdef VERBOSE_DOUBLE						/*PPC*/
-			printf("L: ");
-			print_list(L, Ll, 1);			/*PPC*/
+			std::printf("L: ");
+			print_list(L.data(), Ll, 1);			/*PPC*/
 #endif								/*PPC*/
-			copy_list(ALPHA[l].s, s, n);
-			copy_list(ALPHA[l].d, d, n);
+			copy_list(ALPHA[l].s, s.data(), n);
+			copy_list(ALPHA[l].d, d.data(), n);
 #ifdef VERBOSE_DOUBLE						/*PPC*/
-			printf("TAB[L]={");					/*PPC*/
-			print_perm(s, n, 0);					/*PPC*/
-			printf(", ");						/*PPC*/
-			print_perm(d, n, 0);					/*PPC*/
-			printf("}\n");						/*PPC*/
+			std::printf("TAB[L]={");					/*PPC*/
+			print_perm(s.data(), n, 0);					/*PPC*/
+			std::printf(", ");						/*PPC*/
+			print_perm(d.data(), n, 0);					/*PPC*/
+			std::printf("}\n");						/*PPC*/
 #endif								/*PPC*/
 			list1l=Deltabl;
 			for (c=0; c<list1l; c++)
-				list1[c]=onpoints(Deltab[c], s, n);
-			product(g, d, perm1, n);
-			inverse(perm1, perm2, n);
+				list1[c]=onpoints(Deltab[c], s.data(), n);
+			product(g, d.data(), perm1.data(), n);
+			inverse(perm1.data(), perm2.data(), n);
 			list2l=Deltapl;
 			for (c=0; c<list2l; c++)
-				list2[c]=onpoints(Deltap[c], perm2, n);
+				list2[c]=onpoints(Deltap[c], perm2.data(), n);
 #ifdef VERBOSE_DOUBLE						/*PPC*/
-			printf("NEXT: intersection of sets of slots ");		/*PPC*/
-			print_list(list1, list1l, 0);
-			printf(" and ");		/*PPC*/
-			print_list(list2, list2l, 1);				/*PPC*/
+			std::printf("NEXT: intersection of sets of slots ");		/*PPC*/
+			print_list(list1.data(), list1l, 0);
+			std::printf(" and ");		/*PPC*/
+			print_list(list2.data(), list2l, 1);				/*PPC*/
 #endif								/*PPC*/
-			intersection(list1, list1l, list2, list2l,
-			             NEXT, &NEXTl);
+			intersection(list1.data(), list1l, list2.data(), list2l,
+			             NEXT.data(), &NEXTl);
 #ifdef VERBOSE_DOUBLE						/*PPC*/
-			printf("Intermediate slots NEXT: ");			/*PPC*/
-			print_list(NEXT, NEXTl, 1);				/*PPC*/
+			std::printf("Intermediate slots NEXT: ");			/*PPC*/
+			print_list(NEXT.data(), NEXTl, 1);				/*PPC*/
 #endif								/*PPC*/
 
 			for(jj=0; jj<NEXTl; jj++) {
 				j = NEXT[jj];
-				inverse(s, perm1, n);
-				trace_schreier(onpoints(j,perm1,n), nu,w, perm2,n);
-				product(perm2, s, s1, n);
+				inverse(s.data(), perm1.data(), n);
+				trace_schreier(onpoints(j,perm1.data(),n), nu.data(),w.data(), perm2.data(),n);
+				product(perm2.data(), s.data(), s1.data(), n);
 #ifdef VERBOSE_DOUBLE						/*PPC*/
-				printf("From slot %d to interm. slot %d use s1: ",	/*PPC*/
+				std::printf("From slot %d to interm. slot %d use s1: ",	/*PPC*/
 				       b, j);
-				print_perm(s1, n, 1);			/*PPC*/
+				print_perm(s1.data(), n, 1);			/*PPC*/
 #endif								/*PPC*/
-				product(g, d, perm2, n);
-				trace_schreier(onpoints(j,perm2,n),nuD,wD,perm3,n);
-				inverse(perm3, perm1, n);
-				product(d, perm1, d1, n);
-				copy_list(L, L1, Ll);
+				product(g, d.data(), perm2.data(), n);
+				trace_schreier(onpoints(j,perm2.data(),n),nuD.data(),wD.data(),perm3.data(),n);
+				inverse(perm3.data(), perm1.data(), n);
+				product(d.data(), perm1.data(), d1.data(), n);
+				copy_list(L.data(), L1.data(), Ll);
 				L1l=Ll;
 				L1[L1l++] = j;
 #ifdef VERBOSE_DOUBLE						/*PPC*/
-				printf("d1: ");
-				print_perm(d1, n, 1);			/*PPC*/
-				printf("L1: ");
-				print_list(L1, L1l, 1);			/*PPC*/
+				std::printf("d1: ");
+				print_perm(d1.data(), n, 1);			/*PPC*/
+				std::printf("L1: ");
+				print_list(L1.data(), L1l, 1);			/*PPC*/
 #endif								/*PPC*/
 
 				kk=ALPHAstep[i+1];
@@ -2172,27 +2105,26 @@ void double_coset_rep(int *g, int n, int *base, int bl, int *GS, int m,
 				ALPHAl++;
 				ALPHAstep[i+1]++;
 				//				std::cout << "resizing " << ALPHAl << std::endl;
-				//				ALPHA = (struct alphastruct*)realloc(ALPHA, ALPHAl* sizeof(struct alphastruct));
 				ALPHA.resize(ALPHAl);
 				ALPHA.back().init(n);
-				copy_list(L1, ALPHA[kk].L, L1l);
+				copy_list(L1.data(), ALPHA[kk].L, L1l);
 				ALPHA[kk].Ll = L1l;
-				copy_list(s1, ALPHA[kk].s, n);
-				copy_list(d1, ALPHA[kk].d, n);
+				copy_list(s1.data(), ALPHA[kk].s, n);
+				copy_list(d1.data(), ALPHA[kk].d, n);
 
-				F2(s1, g, d1, perm1, n);
+				F2(s1.data(), g, d1.data(), perm1.data(), n);
 #ifdef VERBOSE_DOUBLE						/*PPC*/
-				printf("This gives the new index configuration: ");	/*PPC*/
-				inverse(perm1, perm2, n);				/*PPC*/
-				print_perm(perm2, n, 1);				/*PPC*/
-				for(ii=0; ii<i; ii++) {					/*PPC*/
-					product(s1, g, perm2, n);			/*PPC*/
-					product(perm2, d1, perm3, n);			/*PPC*/
-					printf("Checking slot %d with point %d: ",	/*PPC*/
+				std::printf("This gives the new index configuration: ");	/*PPC*/
+				inverse(perm1.data(), perm2.data(), n);				/*PPC*/
+				print_perm(perm2.data(), n, 1);				/*PPC*/
+				for(int ii=0; ii<i; ii++) {					/*PPC*/
+					product(s1.data(), g, perm2.data(), n);			/*PPC*/
+					product(perm2.data(), d1.data(), perm3.data(), n);			/*PPC*/
+					std::printf("Checking slot %d with point %d: ",	/*PPC*/
 					       bS[ii], p[ii]);				/*PPC*/
-					if(onpoints(bS[ii], perm3, n)==p[ii])		/*PPC*/
-						printf("True\n");			/*PPC*/
-					else printf("*************FALSE************\n");/*PPC*/
+					if(onpoints(bS[ii], perm3.data(), n)==p[ii])		/*PPC*/
+						std::printf("True\n");			/*PPC*/
+					else std::printf("*************FALSE************\n");/*PPC*/
 					}							/*PPC*/
 #endif								/*PPC*/
 				}
@@ -2200,82 +2132,46 @@ void double_coset_rep(int *g, int n, int *base, int bl, int *GS, int m,
 			{
 			/* Verify if there are 2 equal permutations
 			of opposite sign in SgD */
-			int *array= new int[n*(ALPHAstep[i+1]-ALPHAstep[i])]; //(int*)malloc(n*(ALPHAstep[i+1]-ALPHAstep[i])*sizeof(int));
+			int *array= new int[n*(ALPHAstep[i+1]-ALPHAstep[i])]; //new int[n*(ALPHAstep[i+1]-ALPHAstep[i])];
 			int arrayl= 0;
 #ifdef VERBOSE_DOUBLE						/*PPC*/
-			printf("Astep[i-1]=%d, Astep[i]=%d, Astep[i+1]=%d\n",	/*PPC*/
+			std::printf("Astep[i-1]=%d.data(), Astep[i]=%d.data(), Astep[i+1]=%d\n",	/*PPC*/
 			       ALPHAstep[i-1], ALPHAstep[i], ALPHAstep[i+1]);	/*PPC*/
 #endif 								/*PPC*/
 			for(l=ALPHAstep[i]; l<ALPHAstep[i+1]; l++) {
-				F2(ALPHA[l].s, g, ALPHA[l].d, perm1, n);
-				copy_list(perm1, array+(arrayl++)*n, n);
+				F2(ALPHA[l].s, g, ALPHA[l].d, perm1.data(), n);
+				copy_list(perm1.data(), array+(arrayl++)*n, n);
 				}
 #ifdef VERBOSE_DOUBLE						/*PPC*/
-			printf("Perform check.\n");				/*PPC*/
+			std::printf("Perform check.\n");				/*PPC*/
 #endif								/*PPC*/
 			result= consistency(array, arrayl, n);
 #ifdef VERBOSE_DOUBLE						/*PPC*/
-			printf("Result of check: %d\n", result);		/*PPC*/
+			std::printf("Result of check: %d\n", result);		/*PPC*/
 #endif								/*PPC*/
-			delete[] array; //free(array);
 			if (!result) break;
 			}
 		/* Find the stabilizers S^(i+1) and D^(i+1) */
-		stabilizer(&bS[i-1], 1, KS, KSl, n, KS, &KSl);
+		stabilizer(&bS[i-1], 1, KS.data(), KSl, n, KS.data(), &KSl);
 		dropdummyset(p[i-1], vds, vdsl, dummies, &dl);
 		droprepeatedset(p[i-1], vrs, vrsl, repes, &rl);
 #ifdef VERBOSE_DOUBLE						/*PPC*/
-		printf("Remove perms of KS moving slot %d\n", b);	/*PPC*/
-		printf("Remove perms of KD moving index %d\n", p[i-1]);	/*PPC*/
+		std::printf("Remove perms of KS moving slot %d\n", b);	/*PPC*/
+		std::printf("Remove perms of KD moving index %d\n", p[i-1]);	/*PPC*/
 #endif								/*PPC*/
 
 		} /* End of main loop */
 
 	/* Result */
 	if (result==0) {
-		zeros(perm1, n);
+		zeros(perm1.data(), n);
 		}
 	else {
 		l=ALPHAstep[i-1];
-		F2(ALPHA[l].s, g, ALPHA[l].d, perm1, n);
+		F2(ALPHA[l].s, g, ALPHA[l].d, perm1.data(), n);
 		}
-	copy_list(perm1, dcr, n);
-
-	/* Free allocated memory */
-	//	free(ALPHA);
-	delete[] ALPHAstep; //free(ALPHAstep);
-	delete[] ig; //free(ig);
-	delete[] drummies; //free(drummies);
-	delete[] drummyslots; //free(drummyslots);
-	delete[] drummytmp; //free(drummytmp);
-	delete[] drummytmp2; //free(drummytmp2);
-	delete[] bS; //free(bS);
-	delete[] bSsort; //free(bSsort);
-	delete[] KS; //free(KS);
-	delete[] KD; //free(KD);
-	delete[] bD; // free(bD);
-	delete[] nu; // free(nu);
-	delete[] w; //free(w);
-	delete[] Deltab; //free(Deltab);
-	delete[] DeltaD; //free(DeltaD);
-	delete[] IMAGES; //free(IMAGES);
-	delete[] IMAGESsorted; //(IMAGESsorted);
-	delete[] p; //free(p);
-	delete[] nuD; //free(nuD);
-	delete[] wD; //free(wD);
-	delete[] Deltap; //free(Deltap);
-	delete[] NEXT; //free(NEXT);
-	delete[] L; //free(L);
-	delete[] L1; //free(L1);
-	delete[] s; //free(s);
-	delete[] d; //free(d);
-	delete[] list1; //free(list1);
-	delete[] list2; //free(list2);
-	delete[] perm1; //free(perm1);
-	delete[] perm2; //free(perm2);
-	delete[] perm3; //free(perm3);
-	delete[] s1; //free(s1);
-	delete[] d1; //dfree(d1);
+	copy_list(perm1.data(), dcr, n);
+	/* All double-coset workspaces are automatically released here. */
 	}
 
 /**********************************************************************/
@@ -2303,39 +2199,33 @@ void canonical_perm(int *PERM,
 	int mQ;
 	int *repes= NULL;
 	int *vrs= NULL;
-	int *PERM1=   (int*)malloc(n    *sizeof(int));
-	int *PERM2=   (int*)malloc(n    *sizeof(int));
-	int *frees=   (int*)malloc(fl   *sizeof(int));
-	int *dummies= (int*)malloc(2*dpl*sizeof(int));
+	std::vector<int> PERM1(n);
+	std::vector<int> PERM2(n);
+	std::vector<int> frees(fl);
+	std::vector<int> dummies(2*dpl);
 
 	/* Construct "vectors" vds and mQ */
 	vds = 2*dpl;
 	mQ = metricQ;
 
 	/* !!!!!!!! Change to Renato's notation !!!!!!!! */
-	inverse(PERM, PERM1, n);
+	inverse(PERM, PERM1.data(), n);
 	for (i=0; i<fl; i++) {
-		frees[i] = onpoints(freeps[i], PERM1, n);
+		frees[i] = onpoints(freeps[i], PERM1.data(), n);
 		}
 	for (i=0; i<2*dpl; i++) {
-		dummies[i] = onpoints(dummyps[i], PERM1, n);
+		dummies[i] = onpoints(dummyps[i], PERM1.data(), n);
 		}
 
 	/* Call new, extended function */
-	canonical_perm_ext(PERM1, n, SGSQ, base, bl, GS, m,
-	                   frees, fl, &vds, 1, dummies, 2*dpl, &mQ,
+	canonical_perm_ext(PERM1.data(), n, SGSQ, base, bl, GS, m,
+	                   frees.data(), fl, &vds, 1, dummies.data(), 2*dpl, &mQ,
 	                   vrs, 0, repes, 0,
-	                   PERM2);
+	                   PERM2.data());
 
 	/* !!!!!!!! Change back to our notation !!!!!!!! */
-	if (PERM2[0] != 0) inverse(PERM2, CPERM, n);
-	else copy_list(PERM2, CPERM, n);
-
-	/* Free allocated space */
-	free(PERM1);
-	free(PERM2);
-	free(frees);
-	free(dummies);
+	if (PERM2[0] != 0) inverse(PERM2.data(), CPERM, n);
+	else copy_list(PERM2.data(), CPERM, n);
 	}
 
 /**********************************************************************/
@@ -2403,101 +2293,92 @@ void canonical_perm_ext(int *PERM, int n,
 	{
 
 	int i;
-	int *freeps=    new int[fl]; // (int*)malloc(fl*sizeof(int));
-	int *PERM1=     new int[n]; //(int*)malloc(n *sizeof(int));
-	int *PERM2=     new int[n]; //(int*)malloc(n *sizeof(int));
-	int *newbase=   new int[n]; //(int*)malloc(n *sizeof(int)),
+	std::vector<int> freeps(fl);
+	std::vector<int> PERM1(n);
+	std::vector<int> PERM2(n);
+	std::vector<int> newbase(n);
 	int newbl;
-	int **newGS = nullptr;
-	int *pointer=   new int[m*n];
+	std::vector<int> newGS(static_cast<std::size_t>(m) * n);
 	int newm;
-	int *tmpbase=   new int[n]; //(int*)malloc(n *sizeof(int)),
+	std::vector<int> tmpbase(n);
 	int tmpbl; 
 	int num=0;
 
-	newGS= &pointer;
 
 #ifdef VERBOSE_CANON						/*PPC*/
-	printf("can: input base: ");				/*PPC*/
+	std::printf("can: input base: ");				/*PPC*/
 	print_list(base, bl, 1);				/*PPC*/
 #endif								/*PPC*/
 
 	if (!SGSQ) { /* Compute a Strong Generating Set */
 		nonstable_points(base, bl, GS, m, n,
-		                 tmpbase, &tmpbl);
-		schreier_sims(tmpbase, tmpbl, GS, m, n,
-		              newbase, &newbl, newGS, &newm, &num);
+		                 tmpbase.data(), &tmpbl);
+		schreier_sims(tmpbase.data(), tmpbl, GS, m, n,
+		              newbase.data(), &newbl, newGS, &newm, &num);
 		}
 	else {
-		copy_list(base, newbase, bl);
+		copy_list(base, newbase.data(), bl);
 		newbl=bl;
-		copy_list(GS, *newGS, m*n);
+		newGS.assign(GS, GS + static_cast<std::size_t>(m) * n);
 		newm=m;
 		}
 
 #ifdef VERBOSE_CANON						/*PPC*/
-	printf("can: SGS computed.\n");				/*PPC*/
-	printf("can: newbase: ");				/*PPC*/
-	print_list(newbase, newbl, 1);				/*PPC*/
+	std::printf("can: SGS computed.\n");				/*PPC*/
+	std::printf("can: newbase: ");				/*PPC*/
+	print_list(newbase.data(), newbl, 1);				/*PPC*/
 #endif								/*PPC*/
 
 	/* Compute slots of free indices */
-	inverse(PERM, PERM1, n);
+	inverse(PERM, PERM1.data(), n);
 	for (i=0; i<fl; i++) {
-		freeps[i] = onpoints(frees[i], PERM1, n);
+		freeps[i] = onpoints(frees[i], PERM1.data(), n);
 		}
 	/* Call coset_rep algorithm. Result in PERM1 */
-	coset_rep(PERM, n, newbase, newbl, *newGS, &newm,
-	          freeps, fl, PERM1);
+	coset_rep(PERM, n, newbase.data(), newbl, newGS.data(), &newm,
+	          freeps.data(), fl, PERM1.data());
 #ifdef VERBOSE_CANON						/*PPC*/
-	printf("can: Canonical perm after coset algorithm: ");	/*PPC*/
-	print_perm(PERM1, n, 1);				/*PPC*/
-	printf("New positions of free indices: ");		/*PPC*/
-	print_list(freeps, fl, 1);				/*PPC*/
+	std::printf("can: Canonical perm after coset algorithm: ");	/*PPC*/
+	print_perm(PERM1.data(), n, 1);				/*PPC*/
+	std::printf("New positions of free indices: ");		/*PPC*/
+	print_list(freeps.data(), fl, 1);				/*PPC*/
 #endif								/*PPC*/
 
 	if (dl+rl==0) { /* No drummy indices */
-		copy_list(PERM1, CPERM, n);
+		copy_list(PERM1.data(), CPERM, n);
 		}
 	else {
 
-		complement(newbase, newbl, freeps, fl, 1, tmpbase, &tmpbl);
-		copy_list(tmpbase, newbase, tmpbl);
+		complement(newbase.data(), newbl, freeps.data(), fl, 1,
+		           tmpbase.data(), &tmpbl);
+		copy_list(tmpbase.data(), newbase.data(), tmpbl);
 		newbl=tmpbl;
-		stabilizer(freeps, fl, *newGS, newm, n, *newGS, &newm);
+		stabilizer(freeps.data(), fl, newGS.data(), newm, n, newGS.data(), &newm);
 #ifdef VERBOSE_CANON						/*PPC*/
-		printf("can: newbase after fixing: ");			/*PPC*/
-		print_list(newbase, newbl, 1);				/*PPC*/
-		printf("can: newGS after fixing: ");			/*PPC*/
-		print_array_perm(*newGS, newm, n, 1);			/*PPC*/
+		std::printf("can: newbase after fixing: ");			/*PPC*/
+		print_list(newbase.data(), newbl, 1);				/*PPC*/
+		std::printf("can: newGS after fixing: ");			/*PPC*/
+		print_array_perm(newGS.data(), newm, n, 1);			/*PPC*/
 #endif								/*PPC*/
 
 		/* Apply dummy-indices algorithm. Result in PERM2 */
 #ifdef VERBOSE_CANON						/*PPC*/
-		printf("can: Starting double_coset algorithm.\n");	/*PPC*/
+		std::printf("can: Starting double_coset algorithm.\n");	/*PPC*/
 #endif								/*PPC*/
-		double_coset_rep(PERM1, n, newbase, newbl, *newGS, newm,
+		double_coset_rep(PERM1.data(), n, newbase.data(), newbl, newGS.data(), newm,
 		                 vds, vdsl, dummies, dl, mQ,
-		                 vrs, vrsl, repes, rl, PERM2);
+		                 vrs, vrsl, repes, rl, PERM2.data());
 #ifdef VERBOSE_CANON						/*PPC*/
-		printf("can: Finished double_coset algorithm.\n");	/*PPC*/
+		std::printf("can: Finished double_coset algorithm.\n");	/*PPC*/
 #endif								/*PPC*/
 
 		/* Copy to result */
-		copy_list(PERM2, CPERM, n);
+		copy_list(PERM2.data(), CPERM, n);
 
 		}
 
-	/* Free allocated memory */
-	delete [] freeps; // free(freeps);
-	delete [] PERM1; //free(PERM1);
-	delete [] PERM2; // free(PERM2);
-	delete [] newbase; //free(newbase);
-	delete[] tmpbase; //free(tmpbase);
-	delete [] pointer; //free(*newGS);
-
 #ifdef VERBOSE_CANON						/*PPC*/
-	printf("************ END OF ALGORITHM ***********\n");	/*PPC*/
+	std::printf("************ END OF ALGORITHM ***********\n");	/*PPC*/
 #endif								/*PPC*/
 	}
 
@@ -2518,39 +2399,34 @@ void sorted_schreier_orbit(int point,
                 int *base, int bl, int *GS, int m, int n,
                 int *orbit, int *ol, int *nu, int *w, int init) {
 
-        int *tmp  = (int *)malloc(n*sizeof(int)), tmpl;
-        int *tmp2 = (int *)malloc(n*sizeof(int));
+        std::vector<int> tmp(n);
+        std::vector<int> tmp2(n);
+        int tmpl;
 
-        one_orbit(point, GS, m, n, tmp, &tmpl);
-        sortB(tmp, tmp2, tmpl, base, bl);
+        one_orbit(point, GS, m, n, tmp.data(), &tmpl);
+        sortB(tmp.data(), tmp2.data(), tmpl, base, bl);
         one_schreier_orbit(tmp2[0],GS,m,n,orbit,ol,nu,w,init);
-
-        free(tmp);
-        free(tmp2);
 
 }
 
 void sorted_schreier_vector(int point, int *base, int bl, int *GS, int m, int n, int *nu, int *w){
 
         int i;    /* Point counter (from 1 to n) */
-        int *orbit=      (int*)malloc(n*sizeof(int));
-        int *usedpoints= (int*)malloc(n*sizeof(int));
+        std::vector<int> orbit(n);
+        std::vector<int> usedpoints(n);
         int j=0;  /* Counter of used points */
         int ol;
 
         /* First orbit */
-        sorted_schreier_orbit(point, base, bl, GS, m, n, orbit, &ol, nu, w, 1);
+        sorted_schreier_orbit(point, base, bl, GS, m, n, orbit.data(), &ol, nu, w, 1);
         while(ol--) usedpoints[j++] = orbit[ol];
         /* Other orbits. Do not initialize vector */
         for(i=1; i<=n; i++) {
-                if (!position(i, usedpoints, j)) {
-                        sorted_schreier_orbit(i, base, bl, GS, m, n, orbit, &ol, nu, w, 0);
+                if (!position(i, usedpoints.data(), j)) {
+                        sorted_schreier_orbit(i, base, bl, GS, m, n, orbit.data(), &ol, nu, w, 0);
                         while(ol--) usedpoints[j++] = orbit[ol];
                 }
         }
-        /* Free allocated memory */
-        free(orbit);
-        free(usedpoints);
 
 }
 
@@ -2563,53 +2439,47 @@ void sorted_schreier_vector(int point, int *base, int bl, int *GS, int m, int n,
 void from_base_image(int *images, int ll,
         int *base, int bl, int *GS, int m, int n, int *perm) {
 
-        int *list= (int *)malloc(bl*    sizeof(int));
-        int *nu=   (int *)malloc(   n*n*sizeof(int));
-        int *w=    (int *)malloc(     n*sizeof(int));
-        int *u=    (int *)malloc(     n*sizeof(int));
-        int *tmp=  (int *)malloc(     n*sizeof(int));
-        int *stab= (int *)malloc(   m*n*sizeof(int)), sl;
+        std::vector<int> list(bl);
+        std::vector<int> nu(n*n);
+        std::vector<int> w(n);
+        std::vector<int> u(n);
+        std::vector<int> tmp(n);
+        std::vector<int> stab(m*n);
+        int sl;
         int i,j;
 
-        copy_list(images,list,ll);
+        copy_list(images,list.data(),ll);
         range(perm,n);
         for (i=0; i<ll; i++) {
                 /* It would be better to stabilize stabilizers,
                    instead of stabilizing the original set GS.
                    I think we are computing this stabilizers too
                    many times */
-                stabilizer(base,i,GS,m,n,stab,&sl);
-                sorted_schreier_vector(list[i], base+i, bl-i, stab, sl, n, nu, w);
-                trace_schreier(list[i], nu, w, u, n);
-                product(u,perm,tmp,n);
-                copy_list(tmp,perm,n);
-                inverse(u,tmp,n);
+                stabilizer(base,i,GS,m,n,stab.data(),&sl);
+                sorted_schreier_vector(list[i], base+i, bl-i, stab.data(), sl, n, nu.data(), w.data());
+                trace_schreier(list[i], nu.data(), w.data(), u.data(), n);
+                product(u.data(),perm,tmp.data(),n);
+                copy_list(tmp.data(),perm,n);
+                inverse(u.data(),tmp.data(),n);
                 for (j=0; j<ll; j++) {
-                        list[j]=onpoints(list[j],tmp,n);
+                        list[j]=onpoints(list[j],tmp.data(),n);
                 }
         }
-
-        free(list);
-        free(nu);
-        free(w);
-        free(u);
-        free(tmp);
-        free(stab);
 
 }
 
 int property(int *g, int n, int prop, int *info, int infol) {
 
-        int *perm1= (int*)malloc(n*sizeof(int));
-        int *perm2= (int*)malloc(n*sizeof(int));
+        std::vector<int> perm1(n);
+        std::vector<int> perm2(n);
         int i;
         int ret=0; /* By default we do not accept g */
 
         if (prop==1) { /* Centralizer. info is the permutation to centralize
                           infol is the length of the perm cycle used in the base. Not used to check property */
-                product(g,info,perm1,n);
-                product(info,g,perm2,n);
-                ret=equal_list(perm1,perm2,n);
+                product(g,info,perm1.data(),n);
+                product(info,g,perm2.data(),n);
+                ret=equal_list(perm1.data(),perm2.data(),n);
         } else if (prop==2) { /* Normalizer */
         } else if (prop==3) { /* Group intersection. */
         } else if (prop==4) { /* SetStabilizer. info is the list of set-points as a characteristic function
@@ -2621,118 +2491,75 @@ int property(int *g, int n, int prop, int *info, int infol) {
                         }
                 }
         }
-
-        free(perm1);
-        free(perm2);
-        
+    
         return ret;
 
 }
 
 void generate(int *base, int bl, int *GS, int m, int n, int prop, int *info, int infol,
-        int s, int i, int *list, int ll, int **GSK, int *mK, int *mark, int *num) {
+        int s, int i, int *list, int ll, std::vector<int>& GSK, int *mK, int *mark, int *num) {
 
-        int *g=     (int *)malloc(  n*sizeof(int));
-        int *stab=  (int *)malloc(m*n*sizeof(int)), sl;
-        int *orbit= (int *)malloc(  n*sizeof(int)), ol;
-        int *tmp=   (int *)malloc(  n*sizeof(int));
+        std::vector<int> g(n);
+        std::vector<int> stab(m*n);
+        std::vector<int> orbit(n);
+        std::vector<int> tmp(n);
+        int sl;
+        int ol;
         int j,gamma;
 
-/*
-        FILE *file;
-*/
 
-        from_base_image(list, ll, base, bl, GS, m, n, g);
+        from_base_image(list, ll, base, bl, GS, m, n, g.data());
 
         if (i==bl+1) {
                 (*num)++;
-/*
-        file = fopen("/home/jmm/setwise","a");
-        fprintf(file,"generate at level s=%d and i=%d. We have list=",s,i);
-        fprint_list(file, list, ll, 0);
-        fprintf(file," and permutation ");
-        fprint_perm(file, g, n, 1);
-        fclose(file);
-*/
-                if(!isid(g,n) && property(g,n,prop,info,infol)) {
+                if(!isid(g.data(),n) && property(g.data(),n,prop,info,infol)) {
                         /* Append permutation g to SGSK */
-                        if (*mK>=m) {
-                                *GSK = (int *)realloc(*GSK, (*mK+1)*n*sizeof(int));
-                        }
-                        copy_list(g,(*GSK)+(*mK)*n,n);
-                        (*mK)++;
+                        GSK.insert(GSK.end(), g.begin(), g.end());
+                        *mK = static_cast<int>(GSK.size() / static_cast<std::size_t>(n));
                         *mark=1;
                 }
         } else {
-                stabilizer(base,i-1,GS,m,n, stab, &sl);
-                one_orbit(base[i-1],stab,sl,n, orbit, &ol);
-/*
-        file = fopen("/home/jmm/setwise","a");
-        fprintf(file,"generating over points ");
-        fprint_list(file, orbit, ol, 1);
-        fclose(file);
-*/
+                stabilizer(base,i-1,GS,m,n, stab.data(), &sl);
+                one_orbit(base[i-1],stab.data(),sl,n, orbit.data(), &ol);
                 for (j=0; j<ol; j++) {
-                        gamma = onpoints(orbit[j], g, n);
+                        gamma = onpoints(orbit[j], g.data(), n);
                         if(prop==1 && onpoints(list[ll-1],info,n)!=gamma && ll<infol) continue;
 /* This needs to be commented out because otherwise this case does not work:
 SetStabilizer[{1, 4}, StrongGenSet[{1, 3},
        GenSet[Cycles[{1, 2}], Cycles[{3, 4}], Cycles[{1, 3}, {2, 4}]]] */
                         /* if(prop==4 && !info[gamma-1] && ll<infol) continue; */
-                        copy_list(list, tmp, ll);
+                        copy_list(list, tmp.data(), ll);
                         tmp[ll]=gamma;
-                        generate(base,bl,GS,m,n, prop,info,infol, s, i+1, tmp, ll+1, GSK, mK, mark, num);
+                        generate(base,bl,GS,m,n, prop,info,infol, s, i+1, tmp.data(), ll+1, GSK, mK, mark, num);
                         if (*mark) break;
                 }
         }
 
-        free(g);
-        free(stab);
-        free(orbit);
-        free(tmp);
-
 }
 
 void search(int *base, int bl, int *GS, int m, int n, int prop, int *info, int infol,
-        int s, int **GSK, int *mK, int *num) {
+        int s, std::vector<int>& GSK, int *mK, int *num) {
 
-        int *stab=  (int *)malloc(m*n*sizeof(int)), sl;
-        int *orbit= (int *)malloc(  n*sizeof(int)), ol;
-        int *tmp=   (int *)malloc(  n*sizeof(int));
-        int *Korbit=(int *)malloc(  n*sizeof(int)), Kol;
-        int *list  =(int *)malloc(  n*sizeof(int)), ll;
+        int *stab=  new int[m*n], sl;
+        int *orbit= new int[n], ol;
+        int *tmp=   new int[n];
+        int *Korbit=new int[n], Kol;
+        int *list  =new int[n], ll;
         int gammas, minKorbit, i, mark;
-/*
-        FILE *file;
-
-        file = fopen("/home/jmm/setwise","a");
-        fprintf(file,"search: s=%d with %d points in base and degree %d\n",s,bl,n);
-        fclose(file);
-*/
         if (s==bl+1) {
-                /* Initialize with the identity group */
+                /* Initialize with the identity group. clear() retains capacity. */
+                GSK.clear();
                 *mK=0;
         } else {
                 search(base, bl, GS, m, n, prop,info,infol, s+1, GSK, mK, num);
                 stabilizer(base, s-1, GS, m, n, stab, &sl);
                 one_orbit(base[s-1],stab,sl,n,orbit,&ol);
-/*
-        file = fopen("/home/jmm/setwise","a");
-        fprintf(file,"branching over points ");
-        fprint_list(file, orbit, ol, 1);
-        fclose(file);
-*/
                 /* Note that we do not consider the first point to avoid rechecking permutations. Not in Butler */
                 for (i=1; i<ol; i++) {
                         gammas=orbit[i];
-                        one_orbit(gammas,*GSK,*mK,n,Korbit,&Kol);
+                        one_orbit(gammas,GSK.data(),*mK,n,Korbit,&Kol);
                         sortB(Korbit,tmp, Kol, base, bl);
                         minKorbit=tmp[0];
-/*
-        file = fopen("/home/jmm/setwise","a");
-        fprintf(file,"search: i=%d, gammas=%d, minKorbit=%d\n",i, gammas, minKorbit);
-        fclose(file);
-*/
         
                         if (minKorbit==gammas) {
                                 /* First point in orbit */
@@ -2745,11 +2572,11 @@ void search(int *base, int bl, int *GS, int m, int n, int prop, int *info, int i
                 }
         }
 
-        free(stab);
-        free(orbit);
-        free(tmp);
-        free(Korbit);
-        free(list);
+        delete[] stab;
+        delete[] orbit;
+        delete[] tmp;
+        delete[] Korbit;
+        delete[] list;
 
 }
 
@@ -2759,46 +2586,59 @@ void search(int *base, int bl, int *GS, int m, int n, int prop, int *info, int i
  *
  * Computes the stabilizer chain from the SGS given by
  * base (length bl) and GS (m n-permutations)
- * The result is chain a list of pointers to lists 
- * containing the positions of the generators within GS.
- * The lengths of the lists are given by cl, which is a list 
- * with length bl. Observe that we do not save the last elemet 
- * in the chain which should always be empty.
- * We assume that enough space is already allocated for cl 
- * (bl integers), and for chain (bl pointers) 
- * 
+ * The result is a vector of lists containing the positions
+ * of the generators within GS. Each chain level stores only
+ * generators belonging to the preceding stabilizer. * 
  */
-
-void stab_chain(int *base, int bl, int *GS, int m, int n, int **chain, int *cl) {
-
-	int i, j;
-	int *gsp = new int[m]; 
-
-/* The first GenSet should be the full list.
- */
-
-	cl[0] = m;
-	chain[0] = (int *) malloc(m*sizeof(int));
-	
-	j = m;
-	while(j--) chain[0][j] = j;
-
 
 /* For the rest we need to check which perms that fixes the 
    previous base point and is in the previous stabilizer.
  */
 
-	for(i = 1; i<bl; i++) {
-		for(j=0; j<cl[i-1]; j++) {
-			if (onpoints(base[i-1],&GS[n*(chain[i-1][j])],n) == base[i-1]) {
-				gsp[cl[i]]=chain[i-1][j];
-				cl[i]++;
+void stab_chain(
+	int *base,
+	int bl,
+	int *GS,
+	int m,
+	int n,
+	StabilizerChain& chain)
+{
+	chain.clear();
+	chain.resize(static_cast<std::size_t>(bl));
+
+	if (bl == 0) {
+		return;
+	}
+
+	/*
+	 * The first stabilizer-chain level contains every generator.
+	 */
+	chain[0].resize(static_cast<std::size_t>(m));
+	std::iota(chain[0].begin(), chain[0].end(), 0);
+
+	/*
+	 * Each subsequent level contains the generators from the
+	 * preceding level that fix the preceding base point.
+	 */
+	for (int i = 1; i < bl; ++i) {
+		const auto& previousLevel =
+			chain[static_cast<std::size_t>(i - 1)];
+
+		auto& currentLevel =
+			chain[static_cast<std::size_t>(i)];
+
+		currentLevel.reserve(previousLevel.size());
+
+		for (const int generatorIndex : previousLevel) {
+			int *generator =
+				GS + static_cast<std::size_t>(n) * generatorIndex;
+
+			if (onpoints(base[i - 1], generator, n)
+			    == base[i - 1]) {
+				currentLevel.push_back(generatorIndex);
 			}
 		}
-		chain[i] = (int*) malloc(cl[i]*sizeof(int));
-		memmove(chain[i], gsp, cl[i]*sizeof(int));
 	}
-	delete [] gsp;
 }
 
 
@@ -2848,14 +2688,14 @@ void one_schreier_orbit_chain(int point, int *GS, int *poslist, int poslistl,
 	int np;    /* Index of current element in the orbit */
 	int gamma; /* Current element in the orbit */
 	int mp;    /* Index of current permutation in poslistl */
-	int *perm= (int*)malloc(n*sizeof(int));
+	std::vector<int> perm(n);
 	int newgamma;
 
 	/* Initialize schreier with zeros if required */
-	memset(orbit, 0, n*sizeof(int));
+	std::memset(orbit, 0, n*sizeof(int));
 	if (init) {
-		memset(nu, 0, n*n*sizeof(int));
-		memset(w, 0, n*sizeof(int));
+		std::memset(nu, 0, n*n*sizeof(int));
+		std::memset(w, 0, n*sizeof(int));
 	}
 	/* First element of orbit. There is no backward pointer */
 	orbit[0] = point;
@@ -2865,22 +2705,20 @@ void one_schreier_orbit_chain(int point, int *GS, int *poslist, int poslistl,
 	while(np < *ol) {
 		gamma = orbit[np];
 		for(mp=0; mp<poslistl; mp++) {
-			copy_list(&(GS[poslist[mp]*n]), perm, n);
-			newgamma = onpoints(gamma, perm, n);
+			copy_list(&(GS[poslist[mp]*n]), perm.data(), n);
+			newgamma = onpoints(gamma, perm.data(), n);
 			if (position(newgamma, orbit, *ol));
 			else {
 				/* Append to orbit */
 				orbit[(*ol)++] = newgamma;
 				/* Perm moving gamma to newgamma */
-				copy_list(perm, nu+(newgamma-1)*n, n);
+				copy_list(perm.data(), nu+(newgamma-1)*n, n);
 				/* Gamma backward pointer of newgamma */
 				*(w+newgamma-1) = gamma;
 			}
 		}
 		np++;
 	}
-	/* Free allocated memory */
-	free(perm);
 
 }
 
@@ -2895,10 +2733,10 @@ void one_schreier_orbit_chain(int point, int *GS, int *poslist, int poslistl,
 
 void conjugate_chain(int *base, int bl, int *GS, int m, int n, int *p) {
 	int j;
-	int *tmpperm = new int[n];
-	int *ip = new int[n];
+	std::vector<int> tmpperm(n);
+	std::vector<int> ip(n);
 	
-	inverse(p, ip, n);
+	inverse(p, ip.data(), n);
 
 
 /* Transform the base */
@@ -2908,12 +2746,10 @@ void conjugate_chain(int *base, int bl, int *GS, int m, int n, int *p) {
 
 /* Transform the GenSet */
 	for(j = 0; j < m; j++) {
-		product(&GS[n*j], p, tmpperm, n);
-		product(ip, tmpperm, &GS[n*j], n);
+		product(&GS[n*j], p, tmpperm.data(), n);
+		product(ip.data(), tmpperm.data(), &GS[n*j], n);
 	}
 
-	delete [] tmpperm;
-	delete [] ip;
 }
 
 
@@ -2923,80 +2759,64 @@ void conjugate_chain(int *base, int bl, int *GS, int m, int n, int *p) {
  * 
  */
 
-void basechange_chain(int **base, int *bl, int **GS, int *m, int n, int ***chain, int **cl, int *newbase, int newbl) {
-
-	int *orbit = new int[n];
+void basechange_chain(std::vector<int>& base, std::vector<int>& GS,
+                      int n, StabilizerChain& chain,
+                      const int *newbase, int newbl) {
+	std::vector<int> orbit(n);
 	int ol; 
 	int more=0;
-	int *nu = new int[n*n];
-	int *w = new int[n];
-	int *g = new int[n];
-	int *invg = new int[n];
-	int *g2 = new int[n];
-	int *g3 = new int[n];
+	std::vector<int> nu(n*n);
+	std::vector<int> w(n);
+	std::vector<int> g(n);
+	std::vector<int> invg(n);
+	std::vector<int> g2(n);
+	std::vector<int> g3(n);
 	int i,j, point;
-/*	int GSK[(*m)*n];*/
 	int pos;
-/*	FILE *file;*/
 	
 	i=1;
 
 	if(newbl>0){
-		one_schreier_orbit((*base)[0], *GS, *m, n, orbit, &ol, nu, w, 1);
-		more=position(newbase[0], orbit, ol);
+		one_schreier_orbit(base[0], GS.data(),
+		                   static_cast<int>(GS.size()/n), n,
+		                   orbit.data(), &ol, nu.data(), w.data(), 1);
+		more=position(newbase[0], orbit.data(), ol);
 	}
 	else{
 		more=0;
 	}
 	if(more>0){
-		trace_schreier(newbase[0], nu, w, g, n);
-		while(more>0 && i<*bl && i<newbl){
-/*			for(j=0; j < (*cl)[i]; j++) {
-				memmove(&GSK[n*j], &(*GS)[n*((*chain)[i][j])], n*sizeof(int));
-			}*/
-			inverse(g, invg, n);
-			point=onpoints(newbase[i], invg, n);
-/*			one_schreier_orbit((*base)[i], GSK, (*cl)[i], n, orbit, &ol, nu, w, 1);*/
-			one_schreier_orbit_chain((*base)[i], *GS, (*chain)[i], (*cl)[i], n, orbit, &ol, nu, w, 1);
-			more=position(point, orbit, ol);
+		trace_schreier(newbase[0], nu.data(), w.data(), g.data(), n);
+		while(more>0 && i<static_cast<int>(base.size()) && i<newbl){
+			inverse(g.data(), invg.data(), n);
+			point=onpoints(newbase[i], invg.data(), n);
+			one_schreier_orbit_chain(
+				base[i], GS.data(),
+				chain[i].data(), static_cast<int>(chain[i].size()),
+				n, orbit.data(), &ol, nu.data(), w.data(), 1);
+			more=position(point, orbit.data(), ol);
 			if(more>0){
-				trace_schreier(point, nu, w, g2, n);
-				product(g2,g,g3,n);
-				memmove(g, g3, n*sizeof(int));
+				trace_schreier(point, nu.data(), w.data(), g2.data(), n);
+				product(g2.data(),g.data(),g3.data(),n);
+				std::copy_n(g3.begin(), n, g.begin());
 			} 
 			i=i+1;
 		}
-	conjugate_chain(*base, *bl, *GS, *m, n, g); 
+		conjugate_chain(base.data(), static_cast<int>(base.size()),
+		                GS.data(), static_cast<int>(GS.size()/n),
+		                n, g.data());
 	}
 	for(j=i-1; j < newbl; j++) {
-		pos=position(newbase[j], *base, *bl);
+		pos=position(newbase[j], base.data(), static_cast<int>(base.size()));
 		if(pos==0){
-			appendbasepoint_chain(base, bl, chain, cl, newbase[j]);
-			pos=*bl;
+			appendbasepoint_chain(base, chain, newbase[j]);
+			pos=static_cast<int>(base.size());
 		}
-/*	        file = fopen("xpermlog.txt","a");
-        	fprintf(file,"i=%d, j=%d, pos=%d \n", i, j, pos);
-		fprint_list(file, *base, *bl, 1);
-        	fclose(file);*/
 
 		while((pos!=(j+1))&&(pos>1)){
-/*		        file = fopen("xpermlog.txt","a");
-	        	fprintf(file,"interchange_chain, pos=%d \n", pos);
-        		fclose(file);*/
-
-			interchange_chain(base, bl, GS, m, n, chain, cl, --pos);
+			interchange_chain(base, GS, n, chain, --pos);
 		}
 	}
-
-	delete [] orbit;
-	delete [] nu;
-	delete [] w;
-	delete [] g;
-	delete [] invg;
-	delete [] g2;
-	delete [] g3;
-
-
 }
 
 /* appendbasepoint_chain. TB, 12 March 2014
@@ -3005,16 +2825,11 @@ void basechange_chain(int **base, int *bl, int **GS, int *m, int n, int ***chain
  * 
  */
 
-void appendbasepoint_chain(int **base, int *bl, int ***chain, int **cl, int newbasepoint) {
-
-	(*bl)++;
-	*base=(int *)realloc(*base, (*bl)*sizeof(int));
-	*cl=(int *)realloc(*cl, (*bl)*sizeof(int));
-	*chain=(int* *)realloc(*chain, (*bl)*sizeof(int*));
-	(*base)[(*bl)-1]=newbasepoint;
-	(*cl)[(*bl)-1]=0;
-	(*chain)[(*bl)-1]=NULL;
-
+void appendbasepoint_chain(std::vector<int>& base,
+                           StabilizerChain& chain,
+                           int newbasepoint) {
+	base.push_back(newbasepoint);
+	chain.emplace_back();
 }
 
 /* interchange_chain. TB, 13 March 2014
@@ -3023,104 +2838,72 @@ void appendbasepoint_chain(int **base, int *bl, int ***chain, int **cl, int newb
  * 
  */
 
-void interchange_chain(int **base, int *bl, int **GS, int *m, int n, int ***chain, int **cl, int j) {
+void interchange_chain(std::vector<int>& base, std::vector<int>& GS,
+                       int n, StabilizerChain& chain, int j) {
 	
 	int basej, basejp1;
-	int *Deltaj = new int[n]; 
+	std::vector<int> Deltaj(n);
 	int Deltajl;
-	int *nuj = new int[n*n];
-	int *wj = new int[n];
-	int *Deltajp1 = new int[n]; 
+	std::vector<int> nuj(n*n);
+	std::vector<int> wj(n);
+	std::vector<int> Deltajp1(n);
 	int Deltajp1l;
 	int orbitjp1jm1l;
-	int *nujp1 = new int[n*n];
-	int *wjp1 = new int[n];
+	std::vector<int> nujp1(n*n);
+	std::vector<int> wjp1(n);
 	int i,k;
-	int *GSK = new int[(*m)*n];
+	std::vector<int> GSK(GS.size());
 	int LDeltaBarjp1;
-	int *T=NULL;
+	std::vector<int> T;
 	int Tl=0;
-	int *Gamma=NULL;
+	std::vector<int> Gamma;
 	int Gammal;
-	int *Delta = new int[n];
+	std::vector<int> Delta(n);
 	int Deltal, gamma, p, pos;
-	int *g1 = new int[n];
-	int *invg1 = new int[n];
-	int *g2 = new int[n]; 
-	int *g2g1 = new int[n];
-	int *orbitgammaT = new int[n]; 
+	std::vector<int> g1(n);
+	std::vector<int> invg1(n);
+	std::vector<int> g2(n);
+	std::vector<int> g2g1(n);
+	std::vector<int> orbitgammaT(n);
 	int orbitgammaTl;
-	int *newT=NULL;
+	std::vector<int> newT;
 	int newTl, oldm;
-	int *gsp=NULL; 
+	std::vector<int> gsp;
 
-/*	FILE *file;*/
+	basej=base[j-1];
+	basejp1=base[j];
+	oldm=static_cast<int>(GS.size()/n);
 
+	one_schreier_orbit_chain(
+		basejp1, GS.data(), chain[j].data(),
+		static_cast<int>(chain[j].size()), n,
+		Deltajp1.data(), &Deltajp1l, nujp1.data(), wjp1.data(), 1);
 
-	basej=(*base)[j-1];
-	basejp1=(*base)[j];
-	oldm=*m;
+	one_orbit_chain(
+		basejp1, GS.data(), chain[j-1].data(),
+		static_cast<int>(chain[j-1].size()), n,
+		Deltaj.data(), &orbitjp1jm1l);
 
-/*        file = fopen("xpermlog.txt","a");
-       	fprintf(file,"Inside interchange_chain: m=%d, basej=%d, basejp1=%d \n",*m, basej, basejp1);
-	fprintf(file,"base=");
-	fprint_list(file, *base, *bl, 1);
-       	fclose(file);
-
-        file = fopen("xpermlog.txt","a");
-	fprintf(file,"cl=");
-	fprint_list(file, *cl, *bl, 1);
-       	fclose(file);*/
-
-
-/*	for(i=0; i < (*cl)[j]; i++) {
-		memmove(&GSK[n*i], &(*GS)[n*((*chain)[j][i])], n*sizeof(int));
-	}
-	one_schreier_orbit(basejp1, GSK, (*cl)[j], n, Deltajp1, &Deltajp1l, nujp1, wjp1, 1);
-*/
-
-	one_schreier_orbit_chain(basejp1, *GS,(*chain)[j], (*cl)[j], n, Deltajp1, &Deltajp1l, nujp1, wjp1, 1);
-
-
-/*        file = fopen("xpermlog.txt","a");
-	fprintf(file,"Deltajp1=");
-	fprint_list(file, Deltajp1, Deltajp1l, 1);
-       	fclose(file);*/
-
-	
-/*	for(i=0; i < (*cl)[j-1]; i++) {
-		memmove(&GSK[n*i], &(*GS)[n*((*chain)[j-1][i])], n*sizeof(int));
-	}
-
-	one_orbit(basejp1, GSK, (*cl)[j-1], n, Deltaj, &orbitjp1jm1l);
-
-	one_schreier_orbit(basej, GSK, (*cl)[j-1], n, Deltaj, &Deltajl, nuj, wj, 1);
-*/
-
-	one_orbit_chain(basejp1, *GS, (*chain)[j-1], (*cl)[j-1], n, Deltaj, &orbitjp1jm1l);
-
-	one_schreier_orbit_chain(basej, *GS,(*chain)[j-1], (*cl)[j-1], n, Deltaj, &Deltajl, nuj, wj, 1);
-
-/*        file = fopen("xpermlog.txt","a");
-	fprintf(file,"Deltaj=");
-	fprint_list(file, Deltaj, Deltajl, 1);
-       	fclose(file);*/
+	one_schreier_orbit_chain(
+		basej, GS.data(), chain[j-1].data(),
+		static_cast<int>(chain[j-1].size()), n,
+		Deltaj.data(), &Deltajl, nuj.data(), wj.data(), 1);
 
 
 	LDeltaBarjp1=Deltajp1l*Deltajl/orbitjp1jm1l;	
 
-	if(j+1<*bl){
-		T=(int *)malloc(((*cl)[j+1])*n*sizeof(int));
-		Tl=(*cl)[j+1];
-		for(i=0; i < (*cl)[j+1]; i++) {
-			memmove(&T[n*i], &(*GS)[n*((*chain)[j+1][i])], n*sizeof(int));
+	if(j+1<static_cast<int>(base.size())){
+		T.resize(chain[j+1].size()*n);
+		Tl=static_cast<int>(chain[j+1].size());
+		for(i=0; i<Tl; i++) {
+			std::copy_n(GS.begin()+n*chain[j+1][i], n, T.begin()+n*i);
 		}
 	}
 	
-	Gamma=(int *)malloc(Deltajl*sizeof(int));
+	Gamma.resize(Deltajl);
 	Gammal=0;
 
-	sort(Deltaj, Gamma, Deltajl);
+	sort(Deltaj.data(), Gamma.data(), Deltajl);
 
 	for(i=0; i<Deltajl; i++){
 		if((Gamma[i]!=basej)&&(Gamma[i]!=basejp1)){
@@ -3130,137 +2913,89 @@ void interchange_chain(int **base, int *bl, int **GS, int *m, int n, int ***chai
 	Delta[0]=basej;
 	Deltal=1;
 	
-/*        file = fopen("xpermlog.txt","a");
-       	fprintf(file,"Delta=");
-	fprint_list(file, Delta, Deltal, 1);
-       	fclose(file);*/
-
-
 	while(Deltal < LDeltaBarjp1){
 
 		gamma=Gamma[0];
-		trace_schreier(gamma, nuj, wj, g1, n);
-		inverse(g1, invg1, n);
-		p=onpoints(basejp1, invg1, n);
+		trace_schreier(gamma, nuj.data(), wj.data(), g1.data(), n);
+		inverse(g1.data(), invg1.data(), n);
+		p=onpoints(basejp1, invg1.data(), n);
 
-/*	        file = fopen("xpermlog.txt","a");
-       		fprintf(file,"gamma=%d, p=%d\n", gamma, p);
-       		fclose(file);*/
-
-		pos=position(p, Deltajp1, Deltajp1l);
+		pos=position(p, Deltajp1.data(), Deltajp1l);
 		if(pos==0){
-/*		        file = fopen("xpermlog.txt","a");
-	       		fprintf(file,"p in Deltajp1\n");
-       			fclose(file);*/
 
-			one_orbit(gamma, T, Tl, n, orbitgammaT, &orbitgammaTl);
+			one_orbit(gamma, T.data(), Tl, n, orbitgammaT.data(), &orbitgammaTl);
 			k=0;
 			for(i=0; i<Gammal; i++){
-				if(position(Gamma[i],orbitgammaT, orbitgammaTl)==0){
+				if(position(Gamma[i],orbitgammaT.data(), orbitgammaTl)==0){
 					Gamma[k++]=Gamma[i];
 				}
 			}
 			Gammal=k;
 		}
 		else{
-/*		        file = fopen("xpermlog.txt","a");
-	       		fprintf(file,"p not in Deltajp1\n");
-       			fclose(file);*/
-
-			trace_schreier(p, nujp1, wjp1, g2, n);
-			product(g2,g1,g2g1,n);
+			trace_schreier(p, nujp1.data(), wjp1.data(), g2.data(), n);
+			product(g2.data(),g1.data(),g2g1.data(),n);
 			Tl++;
-			T=(int *)realloc(T,Tl*n*sizeof(int));
-			memmove(&T[n*(Tl-1)], g2g1, n*sizeof(int));
-			one_orbit(basej, T, Tl, n, Delta, &Deltal);
-
+			T.resize(Tl*n);
+			std::copy_n(g2g1.begin(), n, T.begin()+n*(Tl-1));
+			one_orbit(basej, T.data(), Tl, n, Delta.data(), &Deltal);
 			
 			k=0;
 			for(i=0; i<Gammal; i++){
-				if(position(Gamma[i], Delta, Deltal)==0){
+				if(position(Gamma[i], Delta.data(), Deltal)==0){
 					Gamma[k++]=Gamma[i];
 				}
 			}
 			Gammal=k;
 
 		}
-
 		
 	}
 
-/*        file = fopen("xpermlog.txt","a");
-       	fprintf(file,"After loop: Tl=%d\n", Tl);
-	fprint_list(file,T,Tl*n,1);
-       	fclose(file);*/
-
-	newT=(int *)malloc(Tl*n*sizeof(int));
+	newT.resize(Tl*n);
 	newTl=0;
 
-	for(i=0; i < (*cl)[j-1]; i++) {
-		memmove(&GSK[n*i], &(*GS)[n*((*chain)[j-1][i])], n*sizeof(int));
+	for(i=0; i<static_cast<int>(chain[j-1].size()); i++){
+		std::copy_n(
+			GS.begin()+n*chain[j-1][i], n,
+			GSK.begin()+n*i);
 	}
 
-	if(j+1<*bl){
-		complement(&T[n*((*cl)[j+1])], Tl-(*cl)[j+1], GSK, (*cl)[j-1], n, newT, &newTl);
+	if(j+1<static_cast<int>(base.size())){
+		complement(
+			T.data()+n*chain[j+1].size(),
+			Tl-static_cast<int>(chain[j+1].size()),
+			GSK.data(), static_cast<int>(chain[j-1].size()),
+			n, newT.data(), &newTl);
 	}
 	else{
-		complement(T, Tl, GSK, (*cl)[j-1], n, newT, &newTl);
+		complement(
+			T.data(), Tl, GSK.data(),
+			static_cast<int>(chain[j-1].size()),
+			n, newT.data(), &newTl);
 	}
-	
 
-	(*GS)=(int *)realloc(*GS, (newTl+oldm)*n*sizeof(int));
-	memmove(&((*GS)[n*(*m)]), newT, newTl*n*sizeof(int));
-	(*m)=newTl+oldm;
+	GS.resize((newTl+oldm)*n);
+	std::copy_n(newT.begin(), newTl*n, GS.begin()+oldm*n);
 
-	(*base)[j-1]=basejp1;
-	(*base)[j]=basej;
-
-/*        file = fopen("xpermlog.txt","a");
-       	fprintf(file,"newTl=%d\n", newTl);
-	fprint_list(file,newT,newTl*n,1);
-       	fclose(file);*/
-
+	base[j-1]=basejp1;
+	base[j]=basej;
 
 	for(i=0;i<j;i++){
-		(*chain)[i] = (int *)realloc((*chain)[i],(newTl+(*cl)[i])*sizeof(int));
+		const std::size_t oldSize = chain[i].size();
+		chain[i].resize(oldSize+newTl);
 		for(k=0;k<newTl;k++){
-			(*chain)[i][k+(*cl)[i]]=k+oldm;
-		}
-		(*cl)[i]=newTl+(*cl)[i];
-		
-	}
-
-	gsp=(int*)malloc(((*cl)[j-1])*sizeof(int));
-
-	(*cl)[j]=0;
-
-	for(i=0; i<(*cl)[j-1]; i++) {
-		if (onpoints(basejp1, &((*GS)[n*((*chain)[j-1][i])]),n) == basejp1) {
-			gsp[(*cl)[j]]=(*chain)[j-1][i];
-			(*cl)[j]++;
+			chain[i][k+oldSize]=k+oldm;
 		}
 	}
-	(*chain)[j] = (int*)realloc((*chain)[j],((*cl)[j])*sizeof(int));
-	memmove((*chain)[j], gsp, (*cl)[j]*sizeof(int));
-
-	free(gsp);
-
-	free(T);
-	free(newT);
-	free(Gamma);
-
-		delete [] Deltaj;
-	delete [] nuj;
-	delete [] wj;
-	delete [] nujp1;
-	delete [] wjp1;
-	delete [] GSK;
-	delete [] Delta;
-	delete [] g1;
-	delete [] invg1;
-	delete [] g2;
-	delete [] g2g1;
-	delete [] orbitgammaT;
 
 
+	gsp.resize(chain[j-1].size());
+	chain[j].clear();
+	for(i=0; i<static_cast<int>(chain[j-1].size()); i++) {
+		if (onpoints(basejp1,
+		             GS.data()+n*chain[j-1][i], n) == basejp1) {
+			chain[j].push_back(chain[j-1][i]);
+		}
+	}
 }

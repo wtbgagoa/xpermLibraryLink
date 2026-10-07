@@ -1,6 +1,10 @@
 #include "xperm.h"
 #include "LLInterface.hpp"
 
+#include <algorithm>
+#include <cstddef>
+#include <vector>
+
 
 
 /********************************************************************** 
@@ -33,28 +37,36 @@ EXTERN_C DLLEXPORT int LL_schreier_sims(WolframLibraryData libData, WSLINK wslp)
 }
 
 
-void ML_schreier_sims( int *base, long bl, int *GS, long m, int n, WSLINK stdlink) {
+void ML_schreier_sims(
+    int *base, long bl,
+    int *GS, long m,
+    int n, WSLINK stdlink) {
 
-	int *newbase = new int[n];
-	int nbl;
-	int **newGS = nullptr;
-	int *pointer = new int[m*n];
-	int nm;
-	int num=0;
+    std::vector<int> newBase(static_cast<std::size_t>(n));
+    std::vector<int> newGS(GS, GS + m);
+    int newBaseLength;
+    int newGeneratorCount;
+    int iterationCount = 0;
 
-	newGS = &pointer;
+    schreier_sims(
+        base,
+        static_cast<int>(bl),
+        GS,
+        static_cast<int>(m / n),
+        n,
+        newBase.data(),
+        &newBaseLength,
+        newGS,
+        &newGeneratorCount,
+        &iterationCount);
 
-	schreier_sims(base, bl, GS, m/n, n, newbase, &nbl, newGS, &nm, &num);
-	WSPutFunction(stdlink, "StrongGenSet", 3);
-	WSPutIntegerList(stdlink, newbase, nbl);
-	WSPutIntegerList(stdlink, *newGS, nm*n);
-	WSPutInteger(stdlink, n);
-
-	delete [] pointer;
-	delete [] newbase;
-
-	return;
-
+    WSPutFunction(stdlink, "StrongGenSet", 3);
+    WSPutIntegerList(stdlink, newBase.data(), newBaseLength);
+    WSPutIntegerList(
+        stdlink,
+        newGS.data(),
+        newGeneratorCount * n);
+    WSPutInteger(stdlink, n);
 }
 
 /**********************************************************************/
@@ -235,39 +247,44 @@ EXTERN_C DLLEXPORT int LL_set_stabilizer(WolframLibraryData libData, WSLINK wslp
 } 
 
 void ML_set_stabilizer(
-        int *list, long nn,
-        int n,
-        int *base, long bl,
-        int *GS, long m, WSLINK stdlink) {
+    int *list, long nn,
+    int n,
+    int *base, long bl,
+    int *GS, long m, WSLINK stdlink) {
 
-        int num=0;
-        int *charac=NULL, i;
-        int *pointer=NULL;
-        int **GSK=NULL, mK;
-        pointer= new int[m];
-        GSK = &pointer;
-        charac= new int[n];
-        /* Convert list of points into a characteristic function */
-        zeros(charac,n);
-        for(i=0; i<nn; i++) {
-                charac[list[i]-1]=1;
-        }
+    int iterationCount = 0;
+    int subgroupGeneratorCount = 0;
+    std::vector<int> characteristic(static_cast<std::size_t>(n), 0);
+    std::vector<int> subgroupGenerators;
+    subgroupGenerators.reserve(static_cast<std::size_t>(m));
 
-        /* Note that even though we send a characteristic function of
-           n points, we send the length nn of the original list. We
-           need both in the computations */
-	search(base, bl, GS, m/n, n, 4, charac, nn, 1, GSK, &mK, &num);
+    for (long i = 0; i < nn; ++i) {
+        characteristic[static_cast<std::size_t>(list[i] - 1)] = 1;
+    }
 
-	WSPutFunction(stdlink, "StrongGenSet", 3);
-	WSPutIntegerList(stdlink, base, bl);
-	WSPutIntegerList(stdlink, *GSK, mK*n);
-	WSPutInteger(stdlink, n);
+    /* Although characteristic has n entries, nn is the length of the
+       original point list and is also required by the search. */
+    search(
+        base,
+        static_cast<int>(bl),
+        GS,
+        static_cast<int>(m / n),
+        n,
+        4,
+        characteristic.data(),
+        static_cast<int>(nn),
+        1,
+        subgroupGenerators,
+        &subgroupGeneratorCount,
+        &iterationCount);
 
-        delete [] pointer;
-        delete [] charac;
-        
-	return;
-
+    WSPutFunction(stdlink, "StrongGenSet", 3);
+    WSPutIntegerList(stdlink, base, static_cast<int>(bl));
+    WSPutIntegerList(
+        stdlink,
+        subgroupGenerators.data(),
+        subgroupGeneratorCount * n);
+    WSPutInteger(stdlink, n);
 }
 
 /**********************************************************************/
@@ -306,67 +323,27 @@ EXTERN_C DLLEXPORT int LL_basechangestabchain(WolframLibraryData libData, WSLINK
 } 
 
 
-void ML_basechangestabchain(
-	int n,
-	int *base, long bl,
-	int *GS, long m,
-	int *newbase, long nn, WSLINK stdlink) {
-	
-	int i, k;
-	int *cl=NULL;
-	int **chain=NULL;
-	int *GSK=NULL;
-	int nbl;
-	int *nGS=NULL;
-	int gslen=m/n;
-	int *nbase = NULL;
-
-	nbase = (int *)malloc(bl*sizeof(int));
-	cl=(int *)malloc(bl*sizeof(int));
-	chain=(int* *)malloc(bl*sizeof(int*));
-	nGS=(int *)malloc(m*sizeof(int));
-
-	nbl=bl;
-
-	zeros(cl,nbl);
-
-	for(i=0; i < nbl; i++) {
-		chain[i]=NULL;
-	}
-
-	stab_chain(base, nbl, GS, gslen, n, chain, cl); 
-	
-	memmove(nbase, base, nbl*sizeof(int));
-	memmove(nGS, GS, m*sizeof(int));
-	
-	basechange_chain(&nbase, &nbl, &nGS, &gslen, n, &chain, &cl, newbase, nn);
-
-	GSK=(int *)malloc(gslen*n*sizeof(int));	
-
-	WSPutFunction(stdlink, "List", nbl);
-
-	for(i=0; i < nbl; i++) {
-		for(k=0; k < cl[i]; k++) {
-			memmove(&GSK[n*k], &nGS[n*(chain[i][k])], n*sizeof(int));
-		}
-
-		WSPutFunction(stdlink, "StrongGenSet", 3);
-		WSPutIntegerList(stdlink, nbase+i, nbl-i);
-		WSPutIntegerList(stdlink, GSK, n*cl[i]);
-		WSPutInteger(stdlink, n);
-	}
-
-	for(i=0; i < nbl; i++) {
-		free(chain[i]);
-	}
-	free(nbase);
-	free(nGS);
-	free(GSK);
-	free(cl);
-	free(chain);
-
-	return;
-
+void ML_basechangestabchain(int n, int *base, long bl, int *GS, long m,
+    int *newbase, long nn, WSLINK stdlink) {
+    std::vector<int> changedBase(base, base + bl);
+    std::vector<int> changedGS(GS, GS + m);
+    StabilizerChain chain;
+    stab_chain(changedBase.data(), static_cast<int>(changedBase.size()),
+        changedGS.data(), static_cast<int>(changedGS.size() / n), n, chain);
+    basechange_chain(changedBase, changedGS, n, chain, newbase, static_cast<int>(nn));
+    WSPutFunction(stdlink, "List", static_cast<int>(changedBase.size()));
+    for (std::size_t i = 0; i < changedBase.size(); ++i) {
+        const auto& level = chain[i];
+        std::vector<int> levelGS(level.size() * static_cast<std::size_t>(n));
+        for (std::size_t k = 0; k < level.size(); ++k)
+            std::copy_n(changedGS.data() + static_cast<std::size_t>(n) * level[k], n,
+                        levelGS.data() + static_cast<std::size_t>(n) * k);
+        WSPutFunction(stdlink, "StrongGenSet", 3);
+        WSPutIntegerList(stdlink, changedBase.data() + i,
+                         static_cast<int>(changedBase.size() - i));
+        WSPutIntegerList(stdlink, levelGS.data(), static_cast<int>(levelGS.size()));
+        WSPutInteger(stdlink, n);
+    }
 }
 
 /**********************************************************************/
@@ -403,60 +380,23 @@ EXTERN_C DLLEXPORT int LL_basechange(WolframLibraryData libData, WSLINK wslp)
 } 
 
 
-void ML_basechange(
-	int n,
-	int *base, long bl,
-	int *GS, long m,
-	int *newbase, long nn, WSLINK stdlink) {
-	
-	int i, k;
-	int *cl=NULL;
-	int **chain= new int*[bl];
-	int *GSK=NULL;
-	int nbl;
-	int *nGS=NULL;
-	int gslen=m/n;
-	int *nbase = NULL;
-
-	nbase = (int *)malloc(bl*sizeof(int));
-	cl=(int *)malloc(bl*sizeof(int));
-	nGS=(int *)malloc(m*sizeof(int));
-
-	nbl=bl;
-
-	zeros(cl,bl);
-
-	for(i=0; i < bl; i++) {
-		chain[i]= new int[nbl];
-	}
-
-	stab_chain(base, nbl, GS, gslen, n, chain, cl); 
-	
-	memmove(nbase, base, bl*sizeof(int));
-	memmove(nGS, GS, m*sizeof(int));
-	
-	basechange_chain(&nbase, &nbl, &nGS, &gslen, n, &chain, &cl, newbase, nn);
-
-	GSK=(int *)malloc(gslen*n*sizeof(int));
-
-	for(k=0; k < cl[0]; k++) {
-		memmove(&GSK[n*k], &nGS[n*(chain[0][k])], n*sizeof(int));
-	}
-	WSPutFunction(stdlink, "StrongGenSet", 3);
-	WSPutIntegerList(stdlink, nbase, nbl);
-	WSPutIntegerList(stdlink, GSK, n*cl[0]);
-	WSPutInteger(stdlink, n);
-	
-
-	for(i=0; i < bl; i++) {
-		delete [] chain[i];
-	}
-	free(nbase);
-	free(nGS);
-	free(GSK);
-	free(cl);
-	delete [] chain;
-
+void ML_basechange(int n, int *base, long bl, int *GS, long m,
+    int *newbase, long nn, WSLINK stdlink) {
+    std::vector<int> changedBase(base, base + bl);
+    std::vector<int> changedGS(GS, GS + m);
+    StabilizerChain chain;
+    stab_chain(changedBase.data(), static_cast<int>(changedBase.size()),
+        changedGS.data(), static_cast<int>(changedGS.size() / n), n, chain);
+    basechange_chain(changedBase, changedGS, n, chain, newbase, static_cast<int>(nn));
+    const auto& level = chain.front();
+    std::vector<int> levelGS(level.size() * static_cast<std::size_t>(n));
+    for (std::size_t k = 0; k < level.size(); ++k)
+        std::copy_n(changedGS.data() + static_cast<std::size_t>(n) * level[k], n,
+                    levelGS.data() + static_cast<std::size_t>(n) * k);
+    WSPutFunction(stdlink, "StrongGenSet", 3);
+    WSPutIntegerList(stdlink, changedBase.data(), static_cast<int>(changedBase.size()));
+    WSPutIntegerList(stdlink, levelGS.data(), static_cast<int>(levelGS.size()));
+    WSPutInteger(stdlink, n);
 }
 
 
@@ -498,74 +438,29 @@ EXTERN_C DLLEXPORT int LL_stabsgs(WolframLibraryData libData, WSLINK wslp)
 
 
 
-void ML_stabsgs(
-	int n,
-	int *base, long bl,
-	int *GS, long m,
-	int *pts, long ptsl, WSLINK stdlink) {
-	
-	int i, k;
-	int *cl=NULL;
-	int **chain=NULL;
-	int *GSK=NULL;
-	int nbl;
-	int tmpbasel;
-	int *tmpbase=NULL;
-	int *nGS=NULL;
-	int gslen=m/n;
-	int *nbase = NULL;
-
-	tmpbase= (int *)malloc((bl+ptsl)*sizeof(int));
-	nbase = (int *)malloc(bl*sizeof(int));
-	cl=(int *)malloc(bl*sizeof(int));
-	chain=(int* *)malloc(bl*sizeof(int*));
-	nGS=(int *)malloc(m*sizeof(int));
-
-	nbl=bl;
-
-	zeros(cl,bl);
-
-	for(i=0; i < nbl; i++) {
-		chain[i]=NULL;
-	}
-
-	stab_chain(base, nbl, GS, gslen, n, chain, cl); 
-	
-	memmove(nbase, base, bl*sizeof(int));
-	memmove(nGS, GS, m*sizeof(int));
-	
-	/* We want to keep the order of the remaining base points  - updated 2014-09-24 */
-	
-	memmove(tmpbase, pts, ptsl*sizeof(int));
-	tmpbasel=ptsl;
-	
-	for(k=0; k < bl; k++) {
-		if(!position(base[k], pts, ptsl)){
-			tmpbase[tmpbasel++]=base[k];
-		};
-	}
-	
-	basechange_chain(&nbase, &nbl, &nGS, &gslen, n, &chain, &cl, tmpbase, tmpbasel);
-
-	GSK=(int *)malloc(gslen*n*sizeof(int));
-
-	for(k=0; k < cl[ptsl]; k++) {
-		memmove(&GSK[n*k], &nGS[n*(chain[ptsl][k])], n*sizeof(int));
-	}
-	WSPutFunction(stdlink, "StrongGenSet", 3);
-	WSPutIntegerList(stdlink, &(nbase[ptsl]), nbl-ptsl);
-	WSPutIntegerList(stdlink, GSK, n*cl[ptsl]);
-	WSPutInteger(stdlink, n);
-	
-
-	for(i=0; i < nbl; i++) {
-		free(chain[i]);
-	}
-	free(nbase);
-	free(nGS);
-	free(GSK);
-	free(cl);
-	free(chain);
-
+void ML_stabsgs(int n, int *base, long bl, int *GS, long m,
+    int *pts, long ptsl, WSLINK stdlink) {
+    std::vector<int> changedBase(base, base + bl);
+    std::vector<int> changedGS(GS, GS + m);
+    StabilizerChain chain;
+    stab_chain(changedBase.data(), static_cast<int>(changedBase.size()),
+        changedGS.data(), static_cast<int>(changedGS.size() / n), n, chain);
+    std::vector<int> requestedBase(pts, pts + ptsl);
+    requestedBase.reserve(static_cast<std::size_t>(ptsl + bl));
+    for (long k = 0; k < bl; ++k)
+        if (!position(base[k], pts, static_cast<int>(ptsl))) requestedBase.push_back(base[k]);
+    basechange_chain(changedBase, changedGS, n, chain, requestedBase.data(),
+                     static_cast<int>(requestedBase.size()));
+    const std::size_t levelIndex = static_cast<std::size_t>(ptsl);
+    const auto& level = chain[levelIndex];
+    std::vector<int> levelGS(level.size() * static_cast<std::size_t>(n));
+    for (std::size_t k = 0; k < level.size(); ++k)
+        std::copy_n(changedGS.data() + static_cast<std::size_t>(n) * level[k], n,
+                    levelGS.data() + static_cast<std::size_t>(n) * k);
+    WSPutFunction(stdlink, "StrongGenSet", 3);
+    WSPutIntegerList(stdlink, changedBase.data() + levelIndex,
+                     static_cast<int>(changedBase.size() - levelIndex));
+    WSPutIntegerList(stdlink, levelGS.data(), static_cast<int>(levelGS.size()));
+    WSPutInteger(stdlink, n);
 }
 
