@@ -2,13 +2,13 @@
 *********************************************************************
 *********************************************************************
 *
-*  xperm.c
+*  xperm.cpp
 *
 * 	(C) Jose M. Martin-Garcia 2003-2008.
-*      jmm@iem.cfmac.csic.es, IEM, CSIC, Madrid, Spain.
+*      jose@xact.es
 *
 *	This is free software, distributed under the GNU GPL license.
-*      See http://metric.iem.csic.es/Martin-Garcia/xAct/
+*      See http://xact.es/
 *
 *  These are a collection of C-functions that find Strong Generating
 *  Sets, Coset representatives and Double-coset representatives.
@@ -24,6 +24,9 @@
 *  25-28 June 2007. Large extension to included multiple dummysets and
 *     repeatedsets.
 *   2015. Eliminate nested functions. Kasper Peeters.
+*   2023 MathLink changed to LibraryLink and some C-code translated to C++ by Alfonso.
+*   2026 Remaining C-code translated to C++. Changed linking to avoid WSTP.
+*   All new and changed code written by ChatGPT 5.6 Sol under prompting by Thomas Bäckdahl
 *
 *  Main ideas:
 *      - Permutations are represented using Images notation.
@@ -35,11 +38,6 @@
 *	- Permutations are assumed to have degree n>0.
 *	- Lists can have length 0 or positive.
 *
-*  This is ISO C99, not ANSI-C. There are some gcc extensions:
-*	- ISO C forbids nested functions
-*	- ISO C89 forbids mixed declarations and code
-*	- ISO C90 does not support `long long'
-*	- ISO C90 forbids variable-size arrays
 *
 *********************************************************************
 *********************************************************************
