@@ -63,57 +63,57 @@ int integerVectorResult(WolframLibraryData libraryData, const Row &values,
   return LIBRARY_NO_ERROR;
 }
 
-// Encoded structured result. Each row is {tag, index, length, data...}.
-// tag 0 = degree, 1 = base, 2 = flattened generators.
-int structuredResult(WolframLibraryData libraryData,
-                     const std::vector<Row> &rows, MArgument result) {
-  std::size_t width = 3;
-  for (const Row &row : rows)
-    width = std::max(width, row.size());
-  mint dimensions[2] = {static_cast<mint>(rows.size()),
-                        static_cast<mint>(width)};
-  MTensor tensor = nullptr;
-  if (libraryData->MTensor_new(MType_Integer, 2, dimensions, &tensor) !=
-      LIBRARY_NO_ERROR)
-    return LIBRARY_MEMORY_ERROR;
-  mint *data = libraryData->MTensor_getIntegerData(tensor);
-  if (!data && !rows.empty()) {
-    libraryData->MTensor_free(tensor);
-    return LIBRARY_MEMORY_ERROR;
-  }
-  if (!rows.empty())
-    std::fill(data, data + rows.size() * width, static_cast<mint>(0));
-  for (std::size_t i = 0; i < rows.size(); ++i)
-    for (std::size_t j = 0; j < rows[i].size(); ++j)
-      data[i * width + j] = static_cast<mint>(rows[i][j]);
-  MArgument_setMTensor(result, tensor);
-  return LIBRARY_NO_ERROR;
-}
-
-Row encodedRow(int tag, int index, const int *data, std::size_t length) {
-  Row row{tag, index, static_cast<int>(length)};
-  if (length != 0)
-    row.insert(row.end(), data, data + length);
-  return row;
-}
-
-Row encodedScalar(int tag, int index, int value) {
-  return Row{tag, index, 1, value};
-}
-
 bool validGenerators(const Row &generators, int degree) {
   return degree > 0 &&
          generators.size() % static_cast<std::size_t>(degree) == 0;
 }
 
+// A StrongGenSet is serialized as one integer stream:
+//   {degree, baseLength, generatorCount, base..., flattenedGenerators...}
+Row encodeStrongGenSet(int degree, const Row &base, const Row &generators) {
+  const std::size_t generatorCount =
+      generators.size() / static_cast<std::size_t>(degree);
+
+  Row encoded;
+  encoded.reserve(3 + base.size() + generators.size());
+  encoded.push_back(degree);
+  encoded.push_back(static_cast<int>(base.size()));
+  encoded.push_back(static_cast<int>(generatorCount));
+  encoded.insert(encoded.end(), base.begin(), base.end());
+  encoded.insert(encoded.end(), generators.begin(), generators.end());
+  return encoded;
+}
+
 int strongGenSetResult(WolframLibraryData libraryData, const Row &base,
-                       const Row &generators, int degree, MArgument result,
-                       int index = 0) {
-  std::vector<Row> rows;
-  rows.push_back(encodedScalar(0, index, degree));
-  rows.push_back(encodedRow(1, index, base.data(), base.size()));
-  rows.push_back(encodedRow(2, index, generators.data(), generators.size()));
-  return structuredResult(libraryData, rows, result);
+                       const Row &generators, int degree, MArgument result) {
+  if (!validGenerators(generators, degree))
+    return LIBRARY_FUNCTION_ERROR;
+
+  return integerVectorResult(libraryData,
+                             encodeStrongGenSet(degree, base, generators),
+                             result);
+}
+
+// A chain is serialized as:
+//   {streamCount, streamLength1, ..., streamLengthN,
+//    strongGenSetStream1..., ..., strongGenSetStreamN...}
+// Every embedded stream uses exactly the same format as encodeStrongGenSet.
+int strongGenSetChainResult(WolframLibraryData libraryData,
+                            const std::vector<Row> &streams,
+                            MArgument result) {
+  std::size_t totalLength = 1 + streams.size();
+  for (const Row &stream : streams)
+    totalLength += stream.size();
+
+  Row encoded;
+  encoded.reserve(totalLength);
+  encoded.push_back(static_cast<int>(streams.size()));
+  for (const Row &stream : streams)
+    encoded.push_back(static_cast<int>(stream.size()));
+  for (const Row &stream : streams)
+    encoded.insert(encoded.end(), stream.begin(), stream.end());
+
+  return integerVectorResult(libraryData, encoded, result);
 }
 } // namespace
 
@@ -237,23 +237,32 @@ EXTERN_C DLLEXPORT int LL_basechangestabchain(WolframLibraryData libraryData,
     if (chain.size() < changedBase.size())
       return LIBRARY_FUNCTION_ERROR;
 
-    std::vector<Row> rows;
-    for (std::size_t levelIndex = 0; levelIndex < changedBase.size(); ++levelIndex) {
+    std::vector<Row> streams;
+    streams.reserve(changedBase.size());
+
+    for (std::size_t levelIndex = 0; levelIndex < changedBase.size();
+         ++levelIndex) {
       const auto &level = chain[levelIndex];
+
+      Row levelBase(changedBase.begin() +
+                        static_cast<std::ptrdiff_t>(levelIndex),
+                    changedBase.end());
       Row levelGenerators(level.size() * static_cast<std::size_t>(degree));
-      for (std::size_t k = 0; k < level.size(); ++k)
-        std::copy_n(changedGenerators.data() +
-                        static_cast<std::size_t>(degree) * level[k],
-                    degree, levelGenerators.data() +
-                                static_cast<std::size_t>(degree) * k);
-      rows.push_back(encodedScalar(0, static_cast<int>(levelIndex), degree));
-      rows.push_back(encodedRow(1, static_cast<int>(levelIndex),
-                                changedBase.data() + levelIndex,
-                                changedBase.size() - levelIndex));
-      rows.push_back(encodedRow(2, static_cast<int>(levelIndex),
-                                levelGenerators.data(), levelGenerators.size()));
+      for (std::size_t generatorIndex = 0; generatorIndex < level.size();
+           ++generatorIndex) {
+        const std::size_t sourceOffset =
+            static_cast<std::size_t>(degree) * level[generatorIndex];
+        const std::size_t destinationOffset =
+            static_cast<std::size_t>(degree) * generatorIndex;
+        std::copy_n(changedGenerators.data() + sourceOffset, degree,
+                    levelGenerators.data() + destinationOffset);
+      }
+
+      streams.push_back(
+          encodeStrongGenSet(degree, levelBase, levelGenerators));
     }
-    return structuredResult(libraryData, rows, result);
+
+    return strongGenSetChainResult(libraryData, streams, result);
   } catch (const std::bad_alloc &) {
     return LIBRARY_MEMORY_ERROR;
   } catch (const std::exception &) {

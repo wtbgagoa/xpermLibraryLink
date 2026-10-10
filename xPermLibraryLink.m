@@ -20,7 +20,6 @@ LoadxPermLibraryLink::load = "Could not load the xPerm LibraryLink library `1`."
 LoadxPermLibraryLink::format = "Unexpected structured result returned by native function `1`.";
 
 IntegerVector = {Integer, 1};
-IntegerMatrix = {Integer, 2};
 
 ClearAll[LibLoad];
 LibLoad[name_, arguments_, result_] := Module[{function},
@@ -29,36 +28,54 @@ LibLoad[name_, arguments_, result_] := Module[{function},
   function
 ];
 
-ClearAll[RowData];
-RowData[row_List] := Take[row, {4, 3 + row[[3]]}];
-
 ClearAll[DecodeStrongGenSet];
-DecodeStrongGenSet[encoded_?MatrixQ] := Module[{degreeRows, baseRows, generatorRows},
-  degreeRows = Select[encoded, #[[1]] == 0 &];
-  baseRows = Select[encoded, #[[1]] == 1 &];
-  generatorRows = Select[encoded, #[[1]] == 2 &];
-  If[Length[degreeRows] != 1 || Length[baseRows] != 1 ||
-      Length[generatorRows] != 1,
+DecodeStrongGenSet[encoded_List] := Module[
+  {degree, baseLength, generatorCount, expectedLength, base, generators},
+
+  If[Length[encoded] < 3,
     Message[LoadxPermLibraryLink::format, "StrongGenSet"];
     Return[$Failed]
   ];
-  xAct`xPerm`StrongGenSet[
-    RowData[First[baseRows]],
-    RowData[First[generatorRows]],
-    First[RowData[First[degreeRows]]]
-  ]
+
+  {degree, baseLength, generatorCount} = Take[encoded, 3];
+  expectedLength = 3 + baseLength + degree generatorCount;
+
+  If[degree <= 0 || baseLength < 0 || generatorCount < 0 ||
+      Length[encoded] =!= expectedLength,
+    Message[LoadxPermLibraryLink::format, "StrongGenSet"];
+    Return[$Failed]
+  ];
+
+  base = Take[Drop[encoded, 3], baseLength];
+  generators = Drop[encoded, 3 + baseLength];
+  xAct`xPerm`StrongGenSet[base, generators, degree]
 ];
 
 ClearAll[DecodeStabilizerChain];
-DecodeStabilizerChain[encoded_?MatrixQ] := Module[{indices},
-  indices = Sort[DeleteDuplicates[encoded[[All, 2]]]];
-  Map[
-    Function[index,
-      DecodeStrongGenSet[Map[ReplacePart[#, 2 -> 0] &,
-        Select[encoded, #[[2]] == index &]]]
-    ],
-    indices
-  ]
+DecodeStabilizerChain[encoded_List] := Module[
+  {streamCount, streamLengths, payload, streams, decoded},
+
+  If[encoded === {} || First[encoded] < 0,
+    Message[LoadxPermLibraryLink::format, "StrongGenSet chain"];
+    Return[$Failed]
+  ];
+
+  streamCount = First[encoded];
+  If[Length[encoded] < 1 + streamCount,
+    Message[LoadxPermLibraryLink::format, "StrongGenSet chain"];
+    Return[$Failed]
+  ];
+
+  streamLengths = Take[Rest[encoded], streamCount];
+  payload = Drop[encoded, 1 + streamCount];
+  If[AnyTrue[streamLengths, # < 3 &] || Total[streamLengths] =!= Length[payload],
+    Message[LoadxPermLibraryLink::format, "StrongGenSet chain"];
+    Return[$Failed]
+  ];
+
+  streams = TakeList[payload, streamLengths];
+  decoded = DecodeStrongGenSet /@ streams;
+  If[MemberQ[decoded, $Failed], $Failed, decoded]
 ];
 
 EncodeTotalSymmetrySubsets[subsets_List]:=Module[{slots,lengths},slots=If[subsets==={},{},Join@@subsets[[All,2]]];
@@ -80,16 +97,16 @@ LoadxPermLibraryLink[library_,Niehoff_:False] := Module[{},
        IntegerVector, IntegerVector, IntegerVector, IntegerVector,
        IntegerVector, IntegerVector}, IntegerVector];
     $llSchreierSims = LibLoad["LL_schreier_sims",
-      {IntegerVector, IntegerVector, Integer}, IntegerMatrix];
+      {IntegerVector, IntegerVector, Integer}, IntegerVector];
     $llOrbit = LibLoad["LL_orbit", {Integer, IntegerVector, Integer}, IntegerVector];
     $llSetStabilizer = LibLoad["LL_set_stabilizer",
-      {IntegerVector, Integer, IntegerVector, IntegerVector}, IntegerMatrix];
+      {IntegerVector, Integer, IntegerVector, IntegerVector}, IntegerVector];
     $llBaseChangeStabilizerChain = LibLoad["LL_basechangestabchain",
-      {Integer, IntegerVector, IntegerVector, IntegerVector}, IntegerMatrix];
+      {Integer, IntegerVector, IntegerVector, IntegerVector}, IntegerVector];
     $llBaseChange = LibLoad["LL_basechange",
-      {Integer, IntegerVector, IntegerVector, IntegerVector}, IntegerMatrix];
+      {Integer, IntegerVector, IntegerVector, IntegerVector}, IntegerVector];
     $llStabilizerSGS = LibLoad["LL_stabsgs",
-      {Integer, IntegerVector, IntegerVector, IntegerVector}, IntegerMatrix];,
+      {Integer, IntegerVector, IntegerVector, IntegerVector}, IntegerVector];,
     UnloadxPermLibraryLink[];
     Message[LoadxPermLibraryLink::load, library];
     Return[$Failed]
