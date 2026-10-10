@@ -17,6 +17,9 @@ struct MinimumImagesResult {
 };
 
 struct SearchConfiguration {
+  // Accumulated slot action s and current slot-to-label configuration g.
+  // A slot transversal t acts on BOTH fields on the left; a label renaming
+  // acts on g on the right. The separate sign is used by staged helpers.
   Permutation slotPermutation;
   Permutation labelPermutation;
   int sign = 1;
@@ -172,6 +175,8 @@ struct TotalSymmetrySubset {
 
 struct ExtendedCanonicalPermInput {
   LegacyCanonicalPermInput legacy;
+  // Additional declared slot symmetries, combined with legacy.slotGenerators.
+  // The order within a subset has no meaning. These are not pruning hints.
   std::vector<TotalSymmetrySubset> totalSymmetrySubsets;
 };
 
@@ -234,7 +239,8 @@ canonicalizeLabel(int sourceLabel, const IntegerRow &fixedLabels,
                   const std::vector<LabelGroup> &groups, int degree);
 LabelGroupSearchResult runLabelGroupSearch(const LabelGroupSearchInput &input);
 
-// Stage 6: equivalence under propagated signed symmetries and zero detection.
+// Stage 6: bounded explicit signed-group equivalence utility, NOT the paper's
+// incremental symmetry propagation. The closure may grow factorially.
 void validatePropagatedSymmetries(
     const std::vector<SignedPermutation> &generators, int degree);
 PropagatedSymmetryResult
@@ -244,7 +250,9 @@ reduceByPropagatedSymmetries(std::vector<SearchConfiguration> configurations,
 PropagatedSymmetryResult
 runPropagatedSymmetrySearch(const PropagatedSymmetryInput &input);
 
-// Stage 7: compatibility adapter for the existing LL_canonical_perm data.
+// Stage 7: adapter for the existing LL_canonical_perm data layout. Results use
+// natural slot/label lexicographic order, independent of the supplied BSGS base;
+// they need not match the original xPerm representative byte for byte.
 std::vector<LabelGroup>
 makeLegacyLabelGroups(const LegacyCanonicalPermInput &input);
 LegacyCanonicalPermResult

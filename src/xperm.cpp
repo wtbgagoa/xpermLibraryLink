@@ -548,8 +548,13 @@ void nonstable_points(int *list1, int l1, int *GS, int m, int n,
 		/* If all points already in list2 are stable under the
 			permutation, append the smallest nonstable point */
 		if (stable) {
-			list2[*l2] = first_nonstable_point(GS+j*n, n);
-			(*l2)++;
+			const int point = first_nonstable_point(GS+j*n, n);
+			/* Identity generators have no moved point. Zero is not a
+			 * base point: adding it would make onpoints read p[-1]. */
+			if (point != 0) {
+				list2[*l2] = point;
+				(*l2)++;
+				}
 			}
 		}
 	}

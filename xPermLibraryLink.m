@@ -15,6 +15,25 @@ Begin["`Private`"];
 
 $loadedFunctions = {};
 $library = None;
+$originalDefinitions = {};
+$wrappedSymbols = {
+  HoldComplete[xAct`xPerm`Private`MLCanonicalPerm],
+  HoldComplete[xAct`xPerm`Private`MLSchreierSims],
+  HoldComplete[xAct`xPerm`Private`MLOrbit],
+  HoldComplete[xAct`xPerm`Private`MLSetStabilizer],
+  HoldComplete[xAct`xPerm`Private`MLBaseChange],
+  HoldComplete[xAct`xPerm`Private`MLBaseChangeStabilizerChain],
+  HoldComplete[xAct`xPerm`Private`MLStabilizerSGS]
+};
+
+CaptureDefinition[HoldComplete[symbol_]] :=
+  {OwnValues[symbol], DownValues[symbol], SubValues[symbol], UpValues[symbol]};
+RestoreDefinition[HoldComplete[symbol_], values_List] := (
+  OwnValues[symbol] = values[[1]];
+  DownValues[symbol] = values[[2]];
+  SubValues[symbol] = values[[3]];
+  UpValues[symbol] = values[[4]];
+);
 
 LoadxPermLibraryLink::load = "Could not load the xPerm LibraryLink library `1`.";
 LoadxPermLibraryLink::format = "Unexpected structured result returned by native function `1`.";
@@ -112,6 +131,8 @@ LoadxPermLibraryLink[library_,Niehoff_:False] := Module[{},
     Return[$Failed]
   ]];
   
+  (* Preserve xPerm's existing WSTP definitions for unload and failed reloads. *)
+  $originalDefinitions = CaptureDefinition /@ $wrappedSymbols;
   (* Compatibility wrappers expected by xAct/xPerm. *)
   If[Niehoff,
   xAct`xPerm`Private`MLCanonicalPerm[perm_List, degree_Integer, rest__] := 
@@ -141,15 +162,10 @@ UnloadxPermLibraryLink[] := Module[{},
   Scan[Quiet[LibraryFunctionUnload[#]] &, $loadedFunctions];
   $loadedFunctions = {};
   $library = None;
-  Clear[
-    xAct`xPerm`Private`MLCanonicalPerm,
-    xAct`xPerm`Private`MLSchreierSims,
-    xAct`xPerm`Private`MLOrbit,
-    xAct`xPerm`Private`MLSetStabilizer,
-    xAct`xPerm`Private`MLBaseChange,
-    xAct`xPerm`Private`MLBaseChangeStabilizerChain,
-    xAct`xPerm`Private`MLStabilizerSGS
+  If[Length[$originalDefinitions] === Length[$wrappedSymbols],
+    MapThread[RestoreDefinition, {$wrappedSymbols, $originalDefinitions}]
   ];
+  $originalDefinitions = {};
   True
 ];
 

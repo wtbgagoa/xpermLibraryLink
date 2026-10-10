@@ -3,6 +3,11 @@
 
 #include "WolframLibrary.h"
 
+// LibraryLink ABI negotiation and lifecycle.
+EXTERN_C DLLEXPORT mint WolframLibrary_getVersion();
+EXTERN_C DLLEXPORT int WolframLibrary_initialize(WolframLibraryData);
+EXTERN_C DLLEXPORT void WolframLibrary_uninitialize(WolframLibraryData);
+
 // Basic permutation-group operations.
 EXTERN_C DLLEXPORT int LL_schreier_sims(WolframLibraryData, mint,
                                          MArgument *, MArgument);

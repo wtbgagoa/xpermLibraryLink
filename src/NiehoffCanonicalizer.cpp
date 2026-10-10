@@ -32,6 +32,26 @@ void validateBatch(const PermutationBatch &p) {
     if (x.size() != n || !isPermutation(x))
       throw std::invalid_argument("invalid permutation batch");
 }
+void validateConfigurations(const std::vector<SearchConfiguration> &configs) {
+  if (configs.empty())
+    return;
+  const auto degree = configs.front().slotPermutation.size();
+  if (degree == 0)
+    throw std::invalid_argument("empty configuration permutation");
+  for (const auto &config : configs) {
+    if (config.slotPermutation.size() != degree ||
+        config.labelPermutation.size() != degree ||
+        !isPermutation(config.slotPermutation) ||
+        !isPermutation(config.labelPermutation) ||
+        (config.sign != 1 && config.sign != -1))
+      throw std::invalid_argument("invalid search configuration");
+    std::set<int> fixed;
+    for (int label : config.fixedLabels)
+      if (label < 1 || static_cast<std::size_t>(label) > degree ||
+          !fixed.insert(label).second)
+        throw std::invalid_argument("invalid or repeated fixed label");
+  }
+}
 void sameShape(const IntegerMatrix &a, const IntegerMatrix &b) {
   if (a.size() != b.size())
     throw std::invalid_argument("row counts differ");
@@ -158,8 +178,10 @@ namespace xperm::niehoff {
 namespace {
 bool lessConfigStage2(const SearchConfiguration &a,
                       const SearchConfiguration &b) {
-  return std::tie(a.slotPermutation, a.labelPermutation, a.sign, a.metadata) <
-         std::tie(b.slotPermutation, b.labelPermutation, b.sign, b.metadata);
+  return std::tie(a.slotPermutation, a.labelPermutation, a.sign, a.metadata,
+                  a.fixedLabels) <
+         std::tie(b.slotPermutation, b.labelPermutation, b.sign, b.metadata,
+                  b.fixedLabels);
 }
 bool sameConfigStage2(const SearchConfiguration &a,
                       const SearchConfiguration &b) {
@@ -170,6 +192,7 @@ bool sameConfigStage2(const SearchConfiguration &a,
 } // namespace
 std::vector<SearchConfiguration>
 expandConfigurations(const SearchLevelInput &in) {
+  validateConfigurations(in.configurations);
   if (in.parentIndices.size() != in.slotTransversals.size() ||
       in.parentIndices.size() != in.labelTransversals.size())
     throw std::invalid_argument("candidate counts differ");
@@ -178,8 +201,10 @@ expandConfigurations(const SearchLevelInput &in) {
     if (in.parentIndices[i] >= in.configurations.size())
       throw std::invalid_argument("parent out of range");
     auto c = in.configurations[in.parentIndices[i]];
-    c.slotPermutation = product(c.slotPermutation, in.slotTransversals[i]);
-    c.labelPermutation = product(c.labelPermutation, in.labelTransversals[i]);
+    c.slotPermutation = product(in.slotTransversals[i], c.slotPermutation);
+    c.labelPermutation = product(
+        product(in.slotTransversals[i], c.labelPermutation),
+        in.labelTransversals[i]);
     out.push_back(std::move(c));
   }
   return out;
@@ -194,6 +219,7 @@ std::vector<int> candidatePointImages(const std::vector<SearchConfiguration> &c,
 SearchLevelResult
 filterMinimumAndDeduplicate(std::vector<SearchConfiguration> c,
                             std::vector<std::size_t> parents, int point) {
+  validateConfigurations(c);
   if (c.size() != parents.size())
     throw std::invalid_argument("counts differ");
   SearchLevelResult out;
@@ -232,6 +258,7 @@ SearchLevelResult advanceSearchLevel(const SearchLevelInput &in) {
 namespace xperm::niehoff {
 namespace {
 IntegerRow flat(const PermutationBatch &p) {
+  validateBatch(p);
   IntegerRow r;
   for (const auto &x : p) {
     if (!isPermutation(x))
@@ -247,8 +274,7 @@ PermutationBatch rows(const int *p, int m, int n) {
   return r;
 }
 bool lessC(const SearchConfiguration &a, const SearchConfiguration &b) {
-  return std::tie(a.slotPermutation, a.labelPermutation, a.sign, a.metadata) <
-         std::tie(b.slotPermutation, b.labelPermutation, b.sign, b.metadata);
+  return lessConfigStage2(a, b);
 }
 bool sameC(const SearchConfiguration &a, const SearchConfiguration &b) {
   return a.slotPermutation == b.slotPermutation &&
@@ -260,6 +286,12 @@ BSGS makeBSGS(const IntegerRow &base, const PermutationBatch &generators) {
   if (generators.empty())
     throw std::invalid_argument("empty generators");
   int n = generators.front().size();
+  if (n <= 0)
+    throw std::invalid_argument("empty generator permutation");
+  std::set<int> seenBase;
+  for (int point : base)
+    if (point < 1 || point > n || !seenBase.insert(point).second)
+      throw std::invalid_argument("invalid or repeated base point");
   auto f = flat(generators);
   IntegerRow nb(n);
   int nbl = 0, nm = 0, num = 0;
@@ -270,6 +302,8 @@ BSGS makeBSGS(const IntegerRow &base, const PermutationBatch &generators) {
   return {n, IntegerRow(nb.begin(), nb.begin() + nbl), rows(sg.data(), nm, n)};
 }
 PermutationBatch stabilizerOfBasePrefix(const BSGS &g, std::size_t prefix) {
+  if (prefix > g.base.size())
+    throw std::invalid_argument("prefix outside base");
   auto f = flat(g.strongGenerators);
   IntegerRow out(f.size());
   int m = 0;
@@ -302,10 +336,16 @@ Permutation traceRepresentative(const BasicOrbit &o, int point, int degree) {
 }
 GroupSearchLevelResult
 advanceGroupSearchLevel(const GroupSearchLevelInput &in) {
+  validateConfigurations(in.configurations);
+  if (in.configurations.empty())
+    return {};
   IntegerRow b = in.tentativeBase;
   b.erase(std::remove(b.begin(), b.end(), in.selectedSlot), b.end());
   b.insert(b.begin(), in.selectedSlot);
   auto g = makeBSGS(b, in.slotGenerators);
+  if (in.configurations.front().slotPermutation.size() !=
+      static_cast<std::size_t>(g.degree))
+    throw std::invalid_argument("configuration and group degrees differ");
   auto o = basicOrbit(g, 0);
   struct C {
     SearchConfiguration c;
@@ -316,8 +356,9 @@ advanceGroupSearchLevel(const GroupSearchLevelInput &in) {
   for (std::size_t p = 0; p < in.configurations.size(); ++p)
     for (int x : o.points) {
       auto c = in.configurations[p];
-      c.slotPermutation =
-          product(traceRepresentative(o, x, g.degree), c.slotPermutation);
+      const auto transversal = traceRepresentative(o, x, g.degree);
+      c.slotPermutation = product(transversal, c.slotPermutation);
+      c.labelPermutation = product(transversal, c.labelPermutation);
       all.push_back(
           {std::move(c), p, onPoint(x, in.configurations[p].labelPermutation)});
     }
@@ -360,12 +401,6 @@ IntegerRow flatten(const PermutationBatch &ps) {
   }
   return f;
 }
-PermutationBatch unflatten(const int *p, int m, int n) {
-  PermutationBatch r;
-  for (int i = 0; i < m; ++i)
-    r.emplace_back(p + i * n, p + (i + 1) * n);
-  return r;
-}
 IntegerRow orderedBase(const IntegerRow &initial, const IntegerRow &selected) {
   IntegerRow r;
   for (int x : selected)
@@ -377,8 +412,7 @@ IntegerRow orderedBase(const IntegerRow &initial, const IntegerRow &selected) {
   return r;
 }
 bool lessConfig(const SearchConfiguration &a, const SearchConfiguration &b) {
-  return std::tie(a.slotPermutation, a.labelPermutation, a.sign, a.metadata) <
-         std::tie(b.slotPermutation, b.labelPermutation, b.sign, b.metadata);
+  return lessConfigStage2(a, b);
 }
 bool equalConfig(const SearchConfiguration &a, const SearchConfiguration &b) {
   return a.slotPermutation == b.slotPermutation &&
@@ -394,17 +428,16 @@ initializeStabilizerChain(const IntegerRow &tentativeBase,
     throw std::invalid_argument("empty generators");
   }
   int n = static_cast<int>(generators.front().size());
+  std::set<int> selected;
+  for (int point : selectedSlots)
+    if (point < 1 || point > n || !selected.insert(point).second)
+      throw std::invalid_argument("invalid or repeated selected slot");
   IntegerRow base = orderedBase(tentativeBase, selectedSlots);
-  IntegerRow flat = flatten(generators), newBase(static_cast<std::size_t>(n));
-  int nbl = 0, nm = 0, num = 0;
-  std::vector<int> strong;
-  ::schreier_sims(base.data(), static_cast<int>(base.size()), flat.data(),
-                  static_cast<int>(generators.size()), n, newBase.data(), &nbl,
-                  strong, &nm, &num);
+  const auto group = makeBSGS(base, generators);
   StabilizerChainState state;
   state.degree = n;
-  state.base.assign(newBase.begin(), newBase.begin() + nbl);
-  state.strongGenerators = unflatten(strong.data(), nm, n);
+  state.base = group.base;
+  state.strongGenerators = group.strongGenerators;
   if (state.base.size() < selectedSlots.size() ||
       !std::equal(selectedSlots.begin(), selectedSlots.end(),
                   state.base.begin()))
@@ -437,12 +470,16 @@ BasicOrbit currentBasicOrbit(const StabilizerChainState &s) {
 }
 PersistentSearchResult
 runPersistentGroupSearch(const PersistentSearchInput &in) {
+  validateConfigurations(in.configurations);
   PersistentSearchResult out;
   if (in.configurations.empty())
     return out;
   out.configurations = in.configurations;
   out.group = initializeStabilizerChain(in.tentativeBase, in.slotGenerators,
                                         in.selectedSlots);
+  if (in.configurations.front().slotPermutation.size() !=
+      static_cast<std::size_t>(out.group.degree))
+    throw std::invalid_argument("configuration and group degrees differ");
   for (int selected : in.selectedSlots) {
     if (out.group.base[out.group.level] != selected)
       throw std::runtime_error("chain/base mismatch");
@@ -472,6 +509,7 @@ runPersistentGroupSearch(const PersistentSearchInput &in) {
         it->second = traceRepresentative(orbit, c.point, out.group.degree);
       auto expanded = out.configurations[c.parent];
       expanded.slotPermutation = product(it->second, expanded.slotPermutation);
+      expanded.labelPermutation = product(it->second, expanded.labelPermutation);
       survivors.push_back(std::move(expanded));
     }
     std::stable_sort(survivors.begin(), survivors.end(), lessConfig);
@@ -521,19 +559,21 @@ Permutation transpositionRepresentative(int first, int second, int degree) {
 }
 
 Permutation pairRepresentative(int sourceFirst, int sourceSecond,
-                               int targetFirst, int targetSecond, int degree) {
+                               int targetFirst, int targetSecond, bool reverse,
+                               int degree) {
   Permutation representative = identityPermutation(degree);
-  if (sourceFirst == targetFirst && sourceSecond == targetSecond)
-    return representative;
-  if (sourceFirst == targetSecond && sourceSecond == targetFirst) {
-    std::swap(representative[static_cast<std::size_t>(sourceFirst - 1)],
-              representative[static_cast<std::size_t>(sourceSecond - 1)]);
+  if (sourceFirst == targetFirst && sourceSecond == targetSecond) {
+    if (reverse)
+      std::swap(representative[sourceFirst - 1], representative[sourceSecond - 1]);
     return representative;
   }
-  std::swap(representative[static_cast<std::size_t>(sourceFirst - 1)],
-            representative[static_cast<std::size_t>(targetFirst - 1)]);
-  std::swap(representative[static_cast<std::size_t>(sourceSecond - 1)],
-            representative[static_cast<std::size_t>(targetSecond - 1)]);
+  // Exchange the pairs, reversing ONLY the source pair when requested. Two
+  // cross-transpositions would reverse both pairs and give the wrong metric
+  // sign. A one-pair reversal combined with exchange is a four-cycle.
+  representative[sourceFirst - 1] = reverse ? targetSecond : targetFirst;
+  representative[sourceSecond - 1] = reverse ? targetFirst : targetSecond;
+  representative[targetFirst - 1] = sourceFirst;
+  representative[targetSecond - 1] = sourceSecond;
   return representative;
 }
 
@@ -556,6 +596,8 @@ void validateLabelGroups(const std::vector<LabelGroup> &groups, int degree) {
   for (const auto &group : groups) {
     if (group.labels.empty())
       throw std::invalid_argument("empty label group");
+    if (group.type < LabelGroupType::Fixed || group.type > LabelGroupType::Repeated)
+      throw std::invalid_argument("invalid label group type");
     const bool paired = group.type == LabelGroupType::Dummy ||
                         group.type == LabelGroupType::SymmetricMetric ||
                         group.type == LabelGroupType::AntisymmetricMetric;
@@ -575,6 +617,11 @@ void validateLabelGroups(const std::vector<LabelGroup> &groups, int degree) {
 std::vector<LabelCandidate>
 canonicalizeLabel(int sourceLabel, const IntegerRow &fixedLabels,
                   const std::vector<LabelGroup> &groups, int degree) {
+  validateLabelGroups(groups, degree);
+  std::set<int> fixed;
+  for (int label : fixedLabels)
+    if (label < 1 || label > degree || !fixed.insert(label).second)
+      throw std::invalid_argument("invalid or repeated fixed label");
   if (sourceLabel < 1 || sourceLabel > degree)
     throw std::invalid_argument("source label outside degree");
   const LabelGroup &group = groupContainingLabel(groups, sourceLabel);
@@ -615,6 +662,9 @@ canonicalizeLabel(int sourceLabel, const IntegerRow &fixedLabels,
 
     const int sourceFirst = group.labels[2 * sourcePair];
     const int sourceSecond = group.labels[2 * sourcePair + 1];
+    if (containsLabel(fixedLabels, sourceFirst) ||
+        containsLabel(fixedLabels, sourceSecond))
+      return {{sourceLabel, identity, {sourceLabel}, 1}};
     for (std::size_t pair = 0; pair < group.labels.size() / 2; ++pair) {
       const int targetFirst = group.labels[2 * pair];
       const int targetSecond = group.labels[2 * pair + 1];
@@ -622,9 +672,9 @@ canonicalizeLabel(int sourceLabel, const IntegerRow &fixedLabels,
           containsLabel(fixedLabels, targetSecond))
         continue;
 
-      bool reverse = sourceIsSecond;
-      if (group.type == LabelGroupType::Dummy)
-        reverse = false;
+      const bool targetIsSecond = group.type == LabelGroupType::Dummy
+          ? sourceIsSecond : targetSecond < targetFirst;
+      const bool reverse = sourceIsSecond != targetIsSecond;
       const int mappedFirst = reverse ? targetSecond : targetFirst;
       const int mappedSecond = reverse ? targetFirst : targetSecond;
       const int canonicalLabel = sourceIsSecond ? mappedSecond : mappedFirst;
@@ -632,8 +682,8 @@ canonicalizeLabel(int sourceLabel, const IntegerRow &fixedLabels,
           group.type == LabelGroupType::AntisymmetricMetric && reverse ? -1 : 1;
       candidates.push_back(
           {canonicalLabel,
-           pairRepresentative(sourceFirst, sourceSecond, mappedFirst,
-                              mappedSecond, degree),
+           pairRepresentative(sourceFirst, sourceSecond, targetFirst,
+                              targetSecond, reverse, degree),
            {targetFirst, targetSecond},
            sign});
     }
@@ -657,6 +707,7 @@ canonicalizeLabel(int sourceLabel, const IntegerRow &fixedLabels,
 }
 
 LabelGroupSearchResult runLabelGroupSearch(const LabelGroupSearchInput &input) {
+  validateConfigurations(input.configurations);
   LabelGroupSearchResult result;
   if (input.configurations.empty())
     return result;
@@ -667,6 +718,8 @@ LabelGroupSearchResult runLabelGroupSearch(const LabelGroupSearchInput &input) {
   result.configurations = input.configurations;
   result.group = initializeStabilizerChain(
       input.tentativeBase, input.slotGenerators, input.selectedSlots);
+  if (result.group.degree != degree)
+    throw std::invalid_argument("configuration and group degrees differ");
 
   for (const int selectedSlot : input.selectedSlots) {
     if (result.group.level >= result.group.base.size() ||
@@ -711,7 +764,8 @@ LabelGroupSearchResult runLabelGroupSearch(const LabelGroupSearchInput &input) {
       expanded.slotPermutation =
           product(position->second, expanded.slotPermutation);
       expanded.labelPermutation =
-          product(expanded.labelPermutation, candidate.label.representative);
+          product(product(position->second, expanded.labelPermutation),
+                  candidate.label.representative);
       expanded.sign *= candidate.label.sign;
       expanded.fixedLabels = mergedLabels(std::move(expanded.fixedLabels),
                                           candidate.label.newlyFixedLabels);
@@ -766,6 +820,8 @@ struct SignedPermutationKey {
 std::vector<SignedOrbitElement>
 signedGroupClosure(const std::vector<SignedPermutation> &generators, int degree,
                    std::size_t maximumOrbitSize) {
+  if (maximumOrbitSize == 0)
+    throw std::invalid_argument("signed-group closure limit must be positive");
   const SignedOrbitElement identity{identityPermutation(degree), 1};
   std::queue<SignedOrbitElement> pending;
   std::set<SignedPermutationKey> visited;
@@ -785,8 +841,12 @@ signedGroupClosure(const std::vector<SignedPermutation> &generators, int degree,
       SignedOrbitElement next;
       next.permutation = product(current.permutation, generator.permutation);
       next.sign = current.sign * generator.sign;
-      if (visited.insert({next.permutation, next.sign}).second)
+      if (visited.insert({next.permutation, next.sign}).second) {
+        if (visited.size() > maximumOrbitSize)
+          throw std::runtime_error(
+              "propagated-symmetry orbit exceeded the configured limit");
         pending.push(std::move(next));
+      }
     }
   }
   return result;
@@ -816,6 +876,7 @@ PropagatedSymmetryResult
 reduceByPropagatedSymmetries(std::vector<SearchConfiguration> configurations,
                              const std::vector<SignedPermutation> &generators,
                              std::size_t maximumOrbitSize) {
+  validateConfigurations(configurations);
   PropagatedSymmetryResult result;
   if (configurations.empty())
     return result;
@@ -842,6 +903,8 @@ reduceByPropagatedSymmetries(std::vector<SearchConfiguration> configurations,
       SearchConfiguration transformed = configuration;
       transformed.slotPermutation =
           product(symmetry.permutation, configuration.slotPermutation);
+      transformed.labelPermutation =
+          product(symmetry.permutation, configuration.labelPermutation);
       transformed.sign = configuration.sign * symmetry.sign;
       const ConfigurationKey key = configurationKey(transformed);
       orbitSigns[key].insert(transformed.sign);
@@ -902,35 +965,48 @@ runPropagatedSymmetrySearch(const PropagatedSymmetryInput &input) {
 namespace {
 
 void validateLegacyInput(const LegacyCanonicalPermInput &input) {
-  if (input.degree < 3 ||
+  if (input.degree < 2 ||
       static_cast<int>(input.permutation.size()) != input.degree ||
       !isPermutation(input.permutation))
     throw std::invalid_argument("invalid signed input permutation");
+  auto validSignPoints = [&](const Permutation &p) {
+    return p[input.degree - 2] >= input.degree - 1 &&
+           p[input.degree - 1] >= input.degree - 1;
+  };
+  if (!validSignPoints(input.permutation))
+    throw std::invalid_argument("input moves sign points into real slots");
+  std::set<int> basePoints;
+  for (int point : input.base)
+    if (point < 1 || point > input.degree || !basePoints.insert(point).second)
+      throw std::invalid_argument("invalid or repeated base point");
   if (input.dummySetLengths.size() != input.metricSymmetries.size())
     throw std::invalid_argument("dummy-set and metric counts differ");
-  const auto dummyCount = std::accumulate(input.dummySetLengths.begin(),
-                                          input.dummySetLengths.end(), 0);
-  const auto repeatedCount = std::accumulate(input.repeatedSetLengths.begin(),
-                                             input.repeatedSetLengths.end(), 0);
-  if (dummyCount != static_cast<int>(input.dummyLabels.size()) ||
-      repeatedCount != static_cast<int>(input.repeatedLabels.size()))
-    throw std::invalid_argument("legacy set lengths do not match their data");
+  auto validateLengths = [](const IntegerRow &lengths, std::size_t size,
+                            bool paired) {
+    std::size_t count = 0;
+    for (int length : lengths) {
+      if (length <= 0 || (paired && length % 2 != 0) ||
+          static_cast<std::size_t>(length) > size - count)
+        throw std::invalid_argument("invalid legacy set length");
+      count += static_cast<std::size_t>(length);
+    }
+    if (count != size)
+      throw std::invalid_argument("legacy set lengths do not match their data");
+  };
+  validateLengths(input.dummySetLengths, input.dummyLabels.size(), true);
+  validateLengths(input.repeatedSetLengths, input.repeatedLabels.size(), false);
   for (const auto &generator : input.slotGenerators)
     if (static_cast<int>(generator.size()) != input.degree ||
-        !isPermutation(generator))
+        !isPermutation(generator) || !validSignPoints(generator))
       throw std::invalid_argument("invalid slot generator");
 }
 
 IntegerRow realSearchBase(const LegacyCanonicalPermInput &input) {
   const int realDegree = input.degree - 2;
-  IntegerRow result;
-  for (const int point : input.base)
-    if (point >= 1 && point <= realDegree &&
-        std::find(result.begin(), result.end(), point) == result.end())
-      result.push_back(point);
-  for (int point = 1; point <= realDegree; ++point)
-    if (std::find(result.begin(), result.end(), point) == result.end())
-      result.push_back(point);
+  // The base is a group representation detail. The canonical ordering must
+  // agree with the natural slot order used by label normalization.
+  IntegerRow result(static_cast<std::size_t>(realDegree));
+  std::iota(result.begin(), result.end(), 1);
   return result;
 }
 
@@ -943,7 +1019,7 @@ makeLegacyLabelGroups(const LegacyCanonicalPermInput &input) {
   std::vector<bool> covered(static_cast<std::size_t>(input.degree + 1), false);
 
   for (const int label : input.freeLabels) {
-    if (label < 1 || label > input.degree || covered[label])
+    if (label < 1 || label > input.degree - 2 || covered[label])
       throw std::invalid_argument("invalid or repeated free label");
     groups.push_back({LabelGroupType::Free, {label}});
     covered[label] = true;
@@ -967,7 +1043,7 @@ makeLegacyLabelGroups(const LegacyCanonicalPermInput &input) {
                       input.dummyLabels.begin() +
                           static_cast<std::ptrdiff_t>(offset + length));
     for (const int label : labels) {
-      if (label < 1 || label > input.degree || covered[label])
+      if (label < 1 || label > input.degree - 2 || covered[label])
         throw std::invalid_argument("invalid or repeated dummy label");
       covered[label] = true;
     }
@@ -984,7 +1060,7 @@ makeLegacyLabelGroups(const LegacyCanonicalPermInput &input) {
                       input.repeatedLabels.begin() +
                           static_cast<std::ptrdiff_t>(offset + length));
     for (const int label : labels) {
-      if (label < 1 || label > input.degree || covered[label])
+      if (label < 1 || label > input.degree - 2 || covered[label])
         throw std::invalid_argument("invalid or repeated repeated-set label");
       covered[label] = true;
     }
@@ -1024,73 +1100,103 @@ void multiplySign(Permutation &permutation, int sign) {
   }
 }
 
-Permutation normalizeLabelGroups(const Permutation &configuration,
-                                 const std::vector<LabelGroup> &groups,
-                                 int realDegree) {
-  const int degree = static_cast<int>(configuration.size());
-  Permutation labelMap = identityPermutation(degree);
-  int extraSign = 1;
-  IntegerRow position(static_cast<std::size_t>(degree + 1), 0);
-  for (int slot = 1; slot <= realDegree; ++slot)
-    position[configuration[slot - 1]] = slot;
+// The label classes and target orders are invariant throughout one search.
+// Compile them once, then find first occurrences by scanning slots in order.
+// This is the same greedy label-orbit minimum as sorting occurrences, without
+// rebuilding and sorting several temporary vectors for every candidate.
+class LabelNormalizer {
+  struct Group {
+    LabelGroupType type;
+    IntegerRow firstTargets;
+    IntegerRow secondTargets;
+    std::size_t firstCursor = 0;
+    std::size_t secondCursor = 0;
+  };
+  int realDegree;
+  IntegerRow labelGroup;
+  IntegerRow partner;
+  std::vector<unsigned char> second;
+  IntegerRow initialMap;
+  IntegerRow labelMap;
+  std::vector<unsigned char> usedTargets;
+  std::vector<Group> groups;
 
-  for (const auto &group : groups) {
-    if (group.type == LabelGroupType::Fixed ||
-        group.type == LabelGroupType::Free)
-      continue;
-    if (group.type == LabelGroupType::Repeated) {
-      IntegerRow source = group.labels;
-      std::stable_sort(source.begin(), source.end(),
-                       [&](int first, int second) {
-                         return position[first] < position[second];
-                       });
-      for (std::size_t index = 0; index < source.size(); ++index)
-        labelMap[source[index] - 1] = group.labels[index];
-      continue;
-    }
-
-    struct Occurrence {
-      std::size_t pair;
-      int firstPosition;
-      bool reversed;
-    };
-    std::vector<Occurrence> occurrences;
-    const std::size_t pairs = group.labels.size() / 2;
-    occurrences.reserve(pairs);
-    for (std::size_t pair = 0; pair < pairs; ++pair) {
-      const int first = group.labels[2 * pair];
-      const int second = group.labels[2 * pair + 1];
-      if (position[first] == 0 || position[second] == 0)
-        throw std::runtime_error("dummy label missing from configuration");
-      occurrences.push_back({pair, std::min(position[first], position[second]),
-                             position[second] < position[first]});
-    }
-    std::stable_sort(occurrences.begin(), occurrences.end(),
-                     [](const Occurrence &first, const Occurrence &second) {
-                       return first.firstPosition < second.firstPosition;
-                     });
-    for (std::size_t target = 0; target < pairs; ++target) {
-      const auto &occurrence = occurrences[target];
-      const int sourceFirst = group.labels[2 * occurrence.pair];
-      const int sourceSecond = group.labels[2 * occurrence.pair + 1];
-      const int targetFirst = group.labels[2 * target];
-      const int targetSecond = group.labels[2 * target + 1];
-      const bool hasMetric = group.type == LabelGroupType::SymmetricMetric ||
-                             group.type == LabelGroupType::AntisymmetricMetric;
-      const bool reverse = hasMetric && occurrence.reversed;
-      labelMap[sourceFirst - 1] = reverse ? targetSecond : targetFirst;
-      labelMap[sourceSecond - 1] = reverse ? targetFirst : targetSecond;
-      if (reverse && group.type == LabelGroupType::AntisymmetricMetric)
-        extraSign = -extraSign;
+public:
+  LabelNormalizer(const std::vector<LabelGroup> &inputGroups, int degree)
+      : realDegree(degree - 2), labelGroup(degree + 1, -1),
+        partner(degree + 1), second(degree + 1), initialMap(degree + 1),
+        labelMap(degree + 1), usedTargets(degree + 1) {
+    std::iota(initialMap.begin(), initialMap.end(), 0);
+    for (const auto &input : inputGroups) {
+      if (input.type == LabelGroupType::Fixed || input.type == LabelGroupType::Free)
+        continue;
+      const int groupIndex = static_cast<int>(groups.size());
+      Group group{input.type, {}, {}};
+      for (int label : input.labels) {
+        labelGroup[label] = groupIndex;
+        initialMap[label] = 0;
+      }
+      if (input.type == LabelGroupType::Repeated) {
+        group.firstTargets = input.labels;
+      } else {
+        const bool metric = input.type != LabelGroupType::Dummy;
+        for (std::size_t pair = 0; pair < input.labels.size(); pair += 2) {
+          const int first = input.labels[pair], last = input.labels[pair + 1];
+          partner[first] = last;
+          partner[last] = first;
+          second[last] = 1;
+          if (metric) {
+            group.firstTargets.push_back(std::min(first, last));
+          } else {
+            group.firstTargets.push_back(first);
+            group.secondTargets.push_back(last);
+          }
+        }
+      }
+      std::sort(group.firstTargets.begin(), group.firstTargets.end());
+      std::sort(group.secondTargets.begin(), group.secondTargets.end());
+      groups.push_back(std::move(group));
     }
   }
 
-  Permutation result(configuration.size());
-  for (std::size_t slot = 0; slot < configuration.size(); ++slot)
-    result[slot] = labelMap[configuration[slot] - 1];
-  multiplySign(result, extraSign);
-  return result;
-}
+  Permutation operator()(const Permutation &configuration) {
+    if (groups.empty())
+      return configuration;
+    labelMap = initialMap;
+    std::fill(usedTargets.begin(), usedTargets.end(), 0);
+    for (auto &group : groups)
+      group.firstCursor = group.secondCursor = 0;
+    int extraSign = 1;
+    for (int slot = 0; slot < realDegree; ++slot) {
+      const int source = configuration[slot];
+      if (labelMap[source] != 0)
+        continue;
+      auto &group = groups[labelGroup[source]];
+      if (group.type == LabelGroupType::Repeated) {
+        labelMap[source] = group.firstTargets[group.firstCursor++];
+        continue;
+      }
+      const bool useSecond = group.type == LabelGroupType::Dummy && second[source];
+      const auto &targets = useSecond ? group.secondTargets : group.firstTargets;
+      auto &cursor = useSecond ? group.secondCursor : group.firstCursor;
+      while (usedTargets[targets[cursor]])
+        ++cursor;
+      const int target = targets[cursor++];
+      labelMap[source] = target;
+      labelMap[partner[source]] = partner[target];
+      usedTargets[target] = usedTargets[partner[target]] = 1;
+      if (group.type == LabelGroupType::AntisymmetricMetric &&
+          second[source] != second[target])
+        extraSign = -extraSign;
+    }
+    Permutation result(configuration.size());
+    for (std::size_t slot = 0; slot < configuration.size(); ++slot)
+      result[slot] = labelMap[configuration[slot]];
+    if (extraSign < 0)
+      std::swap(result[realDegree], result[realDegree + 1]);
+    return result;
+  }
+};
 
 void validateTotalSubsets(const std::vector<TotalSymmetrySubset> &subsets,
                           int realDegree) {
@@ -1106,52 +1212,14 @@ void validateTotalSubsets(const std::vector<TotalSymmetrySubset> &subsets,
   }
 }
 
-int inversionParity(const IntegerRow &values) {
-  int parity = 0;
-  for (std::size_t first = 0; first < values.size(); ++first)
-    for (std::size_t second = first + 1; second < values.size(); ++second)
-      parity ^= values[first] > values[second];
-  return parity;
-}
-
-Permutation
-normalizeTotalSubsets(Permutation configuration,
-                      const std::vector<TotalSymmetrySubset> &subsets) {
-  int extraSign = 1;
-  for (const auto &subset : subsets) {
-    IntegerRow values;
-    values.reserve(subset.slots.size());
-    for (const int slot : subset.slots)
-      values.push_back(configuration[slot - 1]);
-    if (subset.sign == -1 && inversionParity(values))
-      extraSign = -extraSign;
-    std::sort(values.begin(), values.end());
-    for (std::size_t index = 0; index < subset.slots.size(); ++index)
-      configuration[subset.slots[index] - 1] = values[index];
-  }
-  multiplySign(configuration, extraSign);
-  return configuration;
-}
-
-Permutation normalizeConfiguration(
-    const Permutation &configuration, const std::vector<LabelGroup> &groups,
-    const std::vector<TotalSymmetrySubset> &subsets, int realDegree) {
-  return normalizeTotalSubsets(
-      normalizeLabelGroups(configuration, groups, realDegree), subsets);
-}
-
-Permutation unsignedKey(Permutation permutation) {
-  if (signOf(permutation) < 0)
-    multiplySign(permutation, -1);
-  return permutation;
-}
-
+// Called only after lexicographic sorting. Equal real-slot configurations
+// with different signs are adjacent because the two sign points come last.
 bool oppositeSigns(const std::vector<Permutation> &configurations) {
-  std::map<Permutation, int> signs;
-  for (const auto &configuration : configurations) {
-    const auto [position, inserted] =
-        signs.emplace(unsignedKey(configuration), signOf(configuration));
-    if (!inserted && position->second != signOf(configuration))
+  for (std::size_t index = 1; index < configurations.size(); ++index) {
+    const auto &previous = configurations[index - 1];
+    const auto &current = configurations[index];
+    if (previous[previous.size() - 2] != current[current.size() - 2] &&
+        std::equal(previous.begin(), previous.end() - 2, current.begin()))
       return true;
   }
   return false;
@@ -1163,7 +1231,7 @@ StabilizerChainState legacyChain(const LegacyCanonicalPermInput &input,
   if (generators.empty())
     generators.push_back(identityPermutation(input.degree));
   StabilizerChainState chain;
-  if (input.slotGeneratorsAreStrong) {
+  if (input.slotGeneratorsAreStrong && !input.base.empty()) {
     chain.degree = input.degree;
     chain.base = input.base;
     chain.strongGenerators = generators;
@@ -1199,14 +1267,43 @@ StabilizerChainState legacyChain(const LegacyCanonicalPermInput &input,
 LegacyCanonicalPermResult
 canonicalizeCore(const LegacyCanonicalPermInput &input,
                  const std::vector<TotalSymmetrySubset> &subsets) {
-  validateLegacyInput(input);
+  const auto groups = makeLegacyLabelGroups(input); // validates the full input
   const int realDegree = input.degree - 2;
   validateTotalSubsets(subsets, realDegree);
   const IntegerRow selectedSlots = realSearchBase(input);
-  const auto groups = makeLegacyLabelGroups(input);
-  StabilizerChainState chain = legacyChain(input, selectedSlots);
+  LabelNormalizer normalize(groups, input.degree);
+  // Subsets declare additional slot symmetries. Include their signed adjacent
+  // transpositions in the group so that every search step fixes its prefix.
+  // Sorting an entire subset after a step could move previously frozen slots.
+  LegacyCanonicalPermInput augmented = input;
+  for (const auto &subset : subsets) {
+    for (std::size_t index = 1; index < subset.slots.size(); ++index) {
+      auto generator = identityPermutation(input.degree);
+      std::swap(generator[subset.slots[index - 1] - 1],
+                generator[subset.slots[index] - 1]);
+      multiplySign(generator, subset.sign);
+      augmented.slotGenerators.push_back(std::move(generator));
+    }
+  }
+  if (!subsets.empty())
+    augmented.slotGeneratorsAreStrong = false;
+  auto isNegativeIdentity = [realDegree](const Permutation &generator) {
+    for (int slot = 0; slot < realDegree; ++slot)
+      if (generator[slot] != slot + 1)
+        return false;
+    return signOf(generator) < 0;
+  };
+  if (std::any_of(augmented.slotGenerators.begin(), augmented.slotGenerators.end(),
+                  isNegativeIdentity))
+    return {true, {}};
+  StabilizerChainState chain = legacyChain(augmented, selectedSlots);
+  // A signed group may contain -identity, including as a product of generators.
+  // After all real slots enter the base, its SGS must expose that stabilizer.
+  if (std::any_of(chain.strongGenerators.begin(), chain.strongGenerators.end(),
+                  isNegativeIdentity))
+    return {true, {}};
   std::vector<Permutation> configurations{
-      normalizeConfiguration(input.permutation, groups, subsets, realDegree)};
+      normalize(input.permutation)};
 
   for (std::size_t level = 0; level < selectedSlots.size(); ++level) {
     chain.level = level;
@@ -1223,17 +1320,22 @@ canonicalizeCore(const LegacyCanonicalPermInput &input,
         if (inserted)
           position->second =
               traceRepresentative(orbit, orbitPoint, input.degree);
-        Permutation candidate =
-            normalizeConfiguration(product(position->second, configuration),
-                                   groups, subsets, realDegree);
-        minimum = std::min(minimum, candidate[selected - 1]);
-        candidates.push_back(std::move(candidate));
+        // Both permutations are already validated/generated inside this search.
+        // Keep validation at the public boundary, not in every composition.
+        Permutation moved(static_cast<std::size_t>(input.degree));
+        for (int slot = 0; slot < input.degree; ++slot)
+          moved[slot] = configuration[position->second[slot] - 1];
+        Permutation candidate = normalize(moved);
+        const int image = candidate[selected - 1];
+        if (image < minimum) {
+          minimum = image;
+          candidates.clear();
+        }
+        if (image == minimum)
+          candidates.push_back(std::move(candidate));
       }
     }
-    configurations.clear();
-    for (auto &candidate : candidates)
-      if (candidate[selected - 1] == minimum)
-        configurations.push_back(std::move(candidate));
+    configurations = std::move(candidates);
     std::sort(configurations.begin(), configurations.end());
     configurations.erase(
         std::unique(configurations.begin(), configurations.end()),
