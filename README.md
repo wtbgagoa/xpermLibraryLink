@@ -20,6 +20,7 @@ cmake --build build --target install-paclet --parallel
 Then, in a fresh Wolfram kernel:
 
 ```wl
+PacletDataRebuild[]; (* Only if you install this paclet for the first time *)
 Needs["xAct`xPermLibraryLink`"];
 Uninstall@$xpermLink;
 LoadxPermLibraryLink[Automatic, True]
