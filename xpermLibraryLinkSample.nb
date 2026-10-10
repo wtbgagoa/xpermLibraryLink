@@ -1,0 +1,3947 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Wolfram 15.0' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       154,          7]
+NotebookDataLength[    136149,       3939]
+NotebookOptionsPosition[    131116,       3861]
+NotebookOutlinePosition[    131517,       3877]
+CellTagsIndexPosition[    131474,       3874]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell[BoxData[
+ RowBox[{"Quit", "[", "]"}]], "Input",
+ CellChangeTimes->{{3.9007523111124163`*^9, 3.900752312137422*^9}},
+ CellLabel->"In[15]:=",ExpressionUUID->"93d6b7fa-5b17-4d80-894f-61550bdba3d7"],
+
+Cell[CellGroupData[{
+
+Cell["xPerm & LibraryLink", "Subsection",
+ CellChangeTimes->{{3.804844898160784*^9, 3.804844905264346*^9}, {
+  3.832174376197215*^9, 
+  3.832174388571454*^9}},ExpressionUUID->"83971515-be27-40a8-838c-\
+7abeb4b3505d"],
+
+Cell["We start xTensor:", "Text",
+ CellChangeTimes->{{3.868943625525134*^9, 
+  3.8689436304841347`*^9}},ExpressionUUID->"355f52ee-1745-45ef-a9fd-\
+4ec10a716201"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"<<", "xAct`xTensor`"}]], "Input",
+ CellChangeTimes->{{3.784134821884963*^9, 3.784134834499762*^9}},
+ CellLabel->"In[1]:=",ExpressionUUID->"320818bc-ffaa-4ebc-a63a-0669bee3eacb"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData["\<\"------------------------------------------------------------\
+\"\>"], "Print",
+ CellChangeTimes->{
+  3.7841348370227413`*^9, 3.80484237349655*^9, 3.804843656138385*^9, 
+   3.8048437493625793`*^9, 3.8048449304200153`*^9, 3.804847300388627*^9, 
+   3.8174519026115713`*^9, 3.8174594849504023`*^9, 3.817481861452896*^9, 
+   3.817482530768256*^9, {3.832168440190885*^9, 3.8321684514143972`*^9}, 
+   3.832168598561448*^9, 3.832169251078876*^9, 3.832169679779104*^9, 
+   3.8321698252179193`*^9, 3.8321700891575317`*^9, 3.83217026870468*^9, 
+   3.8686106590964003`*^9, 3.8689278971615267`*^9, 3.868928103795567*^9, 
+   3.868943647664062*^9, 3.900044675985917*^9, 3.900751957497724*^9, 
+   3.900752057925242*^9, 3.900752282629223*^9, 3.900752321753725*^9, 
+   3.90075237735434*^9, 3.9007524581893272`*^9, 3.90464110174163*^9, 
+   4.000614992389085*^9, 4.000615261224764*^9},
+ CellLabel->
+  "During evaluation of \
+In[1]:=",ExpressionUUID->"11b72f86-2d84-4ae4-a9f9-344a913eb50e"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Package xAct`xPerm`  version \"\>", 
+   "\[InvisibleSpace]", "\<\"1.2.4\"\>", "\[InvisibleSpace]", "\<\", \"\>", "\[InvisibleSpace]", 
+   RowBox[{"{", 
+    RowBox[{"2025", ",", "12", ",", "29"}], "}"}]}],
+  SequenceForm["Package xAct`xPerm`  version ", "1.2.4", ", ", {2025, 12, 29}],
+  Editable->False]], "Print",
+ CellChangeTimes->{
+  3.7841348370227413`*^9, 3.80484237349655*^9, 3.804843656138385*^9, 
+   3.8048437493625793`*^9, 3.8048449304200153`*^9, 3.804847300388627*^9, 
+   3.8174519026115713`*^9, 3.8174594849504023`*^9, 3.817481861452896*^9, 
+   3.817482530768256*^9, {3.832168440190885*^9, 3.8321684514143972`*^9}, 
+   3.832168598561448*^9, 3.832169251078876*^9, 3.832169679779104*^9, 
+   3.8321698252179193`*^9, 3.8321700891575317`*^9, 3.83217026870468*^9, 
+   3.8686106590964003`*^9, 3.8689278971615267`*^9, 3.868928103795567*^9, 
+   3.868943647664062*^9, 3.900044675985917*^9, 3.900751957497724*^9, 
+   3.900752057925242*^9, 3.900752282629223*^9, 3.900752321753725*^9, 
+   3.90075237735434*^9, 3.9007524581893272`*^9, 3.90464110174163*^9, 
+   4.000614992389085*^9, 4.000615261233177*^9},
+ CellLabel->
+  "During evaluation of \
+In[1]:=",ExpressionUUID->"28472786-5626-4bae-9885-fbaa818afbfb"],
+
+Cell[BoxData["\<\"CopyRight (C) 2003-2026, Jose M. Martin-Garcia, under the \
+General Public License.\"\>"], "Print",
+ CellChangeTimes->{
+  3.7841348370227413`*^9, 3.80484237349655*^9, 3.804843656138385*^9, 
+   3.8048437493625793`*^9, 3.8048449304200153`*^9, 3.804847300388627*^9, 
+   3.8174519026115713`*^9, 3.8174594849504023`*^9, 3.817481861452896*^9, 
+   3.817482530768256*^9, {3.832168440190885*^9, 3.8321684514143972`*^9}, 
+   3.832168598561448*^9, 3.832169251078876*^9, 3.832169679779104*^9, 
+   3.8321698252179193`*^9, 3.8321700891575317`*^9, 3.83217026870468*^9, 
+   3.8686106590964003`*^9, 3.8689278971615267`*^9, 3.868928103795567*^9, 
+   3.868943647664062*^9, 3.900044675985917*^9, 3.900751957497724*^9, 
+   3.900752057925242*^9, 3.900752282629223*^9, 3.900752321753725*^9, 
+   3.90075237735434*^9, 3.9007524581893272`*^9, 3.90464110174163*^9, 
+   4.000614992389085*^9, 4.0006152612341127`*^9},
+ CellLabel->
+  "During evaluation of \
+In[1]:=",ExpressionUUID->"5e9e4ccc-08c1-4a44-8c56-0f1f075f569f"],
+
+Cell[BoxData["\<\"Connecting to external linux executable...\"\>"], "Print",
+ CellChangeTimes->{
+  3.7841348370227413`*^9, 3.80484237349655*^9, 3.804843656138385*^9, 
+   3.8048437493625793`*^9, 3.8048449304200153`*^9, 3.804847300388627*^9, 
+   3.8174519026115713`*^9, 3.8174594849504023`*^9, 3.817481861452896*^9, 
+   3.817482530768256*^9, {3.832168440190885*^9, 3.8321684514143972`*^9}, 
+   3.832168598561448*^9, 3.832169251078876*^9, 3.832169679779104*^9, 
+   3.8321698252179193`*^9, 3.8321700891575317`*^9, 3.83217026870468*^9, 
+   3.8686106590964003`*^9, 3.8689278971615267`*^9, 3.868928103795567*^9, 
+   3.868943647664062*^9, 3.900044675985917*^9, 3.900751957497724*^9, 
+   3.900752057925242*^9, 3.900752282629223*^9, 3.900752321753725*^9, 
+   3.90075237735434*^9, 3.9007524581893272`*^9, 3.90464110174163*^9, 
+   4.000614992389085*^9, 4.000615261320443*^9},
+ CellLabel->
+  "During evaluation of \
+In[1]:=",ExpressionUUID->"df287edc-1862-49cc-b330-d1638fc0e6b5"],
+
+Cell[BoxData["\<\"Connection established.\"\>"], "Print",
+ CellChangeTimes->{
+  3.7841348370227413`*^9, 3.80484237349655*^9, 3.804843656138385*^9, 
+   3.8048437493625793`*^9, 3.8048449304200153`*^9, 3.804847300388627*^9, 
+   3.8174519026115713`*^9, 3.8174594849504023`*^9, 3.817481861452896*^9, 
+   3.817482530768256*^9, {3.832168440190885*^9, 3.8321684514143972`*^9}, 
+   3.832168598561448*^9, 3.832169251078876*^9, 3.832169679779104*^9, 
+   3.8321698252179193`*^9, 3.8321700891575317`*^9, 3.83217026870468*^9, 
+   3.8686106590964003`*^9, 3.8689278971615267`*^9, 3.868928103795567*^9, 
+   3.868943647664062*^9, 3.900044675985917*^9, 3.900751957497724*^9, 
+   3.900752057925242*^9, 3.900752282629223*^9, 3.900752321753725*^9, 
+   3.90075237735434*^9, 3.9007524581893272`*^9, 3.90464110174163*^9, 
+   4.000614992389085*^9, 4.000615261342724*^9},
+ CellLabel->
+  "During evaluation of \
+In[1]:=",ExpressionUUID->"507f5a88-ef81-4222-b615-13631599b6d6"],
+
+Cell[BoxData["\<\"------------------------------------------------------------\
+\"\>"], "Print",
+ CellChangeTimes->{
+  3.7841348370227413`*^9, 3.80484237349655*^9, 3.804843656138385*^9, 
+   3.8048437493625793`*^9, 3.8048449304200153`*^9, 3.804847300388627*^9, 
+   3.8174519026115713`*^9, 3.8174594849504023`*^9, 3.817481861452896*^9, 
+   3.817482530768256*^9, {3.832168440190885*^9, 3.8321684514143972`*^9}, 
+   3.832168598561448*^9, 3.832169251078876*^9, 3.832169679779104*^9, 
+   3.8321698252179193`*^9, 3.8321700891575317`*^9, 3.83217026870468*^9, 
+   3.8686106590964003`*^9, 3.8689278971615267`*^9, 3.868928103795567*^9, 
+   3.868943647664062*^9, 3.900044675985917*^9, 3.900751957497724*^9, 
+   3.900752057925242*^9, 3.900752282629223*^9, 3.900752321753725*^9, 
+   3.90075237735434*^9, 3.9007524581893272`*^9, 3.90464110174163*^9, 
+   4.000614992389085*^9, 4.000615261358062*^9},
+ CellLabel->
+  "During evaluation of \
+In[1]:=",ExpressionUUID->"40fdd075-4534-4e38-afdb-b697441ca2e9"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Package xAct`xTensor` version \"\>", 
+   "\[InvisibleSpace]", "\<\"1.3.0\"\>", "\[InvisibleSpace]", "\<\", \"\>", "\[InvisibleSpace]", 
+   RowBox[{"{", 
+    RowBox[{"2025", ",", "12", ",", "29"}], "}"}]}],
+  SequenceForm[
+  "Package xAct`xTensor` version ", "1.3.0", ", ", {2025, 12, 29}],
+  Editable->False]], "Print",
+ CellChangeTimes->{
+  3.7841348370227413`*^9, 3.80484237349655*^9, 3.804843656138385*^9, 
+   3.8048437493625793`*^9, 3.8048449304200153`*^9, 3.804847300388627*^9, 
+   3.8174519026115713`*^9, 3.8174594849504023`*^9, 3.817481861452896*^9, 
+   3.817482530768256*^9, {3.832168440190885*^9, 3.8321684514143972`*^9}, 
+   3.832168598561448*^9, 3.832169251078876*^9, 3.832169679779104*^9, 
+   3.8321698252179193`*^9, 3.8321700891575317`*^9, 3.83217026870468*^9, 
+   3.8686106590964003`*^9, 3.8689278971615267`*^9, 3.868928103795567*^9, 
+   3.868943647664062*^9, 3.900044675985917*^9, 3.900751957497724*^9, 
+   3.900752057925242*^9, 3.900752282629223*^9, 3.900752321753725*^9, 
+   3.90075237735434*^9, 3.9007524581893272`*^9, 3.90464110174163*^9, 
+   4.000614992389085*^9, 4.0006152613586683`*^9},
+ CellLabel->
+  "During evaluation of \
+In[1]:=",ExpressionUUID->"cf78c155-3b6d-4754-8b78-ec62899dc361"],
+
+Cell[BoxData["\<\"CopyRight (C) 2002-2026, Jose M. Martin-Garcia, under the \
+General Public License.\"\>"], "Print",
+ CellChangeTimes->{
+  3.7841348370227413`*^9, 3.80484237349655*^9, 3.804843656138385*^9, 
+   3.8048437493625793`*^9, 3.8048449304200153`*^9, 3.804847300388627*^9, 
+   3.8174519026115713`*^9, 3.8174594849504023`*^9, 3.817481861452896*^9, 
+   3.817482530768256*^9, {3.832168440190885*^9, 3.8321684514143972`*^9}, 
+   3.832168598561448*^9, 3.832169251078876*^9, 3.832169679779104*^9, 
+   3.8321698252179193`*^9, 3.8321700891575317`*^9, 3.83217026870468*^9, 
+   3.8686106590964003`*^9, 3.8689278971615267`*^9, 3.868928103795567*^9, 
+   3.868943647664062*^9, 3.900044675985917*^9, 3.900751957497724*^9, 
+   3.900752057925242*^9, 3.900752282629223*^9, 3.900752321753725*^9, 
+   3.90075237735434*^9, 3.9007524581893272`*^9, 3.90464110174163*^9, 
+   4.000614992389085*^9, 4.000615261359273*^9},
+ CellLabel->
+  "During evaluation of \
+In[1]:=",ExpressionUUID->"8c33653d-74b5-4e27-bd49-2ed63cee0113"],
+
+Cell[BoxData["\<\"------------------------------------------------------------\
+\"\>"], "Print",
+ CellChangeTimes->{
+  3.7841348370227413`*^9, 3.80484237349655*^9, 3.804843656138385*^9, 
+   3.8048437493625793`*^9, 3.8048449304200153`*^9, 3.804847300388627*^9, 
+   3.8174519026115713`*^9, 3.8174594849504023`*^9, 3.817481861452896*^9, 
+   3.817482530768256*^9, {3.832168440190885*^9, 3.8321684514143972`*^9}, 
+   3.832168598561448*^9, 3.832169251078876*^9, 3.832169679779104*^9, 
+   3.8321698252179193`*^9, 3.8321700891575317`*^9, 3.83217026870468*^9, 
+   3.8686106590964003`*^9, 3.8689278971615267`*^9, 3.868928103795567*^9, 
+   3.868943647664062*^9, 3.900044675985917*^9, 3.900751957497724*^9, 
+   3.900752057925242*^9, 3.900752282629223*^9, 3.900752321753725*^9, 
+   3.90075237735434*^9, 3.9007524581893272`*^9, 3.90464110174163*^9, 
+   4.000614992389085*^9, 4.000615261376629*^9},
+ CellLabel->
+  "During evaluation of \
+In[1]:=",ExpressionUUID->"9debad5a-2077-46ea-ac2b-f6b1536fe190"],
+
+Cell[BoxData["\<\"These packages come with ABSOLUTELY NO WARRANTY; for \
+details type Disclaimer[]. This is free software, and you are welcome to \
+redistribute it under certain conditions. See the General Public License for \
+details.\"\>"], "Print",
+ CellChangeTimes->{
+  3.7841348370227413`*^9, 3.80484237349655*^9, 3.804843656138385*^9, 
+   3.8048437493625793`*^9, 3.8048449304200153`*^9, 3.804847300388627*^9, 
+   3.8174519026115713`*^9, 3.8174594849504023`*^9, 3.817481861452896*^9, 
+   3.817482530768256*^9, {3.832168440190885*^9, 3.8321684514143972`*^9}, 
+   3.832168598561448*^9, 3.832169251078876*^9, 3.832169679779104*^9, 
+   3.8321698252179193`*^9, 3.8321700891575317`*^9, 3.83217026870468*^9, 
+   3.8686106590964003`*^9, 3.8689278971615267`*^9, 3.868928103795567*^9, 
+   3.868943647664062*^9, 3.900044675985917*^9, 3.900751957497724*^9, 
+   3.900752057925242*^9, 3.900752282629223*^9, 3.900752321753725*^9, 
+   3.90075237735434*^9, 3.9007524581893272`*^9, 3.90464110174163*^9, 
+   4.000614992389085*^9, 4.000615261377184*^9},
+ CellLabel->
+  "During evaluation of \
+In[1]:=",ExpressionUUID->"8bb406bd-cef8-4301-952e-2dee2c0af27a"],
+
+Cell[BoxData["\<\"------------------------------------------------------------\
+\"\>"], "Print",
+ CellChangeTimes->{
+  3.7841348370227413`*^9, 3.80484237349655*^9, 3.804843656138385*^9, 
+   3.8048437493625793`*^9, 3.8048449304200153`*^9, 3.804847300388627*^9, 
+   3.8174519026115713`*^9, 3.8174594849504023`*^9, 3.817481861452896*^9, 
+   3.817482530768256*^9, {3.832168440190885*^9, 3.8321684514143972`*^9}, 
+   3.832168598561448*^9, 3.832169251078876*^9, 3.832169679779104*^9, 
+   3.8321698252179193`*^9, 3.8321700891575317`*^9, 3.83217026870468*^9, 
+   3.8686106590964003`*^9, 3.8689278971615267`*^9, 3.868928103795567*^9, 
+   3.868943647664062*^9, 3.900044675985917*^9, 3.900751957497724*^9, 
+   3.900752057925242*^9, 3.900752282629223*^9, 3.900752321753725*^9, 
+   3.90075237735434*^9, 3.9007524581893272`*^9, 3.90464110174163*^9, 
+   4.000614992389085*^9, 4.00061526137788*^9},
+ CellLabel->
+  "During evaluation of \
+In[1]:=",ExpressionUUID->"ded53b2d-d121-411e-83a2-0b68332f5950"]
+}, Open  ]]
+}, Open  ]],
+
+Cell["Load the new linking functions.", "Text",
+ CellChangeTimes->{{4.0005628767816*^9, 
+  4.000562897803109*^9}},ExpressionUUID->"cf32b48d-218a-48a6-957d-\
+8dfa9abb8486"],
+
+Cell[BoxData[
+ RowBox[{"Get", "[", 
+  RowBox[{
+   RowBox[{"NotebookDirectory", "[", "]"}], 
+   "<>", "\"\<xPermLibraryLink.m\>\""}], "]"}]], "Input",
+ CellChangeTimes->{{4.0005588391348*^9, 4.0005588579573708`*^9}, {
+  4.000558951800529*^9, 4.000558965542116*^9}, {4.0005591320501757`*^9, 
+  4.000559167648944*^9}},
+ CellLabel->"In[2]:=",ExpressionUUID->"b64d7a49-c064-45b0-80b0-78be7dbff471"],
+
+Cell["Uninstall the default xperm MathLink executable:", "Text",
+ CellChangeTimes->{{3.804844101097972*^9, 3.8048441181217546`*^9}, {
+  3.83216932871404*^9, 3.832169348681553*^9}, {3.868928112699862*^9, 
+  3.868928120803507*^9}, {3.868928157269505*^9, 
+  3.8689281728927593`*^9}},ExpressionUUID->"43af8b59-c149-45e8-942b-\
+a5e72a321987"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"Uninstall", "@", "$xpermLink"}], ";"}]], "Input",
+ CellChangeTimes->{{3.804843988764819*^9, 3.8048439903862543`*^9}, 
+   3.868943649898542*^9},
+ CellLabel->"In[3]:=",ExpressionUUID->"b230fca2-cab3-46ec-b727-e8df0553296a"],
+
+Cell[TextData[{
+ "Load the new libxperm shared library (for this to work you must have \
+installed the shared library in one of the locations reported by the variable \
+",
+ StyleBox["$LibraryPath", "Input"],
+ "):"
+}], "Text",
+ CellChangeTimes->{{3.868928186694066*^9, 3.868928207278784*^9}, 
+   3.8689282408558073`*^9, {3.86894365710581*^9, 
+   3.868943716285973*^9}},ExpressionUUID->"ba6ef73c-2bab-455b-8511-\
+4706ce6f7d1d"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", "Linux", " ", "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{"xperm", "=", 
+    RowBox[{"FindLibrary", "[", "\"\<libxpermLL.so\>\"", "]"}]}], 
+   ";"}]}]], "Input",
+ CellChangeTimes->{{3.8062418731362953`*^9, 3.8062418745279207`*^9}, {
+   3.806579600394415*^9, 3.8065796144808407`*^9}, {3.807107113357978*^9, 
+   3.807107115013669*^9}, {3.807184901117092*^9, 3.807184902652358*^9}, {
+   3.807378117197681*^9, 3.807378117724161*^9}, {3.807422529603216*^9, 
+   3.807422529888925*^9}, {3.810712499493231*^9, 3.8107125008669853`*^9}, 
+   3.8211114959269657`*^9, 3.8211115544073544`*^9, {3.832125922853691*^9, 
+   3.832125958964211*^9}, 3.868943654564355*^9, {3.90004467054852*^9, 
+   3.900044670667925*^9}, {3.9046410481058397`*^9, 3.90464105639926*^9}},
+ CellLabel->"In[4]:=",ExpressionUUID->"4961d1ac-cddf-4eec-8e9d-c001c85daa95"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", "MacOS", " ", "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{"xperm", "=", 
+    RowBox[{"FindLibrary", "[", "\"\<libxpermLL.dylib\>\"", "]"}]}], 
+   ";"}]}]], "Input",
+ CellChangeTimes->{{3.8062418731362953`*^9, 3.8062418745279207`*^9}, {
+   3.806579600394415*^9, 3.8065796144808407`*^9}, {3.807107113357978*^9, 
+   3.807107115013669*^9}, {3.807184901117092*^9, 3.807184902652358*^9}, {
+   3.807378117197681*^9, 3.807378117724161*^9}, {3.807422529603216*^9, 
+   3.807422529888925*^9}, {3.810712499493231*^9, 3.8107125008669853`*^9}, 
+   3.8211114959269657`*^9, 3.8211115544073544`*^9, {3.832125922853691*^9, 
+   3.832125958964211*^9}, 3.868943654564355*^9, {3.90004467054852*^9, 
+   3.900044670667925*^9}, {3.9046410481058397`*^9, 3.90464105639926*^9}, {
+   3.90464147876945*^9, 
+   3.9046415052655067`*^9}},ExpressionUUID->"4370e652-075a-460d-9561-\
+e75635698e55"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", "Windows", " ", "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{"xperm", "=", 
+    RowBox[{"FindLibrary", "[", "\"\<xpermLL\>\"", "]"}]}], ";"}]}]], "Input",\
+
+ CellChangeTimes->{{3.8062418731362953`*^9, 3.8062418745279207`*^9}, {
+   3.806579600394415*^9, 3.8065796144808407`*^9}, {3.807107113357978*^9, 
+   3.807107115013669*^9}, {3.807184901117092*^9, 3.807184902652358*^9}, {
+   3.807378117197681*^9, 3.807378117724161*^9}, {3.807422529603216*^9, 
+   3.807422529888925*^9}, {3.810712499493231*^9, 3.8107125008669853`*^9}, 
+   3.8211114959269657`*^9, 3.8211115544073544`*^9, {3.832125922853691*^9, 
+   3.832125958964211*^9}, 3.868943654564355*^9, {3.90004467054852*^9, 
+   3.900044670667925*^9}, {3.9046410481058397`*^9, 
+   3.9046411162556257`*^9}},ExpressionUUID->"4af6119c-fbe5-4163-b5ea-\
+d500a4c67f75"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Test computation", "Subsection",
+ CellChangeTimes->{{3.8689282720965347`*^9, 
+  3.8689282744619837`*^9}},ExpressionUUID->"72f6f1e2-dd34-45d3-a672-\
+1827f981e032"],
+
+Cell["\<\
+We can now perform computations as usual.  In this section we make a test \
+computation to make sure that everything has been set up correctly:\
+\>", "Text",
+ CellChangeTimes->{{3.8689280736437883`*^9, 3.868928085323504*^9}, {
+  3.868928277018272*^9, 3.8689282897925053`*^9}, {3.86892839809947*^9, 
+  3.868928441491688*^9}, {3.8689437840421467`*^9, 
+  3.868943798343912*^9}},ExpressionUUID->"891cedda-4ee9-42e4-8479-\
+65d95de8f109"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"$DefInfoQ", "=", "False"}], ";"}]], "Input",
+ CellChangeTimes->{{3.868928450405772*^9, 3.868928456732594*^9}},
+ CellLabel->"In[6]:=",ExpressionUUID->"f2522d04-9197-468f-a2c7-69cc7ac3cd4c"],
+
+Cell[BoxData[
+ RowBox[{"DefManifold", "[", 
+  RowBox[{"M", ",", "4", ",", 
+   RowBox[{"IndexRange", "[", 
+    RowBox[{"a", ",", "m"}], "]"}]}], "]"}]], "Input",
+ CellChangeTimes->{{3.804842677110012*^9, 3.8048426969959173`*^9}},
+ CellLabel->"In[7]:=",ExpressionUUID->"1aac3cf1-7dd7-443d-aad3-3134d37bbe2a"],
+
+Cell[BoxData[
+ RowBox[{"DefMetric", "[", 
+  RowBox[{"1", ",", 
+   RowBox[{"metricg", "[", 
+    RowBox[{
+     RowBox[{"-", "a"}], ",", 
+     RowBox[{"-", "b"}]}], "]"}], ",", "CD", ",", 
+   RowBox[{"PrintAs", "\[Rule]", "\"\<g\>\""}]}], "]"}]], "Input",
+ CellChangeTimes->{{3.817481926709489*^9, 3.81748196371166*^9}},
+ CellLabel->"In[8]:=",ExpressionUUID->"0d2e74d6-7548-4feb-9856-9ee9350d6951"],
+
+Cell[BoxData[
+ RowBox[{"DefTensor", "[", 
+  RowBox[{
+   RowBox[{"T", "[", 
+    RowBox[{
+     RowBox[{"-", "a"}], ",", 
+     RowBox[{"-", "b"}]}], "]"}], ",", "M", ",", 
+   RowBox[{"Antisymmetric", "[", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"-", "a"}], ",", 
+      RowBox[{"-", "b"}]}], "}"}], "]"}]}], "]"}]], "Input",
+ CellChangeTimes->{{3.804842699390028*^9, 3.804842720533889*^9}, {
+  3.81748190465138*^9, 3.8174819081462717`*^9}},
+ CellLabel->"In[9]:=",ExpressionUUID->"b92de3db-2ca2-4746-85b0-038120870e79"],
+
+Cell["Contracted product of any number of factors:", "Text",
+ CellChangeTimes->{{3.868943817353528*^9, 
+  3.8689438306638823`*^9}},ExpressionUUID->"bdc839ce-6826-4986-bd72-\
+1184ef01bc54"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"FProduct", "[", "n_", "]"}], ":=", 
+  RowBox[{"Module", "[", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{"indices", ",", "counter"}], "}"}], ",", "\[IndentingNewLine]", 
+    RowBox[{
+     RowBox[{"indices", "=", 
+      RowBox[{"GetIndicesOfVBundle", "[", 
+       RowBox[{"TangentM", ",", "n"}], "]"}]}], ";", "\[IndentingNewLine]", 
+     RowBox[{"counter", "=", 
+      RowBox[{"{", 
+       RowBox[{"indices", ",", 
+        RowBox[{"-", "indices"}]}], "}"}]}], ";", "\[IndentingNewLine]", 
+     RowBox[{"counter", "=", 
+      RowBox[{"Transpose", "[", "counter", "]"}]}], ";", 
+     "\[IndentingNewLine]", 
+     RowBox[{"counter", "=", 
+      RowBox[{"Flatten", "[", "counter", "]"}]}], ";", "\[IndentingNewLine]", 
+     
+     RowBox[{"counter", "=", 
+      RowBox[{"RotateLeft", "[", "counter", "]"}]}], ";", 
+     "\[IndentingNewLine]", 
+     RowBox[{"counter", "=", 
+      RowBox[{"Partition", "[", 
+       RowBox[{"counter", ",", "2"}], "]"}]}], ";", "\[IndentingNewLine]", 
+     RowBox[{"counter", "=", 
+      RowBox[{"Apply", "[", 
+       RowBox[{"T", ",", "counter", ",", 
+        RowBox[{"{", "1", "}"}]}], "]"}]}], ";", "\[IndentingNewLine]", 
+     RowBox[{"Apply", "[", 
+      RowBox[{"Times", ",", "counter"}], "]"}]}]}], "]"}]}]], "Input",
+ CellChangeTimes->{{3.725957787715453*^9, 3.725958039470014*^9}, {
+  3.817482380287475*^9, 3.817482385709716*^9}},
+ CellLabel->"In[10]:=",ExpressionUUID->"f83596c8-c82f-410f-892c-922b6c2b9420"],
+
+Cell["Product with 15 factors:", "Text",
+ CellChangeTimes->{{3.782447625394946*^9, 3.7824476320188217`*^9}, {
+   3.8321692763720303`*^9, 3.8321692776438093`*^9}, 3.832169694162404*^9, {
+   3.832170105552277*^9, 3.8321701064344397`*^9}, {3.900044691180286*^9, 
+   3.900044692031438*^9}},ExpressionUUID->"74711f1f-f633-4da0-b327-\
+d3c36fda4c44"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"FProduct", "[", "125", "]"}]], "Input",
+ CellChangeTimes->{{3.725958052733605*^9, 3.725958073215495*^9}, {
+   3.7300072344019623`*^9, 3.7300072354206057`*^9}, {3.730007508517321*^9, 
+   3.730007508606341*^9}, {3.73018585904519*^9, 3.7301858878506937`*^9}, {
+   3.730185944232551*^9, 3.730185944706292*^9}, {3.832169280665794*^9, 
+   3.83216928178885*^9}, 3.8321696967038317`*^9, {3.83216984138323*^9, 
+   3.832169842891157*^9}, {3.832170283030903*^9, 3.832170285371615*^9}, 
+   3.8689280515606613`*^9, {3.900752092120263*^9, 3.90075209242964*^9}, {
+   3.900752353598927*^9, 3.900752354027956*^9}, {3.90075241591889*^9, 
+   3.9007524164110327`*^9}, {3.90075258205587*^9, 3.900752583021758*^9}},
+ CellLabel->"In[11]:=",ExpressionUUID->"e3e2b372-c468-4fd7-85cd-198283fed995"],
+
+Cell[BoxData[
+ RowBox[{
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "b"},
+          {"a", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`a, $CellContext`b],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "c"},
+          {"b", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`b, $CellContext`c],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "d"},
+          {"c", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`c, $CellContext`d],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "e"},
+          {"d", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`d, $CellContext`e],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "f"},
+          {"e", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`e, $CellContext`f],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "g"},
+          {"f", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`f, $CellContext`g],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "h"},
+          {"g", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`g, $CellContext`h],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "i"},
+          {"h", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`h, $CellContext`i],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "j"},
+          {"i", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`i, $CellContext`j],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "k"},
+          {"j", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`j, $CellContext`k],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "l"},
+          {"k", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`k, $CellContext`l],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m"},
+          {"l", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`l, $CellContext`m],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m1"},
+          {"m", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m, $CellContext`m1],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m2"},
+          {"m1", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m1, $CellContext`m2],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m11"},
+          {"m10", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m10, $CellContext`m11],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m101"},
+          {"m100", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m100, $CellContext`m101],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m102"},
+          {"m101", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m101, $CellContext`m102],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m103"},
+          {"m102", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m102, $CellContext`m103],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m104"},
+          {"m103", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m103, $CellContext`m104],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m105"},
+          {"m104", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m104, $CellContext`m105],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m106"},
+          {"m105", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m105, $CellContext`m106],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m107"},
+          {"m106", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m106, $CellContext`m107],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m108"},
+          {"m107", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m107, $CellContext`m108],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m109"},
+          {"m108", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m108, $CellContext`m109],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m110"},
+          {"m109", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m109, $CellContext`m110],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m12"},
+          {"m11", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m11, $CellContext`m12],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m111"},
+          {"m110", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m110, $CellContext`m111],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m112"},
+          {"m111", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m111, $CellContext`m112],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "a"},
+          {"m112", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m112, $CellContext`a],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m13"},
+          {"m12", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m12, $CellContext`m13],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m14"},
+          {"m13", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m13, $CellContext`m14],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m15"},
+          {"m14", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m14, $CellContext`m15],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m16"},
+          {"m15", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m15, $CellContext`m16],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m17"},
+          {"m16", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m16, $CellContext`m17],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m18"},
+          {"m17", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m17, $CellContext`m18],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m19"},
+          {"m18", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m18, $CellContext`m19],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m20"},
+          {"m19", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m19, $CellContext`m20],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m3"},
+          {"m2", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m2, $CellContext`m3],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m21"},
+          {"m20", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m20, $CellContext`m21],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m22"},
+          {"m21", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m21, $CellContext`m22],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m23"},
+          {"m22", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m22, $CellContext`m23],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m24"},
+          {"m23", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m23, $CellContext`m24],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m25"},
+          {"m24", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m24, $CellContext`m25],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m26"},
+          {"m25", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m25, $CellContext`m26],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m27"},
+          {"m26", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m26, $CellContext`m27],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m28"},
+          {"m27", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m27, $CellContext`m28],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m29"},
+          {"m28", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m28, $CellContext`m29],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m30"},
+          {"m29", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m29, $CellContext`m30],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m4"},
+          {"m3", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m3, $CellContext`m4],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m31"},
+          {"m30", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m30, $CellContext`m31],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m32"},
+          {"m31", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m31, $CellContext`m32],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m33"},
+          {"m32", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m32, $CellContext`m33],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m34"},
+          {"m33", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m33, $CellContext`m34],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m35"},
+          {"m34", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m34, $CellContext`m35],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m36"},
+          {"m35", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m35, $CellContext`m36],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m37"},
+          {"m36", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m36, $CellContext`m37],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m38"},
+          {"m37", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m37, $CellContext`m38],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m39"},
+          {"m38", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m38, $CellContext`m39],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m40"},
+          {"m39", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m39, $CellContext`m40],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m5"},
+          {"m4", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m4, $CellContext`m5],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m41"},
+          {"m40", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m40, $CellContext`m41],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m42"},
+          {"m41", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m41, $CellContext`m42],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m43"},
+          {"m42", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m42, $CellContext`m43],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m44"},
+          {"m43", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m43, $CellContext`m44],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m45"},
+          {"m44", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m44, $CellContext`m45],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m46"},
+          {"m45", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m45, $CellContext`m46],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m47"},
+          {"m46", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m46, $CellContext`m47],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m48"},
+          {"m47", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m47, $CellContext`m48],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m49"},
+          {"m48", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m48, $CellContext`m49],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m50"},
+          {"m49", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m49, $CellContext`m50],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m6"},
+          {"m5", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m5, $CellContext`m6],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m51"},
+          {"m50", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m50, $CellContext`m51],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m52"},
+          {"m51", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m51, $CellContext`m52],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m53"},
+          {"m52", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m52, $CellContext`m53],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m54"},
+          {"m53", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m53, $CellContext`m54],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m55"},
+          {"m54", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m54, $CellContext`m55],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m56"},
+          {"m55", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m55, $CellContext`m56],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m57"},
+          {"m56", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m56, $CellContext`m57],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m58"},
+          {"m57", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m57, $CellContext`m58],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m59"},
+          {"m58", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m58, $CellContext`m59],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m60"},
+          {"m59", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m59, $CellContext`m60],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m7"},
+          {"m6", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m6, $CellContext`m7],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m61"},
+          {"m60", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m60, $CellContext`m61],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m62"},
+          {"m61", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m61, $CellContext`m62],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m63"},
+          {"m62", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m62, $CellContext`m63],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m64"},
+          {"m63", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m63, $CellContext`m64],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m65"},
+          {"m64", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m64, $CellContext`m65],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m66"},
+          {"m65", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m65, $CellContext`m66],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m67"},
+          {"m66", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m66, $CellContext`m67],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m68"},
+          {"m67", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m67, $CellContext`m68],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m69"},
+          {"m68", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m68, $CellContext`m69],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m70"},
+          {"m69", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m69, $CellContext`m70],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m8"},
+          {"m7", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m7, $CellContext`m8],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m71"},
+          {"m70", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m70, $CellContext`m71],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m72"},
+          {"m71", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m71, $CellContext`m72],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m73"},
+          {"m72", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m72, $CellContext`m73],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m74"},
+          {"m73", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m73, $CellContext`m74],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m75"},
+          {"m74", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m74, $CellContext`m75],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m76"},
+          {"m75", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m75, $CellContext`m76],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m77"},
+          {"m76", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m76, $CellContext`m77],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m78"},
+          {"m77", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m77, $CellContext`m78],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m79"},
+          {"m78", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m78, $CellContext`m79],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m80"},
+          {"m79", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m79, $CellContext`m80],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m9"},
+          {"m8", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m8, $CellContext`m9],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m81"},
+          {"m80", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m80, $CellContext`m81],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m82"},
+          {"m81", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m81, $CellContext`m82],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m83"},
+          {"m82", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m82, $CellContext`m83],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m84"},
+          {"m83", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m83, $CellContext`m84],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m85"},
+          {"m84", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m84, $CellContext`m85],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m86"},
+          {"m85", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m85, $CellContext`m86],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m87"},
+          {"m86", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m86, $CellContext`m87],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m88"},
+          {"m87", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m87, $CellContext`m88],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m89"},
+          {"m88", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m88, $CellContext`m89],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m90"},
+          {"m89", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m89, $CellContext`m90],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m10"},
+          {"m9", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m9, $CellContext`m10],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m91"},
+          {"m90", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m90, $CellContext`m91],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m92"},
+          {"m91", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m91, $CellContext`m92],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m93"},
+          {"m92", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m92, $CellContext`m93],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m94"},
+          {"m93", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m93, $CellContext`m94],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m95"},
+          {"m94", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m94, $CellContext`m95],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m96"},
+          {"m95", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m95, $CellContext`m96],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m97"},
+          {"m96", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m96, $CellContext`m97],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m98"},
+          {"m97", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m97, $CellContext`m98],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m99"},
+          {"m98", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m98, $CellContext`m99],
+   Editable->False], " ", 
+  InterpretationBox[
+   StyleBox[GridBox[{
+      {"T", 
+       StyleBox[GridBox[{
+          {" ", "m100"},
+          {"m99", " "}
+         },
+         GridBoxSpacings->{"Columns" -> {
+             Offset[0.], {
+              Offset[0.034999999999999996`]}, 
+             Offset[0.]}, "Rows" -> {{
+              Offset[0.]}}}],
+        FontSize->Rational[39, 4]]}
+     },
+     GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Center}}},
+     GridBoxSpacings->{"Columns" -> {
+         Offset[0.27999999999999997`], {
+          Offset[0.034999999999999996`]}, 
+         Offset[0.27999999999999997`]}, "Rows" -> {
+         Offset[0.2], {
+          Offset[0.4]}, 
+         Offset[0.2]}}],
+    ShowAutoStyles->False,
+    AutoSpacing->False],
+   $CellContext`T[-$CellContext`m99, $CellContext`m100],
+   Editable->False]}]], "Output",
+ CellChangeTimes->{{3.725958056306203*^9, 3.7259580741064787`*^9}, 
+   3.7259581242161007`*^9, 3.7259662591348352`*^9, 3.729946690330638*^9, {
+   3.730007501103793*^9, 3.7300075089476748`*^9}, {3.730185852893104*^9, 
+   3.730185888260242*^9}, {3.730185925226055*^9, 3.7301859702837467`*^9}, 
+   3.730609853356512*^9, 3.782447620398253*^9, 3.782447669198762*^9, 
+   3.817482393373417*^9, 3.8174825850646973`*^9, 3.832168681495555*^9, 
+   3.832169282781207*^9, 3.83216969765975*^9, 3.832169845650743*^9, 
+   3.8321701076843348`*^9, 3.832170286448906*^9, {3.868928046213019*^9, 
+   3.8689280522100163`*^9}, 3.8689284741590757`*^9, 3.8689438345592823`*^9, 
+   3.900044680465343*^9, {3.9007519741999397`*^9, 3.900751980614353*^9}, {
+   3.900752028888338*^9, 3.9007521376944237`*^9}, {3.900752251827322*^9, 
+   3.900752263358927*^9}, {3.900752300069563*^9, 3.900752354756598*^9}, {
+   3.9007523870998*^9, 3.900752420382246*^9}, 3.90075246456909*^9, 
+   3.90075249513352*^9, 3.90075258363804*^9, 4.000615454277637*^9},
+ CellLabel->"Out[11]=",ExpressionUUID->"6e190447-bf42-4aa9-88a1-1e46a5d62646"]
+}, Open  ]],
+
+Cell["\<\
+If everything has been set up correctly then the following computation should \
+give the expected result:\
+\>", "Text",
+ CellChangeTimes->{{3.8689438536384573`*^9, 
+  3.868943914868149*^9}},ExpressionUUID->"92a08344-196c-4cbe-ba63-\
+06bbfc4ce01e"],
+
+Cell["\<\
+Load the library with the Niehoff algorithm for CanonicalPerm\
+\>", "Text",
+ CellChangeTimes->{{4.0005628767816*^9, 
+  4.000562989994953*^9}},ExpressionUUID->"c4a9f5fc-6f18-4abe-b2a8-\
+8a2e380586b0"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"LoadxPermLibraryLink", "[", 
+  RowBox[{"xperm", ",", "True"}], "]"}]], "Input",
+ CellChangeTimes->{{4.00055941714834*^9, 4.000559424249516*^9}},
+ CellLabel->"In[12]:=",ExpressionUUID->"ec3c5588-cf85-4d2c-9c28-2c15afd58247"],
+
+Cell[BoxData["True"], "Output",
+ CellChangeTimes->{4.000559426043769*^9, 4.000559750997332*^9, 
+  4.000559996210095*^9, 4.000560911507003*^9, 4.000561019534274*^9, 
+  4.0005622027493677`*^9, 4.000562310172608*^9, 4.000562527155026*^9, 
+  4.000565041762487*^9, 4.000615292696063*^9, 4.0006154609646883`*^9},
+ CellLabel->"Out[12]=",ExpressionUUID->"d90e9c93-b796-4502-a920-e9885d3cb6f5"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"EchoTiming", "@", 
+  RowBox[{"ToCanonical", "@", 
+   RowBox[{"FProduct", "[", "125", "]"}]}]}]], "Input",
+ CellChangeTimes->{{3.725958075283958*^9, 3.725958080836957*^9}, {
+   3.7259581257531776`*^9, 3.725958127183381*^9}, 3.7301859676492643`*^9, {
+   3.730609857870421*^9, 3.730609862547038*^9}, 3.782447666220087*^9, {
+   3.817482587304792*^9, 3.8174825911735983`*^9}, {3.90075211004851*^9, 
+   3.9007521284049683`*^9}, {3.9007522434486237`*^9, 3.900752247101695*^9}, {
+   3.9007524979350348`*^9, 3.900752500589925*^9}, {4.000615330724279*^9, 
+   4.000615331236175*^9}},
+ CellLabel->"In[13]:=",ExpressionUUID->"908e5de9-493b-48c1-96fc-057f4563eb95"],
+
+Cell[BoxData["5.356937`"], "EchoTiming",
+ CellChangeTimes->{
+  4.000615468389571*^9},ExpressionUUID->"6d89a45b-f629-4bd9-9a4a-\
+8f39d785a047"],
+
+Cell[BoxData["0"], "Output",
+ CellChangeTimes->{
+  3.7259581182142477`*^9, 3.725958168405147*^9, 3.725966296688747*^9, 
+   3.7299467342243977`*^9, {3.730007502864832*^9, 3.730007509946072*^9}, {
+   3.730185854047982*^9, 3.730185898347332*^9}, {3.7301859354048758`*^9, 
+   3.7301859890935917`*^9}, 3.730609882074748*^9, 3.782447654155225*^9, 
+   3.7824476888150797`*^9, 3.817482408328031*^9, 3.817482602894992*^9, 
+   3.8321686943301153`*^9, 3.832169729014722*^9, 3.832169901430893*^9, 
+   3.832170162838356*^9, 3.832170537367255*^9, 3.868928053344208*^9, 
+   3.868928475833037*^9, 3.868943835972229*^9, 3.900044680505867*^9, {
+   3.900751975508726*^9, 3.900751982392345*^9}, {3.900752029994257*^9, 
+   3.9007521386920643`*^9}, {3.900752249328858*^9, 3.900752266418501*^9}, {
+   3.900752302022089*^9, 3.90075236031283*^9}, {3.9007523908159723`*^9, 
+   3.9007524383713512`*^9}, 3.900752510022254*^9, 3.900752684944936*^9, 
+   4.00061546840184*^9},
+ CellLabel->"Out[13]=",ExpressionUUID->"cf6f4b95-589f-428d-84fc-3da8c2f87a0b"]
+}, Open  ]],
+
+Cell["Same computation with the old canonicalizer:", "Text",
+ CellChangeTimes->{{4.000615489979516*^9, 
+  4.000615527013935*^9}},ExpressionUUID->"a48cf585-955f-44bb-beda-\
+311db19a574d"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"LoadxPermLibraryLink", "[", 
+  RowBox[{"xperm", ",", "False"}], "]"}]], "Input",
+ CellChangeTimes->{{4.00055941714834*^9, 4.000559424249516*^9}, {
+  4.000615536088626*^9, 4.0006155381284637`*^9}},
+ CellLabel->"In[14]:=",ExpressionUUID->"5e70fe48-e7f3-4818-89e3-369d4d034579"],
+
+Cell[BoxData["True"], "Output",
+ CellChangeTimes->{4.000615538749077*^9},
+ CellLabel->"Out[14]=",ExpressionUUID->"eb136870-b169-480c-ad40-2a75ac9a1619"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"EchoTiming", "@", 
+  RowBox[{"ToCanonical", "@", 
+   RowBox[{"FProduct", "[", "125", "]"}]}]}]], "Input",
+ CellChangeTimes->{{3.725958075283958*^9, 3.725958080836957*^9}, {
+   3.7259581257531776`*^9, 3.725958127183381*^9}, 3.7301859676492643`*^9, {
+   3.730609857870421*^9, 3.730609862547038*^9}, 3.782447666220087*^9, {
+   3.817482587304792*^9, 3.8174825911735983`*^9}, {3.90075211004851*^9, 
+   3.9007521284049683`*^9}, {3.9007522434486237`*^9, 3.900752247101695*^9}, {
+   3.9007524979350348`*^9, 3.900752500589925*^9}, {4.000615330724279*^9, 
+   4.000615331236175*^9}},
+ CellLabel->"In[15]:=",ExpressionUUID->"92f81018-b792-4a9a-aeb1-b9c343745a1d"],
+
+Cell[BoxData["16.969087`"], "EchoTiming",
+ CellChangeTimes->{
+  4.000615558703404*^9},ExpressionUUID->"20b3e1bc-7528-450f-bbff-\
+c43dad4c9737"],
+
+Cell[BoxData["0"], "Output",
+ CellChangeTimes->{4.00061555872548*^9},
+ CellLabel->"Out[15]=",ExpressionUUID->"c4697b56-862a-4cb5-b54b-f86ff6f002bf"]
+}, Open  ]]
+}, Open  ]]
+},
+WindowSize->{1314.75, 741.75},
+WindowMargins->{{Automatic, -1314.75}, {Automatic, 0}},
+FrontEndVersion->"15.0 for Linux x86 (64-bit) (July 2, 2026)",
+StyleDefinitions->"Default.nb",
+ExpressionUUID->"9aeb3660-3e05-41e6-ace1-fb36031fe6f2"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[554, 20, 199, 3, 29, "Input",ExpressionUUID->"93d6b7fa-5b17-4d80-894f-61550bdba3d7"],
+Cell[CellGroupData[{
+Cell[778, 27, 216, 4, 53, "Subsection",ExpressionUUID->"83971515-be27-40a8-838c-7abeb4b3505d"],
+Cell[997, 33, 161, 3, 33, "Text",ExpressionUUID->"355f52ee-1745-45ef-a9fd-4ec10a716201"],
+Cell[CellGroupData[{
+Cell[1183, 40, 201, 3, 29, "Input",ExpressionUUID->"320818bc-ffaa-4ebc-a63a-0669bee3eacb"],
+Cell[CellGroupData[{
+Cell[1409, 47, 987, 16, 23, "Print",ExpressionUUID->"11b72f86-2d84-4ae4-a9f9-344a913eb50e"],
+Cell[2399, 65, 1254, 22, 23, "Print",ExpressionUUID->"28472786-5626-4bae-9885-fbaa818afbfb"],
+Cell[3656, 89, 1010, 16, 23, "Print",ExpressionUUID->"5e9e4ccc-08c1-4a44-8c56-0f1f075f569f"],
+Cell[4669, 107, 967, 15, 23, "Print",ExpressionUUID->"df287edc-1862-49cc-b330-d1638fc0e6b5"],
+Cell[5639, 124, 948, 15, 23, "Print",ExpressionUUID->"507f5a88-ef81-4222-b615-13631599b6d6"],
+Cell[6590, 141, 987, 16, 23, "Print",ExpressionUUID->"40fdd075-4534-4e38-afdb-b697441ca2e9"],
+Cell[7580, 159, 1261, 23, 23, "Print",ExpressionUUID->"cf78c155-3b6d-4754-8b78-ec62899dc361"],
+Cell[8844, 184, 1008, 16, 23, "Print",ExpressionUUID->"8c33653d-74b5-4e27-bd49-2ed63cee0113"],
+Cell[9855, 202, 987, 16, 23, "Print",ExpressionUUID->"9debad5a-2077-46ea-ac2b-f6b1536fe190"],
+Cell[10845, 220, 1142, 18, 41, "Print",ExpressionUUID->"8bb406bd-cef8-4301-952e-2dee2c0af27a"],
+Cell[11990, 240, 986, 16, 23, "Print",ExpressionUUID->"ded53b2d-d121-411e-83a2-0b68332f5950"]
+}, Open  ]]
+}, Open  ]],
+Cell[13003, 260, 171, 3, 33, "Text",ExpressionUUID->"cf32b48d-218a-48a6-957d-8dfa9abb8486"],
+Cell[13177, 265, 393, 8, 29, "Input",ExpressionUUID->"b64d7a49-c064-45b0-80b0-78be7dbff471"],
+Cell[13573, 275, 337, 5, 33, "Text",ExpressionUUID->"43af8b59-c149-45e8-942b-a5e72a321987"],
+Cell[13913, 282, 256, 5, 29, "Input",ExpressionUUID->"b230fca2-cab3-46ec-b727-e8df0553296a"],
+Cell[14172, 289, 425, 10, 33, "Text",ExpressionUUID->"ba6ef73c-2bab-455b-8511-4706ce6f7d1d"],
+Cell[14600, 301, 880, 15, 49, "Input",ExpressionUUID->"4961d1ac-cddf-4eec-8e9d-c001c85daa95"],
+Cell[15483, 318, 917, 17, 49, "Input",ExpressionUUID->"4370e652-075a-460d-9561-e75635698e55"],
+Cell[16403, 337, 860, 16, 49, "Input",ExpressionUUID->"4af6119c-fbe5-4163-b5ea-d500a4c67f75"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[17300, 358, 168, 3, 53, "Subsection",ExpressionUUID->"72f6f1e2-dd34-45d3-a672-1827f981e032"],
+Cell[17471, 363, 442, 8, 33, "Text",ExpressionUUID->"891cedda-4ee9-42e4-8479-65d95de8f109"],
+Cell[17916, 373, 223, 4, 29, "Input",ExpressionUUID->"f2522d04-9197-468f-a2c7-69cc7ac3cd4c"],
+Cell[18142, 379, 306, 6, 29, "Input",ExpressionUUID->"1aac3cf1-7dd7-443d-aad3-3134d37bbe2a"],
+Cell[18451, 387, 395, 9, 29, "Input",ExpressionUUID->"0d2e74d6-7548-4feb-9856-9ee9350d6951"],
+Cell[18849, 398, 521, 14, 29, "Input",ExpressionUUID->"b92de3db-2ca2-4746-85b0-038120870e79"],
+Cell[19373, 414, 188, 3, 33, "Text",ExpressionUUID->"bdc839ce-6826-4986-bd72-1184ef01bc54"],
+Cell[19564, 419, 1479, 35, 189, "Input",ExpressionUUID->"f83596c8-c82f-410f-892c-922b6c2b9420"],
+Cell[21046, 456, 343, 5, 33, "Text",ExpressionUUID->"74711f1f-f633-4da0-b327-d3c36fda4c44"],
+Cell[CellGroupData[{
+Cell[21414, 465, 796, 11, 29, "Input",ExpressionUUID->"e3e2b372-c468-4fd7-85cd-198283fed995"],
+Cell[22213, 478, 104158, 3266, 158, "Output",ExpressionUUID->"6e190447-bf42-4aa9-88a1-1e46a5d62646"]
+}, Open  ]],
+Cell[126386, 3747, 257, 6, 33, "Text",ExpressionUUID->"92a08344-196c-4cbe-ba63-06bbfc4ce01e"],
+Cell[126646, 3755, 209, 5, 33, "Text",ExpressionUUID->"c4a9f5fc-6f18-4abe-b2a8-8a2e380586b0"],
+Cell[CellGroupData[{
+Cell[126880, 3764, 247, 4, 29, "Input",ExpressionUUID->"ec3c5588-cf85-4d2c-9c28-2c15afd58247"],
+Cell[127130, 3770, 385, 5, 33, "Output",ExpressionUUID->"d90e9c93-b796-4502-a920-e9885d3cb6f5"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[127552, 3780, 675, 11, 29, "Input",ExpressionUUID->"908e5de9-493b-48c1-96fc-057f4563eb95"],
+Cell[128230, 3793, 142, 3, 23, "EchoTiming",ExpressionUUID->"6d89a45b-f629-4bd9-9a4a-8f39d785a047"],
+Cell[128375, 3798, 1024, 15, 33, "Output",ExpressionUUID->"cf6f4b95-589f-428d-84fc-3da8c2f87a0b"]
+}, Open  ]],
+Cell[129414, 3816, 186, 3, 33, "Text",ExpressionUUID->"a48cf585-955f-44bb-beda-311db19a574d"],
+Cell[CellGroupData[{
+Cell[129625, 3823, 299, 5, 29, "Input",ExpressionUUID->"5e70fe48-e7f3-4818-89e3-369d4d034579"],
+Cell[129927, 3830, 152, 2, 33, "Output",ExpressionUUID->"eb136870-b169-480c-ad40-2a75ac9a1619"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[130116, 3837, 675, 11, 29, "Input",ExpressionUUID->"92f81018-b792-4a9a-aeb1-b9c343745a1d"],
+Cell[130794, 3850, 143, 3, 23, "EchoTiming",ExpressionUUID->"20b3e1bc-7528-450f-bbff-c43dad4c9737"],
+Cell[130940, 3855, 148, 2, 33, "Output",ExpressionUUID->"c4697b56-862a-4cb5-b54b-f86ff6f002bf"]
+}, Open  ]]
+}, Open  ]]
+}
+]
+*)
+
