@@ -7,16 +7,46 @@ inspired by [Ben Niehoff's work](https://github.com/bniehoff/tensor-canonicalize
 see the implementation status below.
 
 
+# Wolfram Language paclet
+
+The wrapper is available as the **xPermLibraryLink** paclet in the
+``xAct`xPermLibraryLink` `` context. Build and install it for the current user:
+
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --target install-paclet --parallel
+```
+
+Then, in a fresh Wolfram kernel:
+
+```wl
+Needs["xAct`xPermLibraryLink`"];
+Uninstall@$xpermLink;
+LoadxPermLibraryLink[Automatic, True]
+```
+
+`Needs` loads xPerm when necessary. `LoadxPermLibraryLink` uses the native library
+bundled with this paclet; `True` selects the Niehoff canonicalizer. Use
+`LoadxPermLibraryLink[]` for the original xPerm canonicalizer and
+`UnloadxPermLibraryLink[]` to restore xPerm's previous native definitions and
+availability flag. Loading the package alone does not replace those definitions.
+
+See [PACLET.md](PACLET.md) for prerequisites, installation, archive creation,
+context migration, and integration tests.
+
 # Prerequisites
 * A working installation of [xAct](http://www.xact.es/).
+* Wolfram Language 12.1 or newer for the paclet format, with a licensed kernel
+  for the `paclet` and `install-paclet` targets. Runtime validation is described
+  in [PACLET.md](PACLET.md).
 * CMake >= 3.15 (only for building from source).
 * A C\C++ compiler (only for building from source).
 
 # Precompiled libraries
-If you just want a ready to use compiled library you can simply download it from the `binaries`
-folder of this repository (choose the library suitable for your platform). You should then copy the library to one
-of the directories that is in the `$LibraryPath` variable (this is a Mathematica variable that you can
-check from within a Mathematica session).
+The original libraries under `binaries/` predate the fixes on this branch.
+Build the paclet to include the current native library. A distributed `.paclet`
+archive can be installed with `PacletInstall["/absolute/path/to/archive.paclet"]`;
+there is no need to copy its native library onto `$LibraryPath`.
 
 ## Status of the Niehoff branch
 

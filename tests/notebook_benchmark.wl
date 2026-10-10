@@ -15,10 +15,10 @@ If[!IntegerQ[factors] || factors < 1 || !IntegerQ[repeats] || repeats < 1, Quit[
 Print["Kernel: ", System`$Version];
 Needs["xAct`xTensor`"];
 Get[FileNameJoin[{DirectoryName[DirectoryName[$InputFileName]], "xPermLibraryLink.m"}]];
-If[xPermLibraryLink`LoadxPermLibraryLink[library, True] =!= True, Quit[2]];
-(* LibraryLink replaces WSTP; prevent an unavailable WSTP executable from
-   silently selecting the pure-Wolfram fallback in ToCanonical. *)
-xAct`xPerm`$xpermQ = True;
+If[xAct`xPermLibraryLink`LoadxPermLibraryLink[library, True] =!= True, Quit[2]];
+(* A successful LibraryLink load must enable xPerm native dispatch even
+   when its original WSTP executable is unavailable. *)
+If[!TrueQ[xAct`xPerm`$xpermQ], Print["FAIL: native dispatch disabled"]; Quit[1]];
 $DefInfoQ = False;
 DefManifold[M, 4, IndexRange[a, m]];
 DefMetric[1, metricg[-a, -b], CD, PrintAs -> "g"];
@@ -29,13 +29,13 @@ FProduct[n_] := Module[{indices, counter},
   Times @@ Apply[T, Partition[RotateLeft[counter], 2], {1}]
 ];
 (* Assert that the native function was actually called during warmup. *)
-native = xPermLibraryLink`Private`$llNiehoffCanonicalPerm;
-Clear[xPermLibraryLink`Private`$llNiehoffCanonicalPerm];
+native = xAct`xPermLibraryLink`Private`$llNiehoffCanonicalPerm;
+Clear[xAct`xPermLibraryLink`Private`$llNiehoffCanonicalPerm];
 nativeCalls = 0;
-xPermLibraryLink`Private`$llNiehoffCanonicalPerm[args___] := (nativeCalls++; native[args]);
+xAct`xPermLibraryLink`Private`$llNiehoffCanonicalPerm[args___] := (nativeCalls++; native[args]);
 warmup = AbsoluteTiming[ToCanonical[FProduct[factors]]];
-Clear[xPermLibraryLink`Private`$llNiehoffCanonicalPerm];
-xPermLibraryLink`Private`$llNiehoffCanonicalPerm = native;
+Clear[xAct`xPermLibraryLink`Private`$llNiehoffCanonicalPerm];
+xAct`xPermLibraryLink`Private`$llNiehoffCanonicalPerm = native;
 If[nativeCalls == 0 || (Last[warmup] === 0) =!= OddQ[factors],
   Print["FAIL: missing native call or wrong odd/even result"]; Quit[1]];
 runs = Table[AbsoluteTiming[ToCanonical[FProduct[factors]]], {repeats}];

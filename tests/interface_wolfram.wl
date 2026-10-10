@@ -1,6 +1,6 @@
 (* Run manually with a licensed Wolfram kernel:
    WolframKernel -noinit -noprompt -script tests/interface_wolfram.wl /absolute/path/libxpermLL.so
-   xAct integration is included when xAct`xPerm` is installed. *)
+   Requires an installed xAct`xPerm` package. *)
 scriptArguments = If[MemberQ[$CommandLine, "-script"],
   Drop[$CommandLine, First[FirstPosition[$CommandLine, "-script"]]], $ScriptCommandLine];
 If[Length[scriptArguments] =!= 2,
@@ -12,23 +12,27 @@ package = FileNameJoin[{DirectoryName[DirectoryName[$InputFileName]], "xPermLibr
 assert[condition_, label_] := If[!TrueQ[condition], Print["FAIL: ", label]; Quit[1]];
 Print["Kernel: ", $Version];
 hasXPerm = StringQ[Quiet[FindFile["xAct`xPerm`"]]];
-If[hasXPerm, Quiet[Needs["xAct`xPerm`"]]];
+assert[hasXPerm, "xAct`xPerm` dependency is installed"];
+Quiet[Needs["xAct`xPerm`"]];
 Get[package];
 (* A sentinel verifies restoration even if xAct's WSTP program is unavailable. *)
 xAct`xPerm`Private`MLOrbit[1000, {}, 1000] := "original definition";
-originalDefinitions = xPermLibraryLink`Private`CaptureDefinition /@
-  xPermLibraryLink`Private`$wrappedSymbols;
-assert[xPermLibraryLink`LoadxPermLibraryLink[library, True] === True, "load"];
-assert[xPermLibraryLink`xPermLibraryLinkLoadedQ[], "loaded flag"];
+xAct`xPerm`$xpermQ = False;
+originalNativeFlag = OwnValues[xAct`xPerm`$xpermQ];
+originalDefinitions = xAct`xPermLibraryLink`Private`CaptureDefinition /@
+  xAct`xPermLibraryLink`Private`$wrappedSymbols;
+assert[xAct`xPermLibraryLink`LoadxPermLibraryLink[library, True] === True, "load"];
+assert[xAct`xPermLibraryLink`xPermLibraryLinkLoadedQ[], "loaded flag"];
+assert[TrueQ[xAct`xPerm`$xpermQ], "native dispatch enabled"];
 assert[xAct`xPerm`Private`MLOrbit[1, {2, 1, 3}, 3] === {1, 2}, "orbit"];
-assert[xPermLibraryLink`Private`$llBaseChange[3, {}, {}, {2}] === {3, 1, 0, 2},
+assert[xAct`xPermLibraryLink`Private`$llBaseChange[3, {}, {}, {2}] === {3, 1, 0, 2},
   "identity group base change"];
-assert[xPermLibraryLink`Private`$llStabilizerSGS[3, {1}, {2, 1, 3}, {1}] === {3, 0, 0},
+assert[xAct`xPermLibraryLink`Private`$llStabilizerSGS[3, {1}, {2, 1, 3}, {1}] === {3, 0, 0},
   "full-base stabilizer"];
-assert[xPermLibraryLink`Private`$llNiehoffCanonicalPerm[
+assert[xAct`xPermLibraryLink`Private`$llNiehoffCanonicalPerm[
   {1, 2, 3, 4}, 4, 0, {}, {}, {1, 2}, {}, {}, {}, {}, {}] === {1, 2, 3, 4},
   "canonical identity"];
-assert[MatchQ[Quiet[xPermLibraryLink`Private`$llCanonicalPerm[
+assert[MatchQ[Quiet[xAct`xPermLibraryLink`Private`$llCanonicalPerm[
   {1, 2, 3, 4}, 4, 0, {}, {}, {}, {2}, {1, 2}, {}, {}, {}]], _LibraryFunctionError],
   "malformed legacy input"];
 stage6 = LibraryFunctionLoad[library, "LL_niehoff_propagated_symmetry_search",
@@ -56,15 +60,17 @@ If[hasXPerm,
     {xAct`xPerm`DummySet[{1, 2}, {{1, 2}}, 1]}, xAct`xPerm`MathLink -> True] === 0,
     "xAct vanishing contraction"];
 ];
-assert[xPermLibraryLink`UnloadxPermLibraryLink[], "unload"];
-assert[originalDefinitions === (xPermLibraryLink`Private`CaptureDefinition /@
-  xPermLibraryLink`Private`$wrappedSymbols), "restore definitions"];
+assert[xAct`xPermLibraryLink`UnloadxPermLibraryLink[], "unload"];
+assert[OwnValues[xAct`xPerm`$xpermQ] === originalNativeFlag, "unload restores native dispatch flag"];
+assert[originalDefinitions === (xAct`xPermLibraryLink`Private`CaptureDefinition /@
+  xAct`xPermLibraryLink`Private`$wrappedSymbols), "restore definitions"];
 assert[xAct`xPerm`Private`MLOrbit[1000, {}, 1000] === "original definition",
   "restored definition is callable"];
-assert[xPermLibraryLink`UnloadxPermLibraryLink[], "repeated unload"];
-assert[Quiet[xPermLibraryLink`LoadxPermLibraryLink["/nonexistent/xpermLL.so"]] === $Failed,
+assert[xAct`xPermLibraryLink`UnloadxPermLibraryLink[], "repeated unload"];
+assert[Quiet[xAct`xPermLibraryLink`LoadxPermLibraryLink["/nonexistent/xpermLL.so"]] === $Failed,
   "load failure"];
-assert[originalDefinitions === (xPermLibraryLink`Private`CaptureDefinition /@
-  xPermLibraryLink`Private`$wrappedSymbols), "load failure preserves definitions"];
+assert[OwnValues[xAct`xPerm`$xpermQ] === originalNativeFlag, "load failure preserves native dispatch flag"];
+assert[originalDefinitions === (xAct`xPermLibraryLink`Private`CaptureDefinition /@
+  xAct`xPermLibraryLink`Private`$wrappedSymbols), "load failure preserves definitions"];
 Print["LibraryLink Wolfram regressions passed", If[hasXPerm, " (including xAct)", ""]];
 Quit[0];

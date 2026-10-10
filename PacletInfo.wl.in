@@ -1,0 +1,12 @@
+PacletObject[<|
+    "Name" -> "xPermLibraryLink",
+    "Creator" -> "Thomas Bäckdahl and Alfonso García-Parrado assisted by ChatGPT/Codex",
+    "Version" -> "@XPERM_PACLET_VERSION@",
+    "WolframVersion" -> "12.1+",
+    "SystemID" -> "@XPERM_WOLFRAM_SYSTEM_ID@",
+    "Description" -> "LibraryLink tensor canonicalization for the xAct suite.",
+    "Extensions" -> {
+        {"Kernel", "Root" -> "Kernel", "Context" -> {{"xAct`xPermLibraryLink`", "init.m"}}},
+        {"LibraryLink"}
+    }
+|>]

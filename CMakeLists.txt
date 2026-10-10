@@ -73,6 +73,8 @@ if(BUILD_LIBRARYLINK)
     endif()
     install(TARGETS xpermLL LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}"
                            RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}")
+    include(XPermPaclet)
+    xperm_add_paclet_targets()
 endif()
 
 if(BUILD_TESTING)
