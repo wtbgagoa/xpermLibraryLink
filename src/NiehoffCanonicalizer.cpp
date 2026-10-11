@@ -179,9 +179,9 @@ namespace {
 bool lessConfigStage2(const SearchConfiguration &a,
                       const SearchConfiguration &b) {
   return std::tie(a.slotPermutation, a.labelPermutation, a.sign, a.metadata,
-                  a.fixedLabels) <
-         std::tie(b.slotPermutation, b.labelPermutation, b.sign, b.metadata,
-                  b.fixedLabels);
+                  a.fixedLabels) < std::tie(b.slotPermutation,
+                                            b.labelPermutation, b.sign,
+                                            b.metadata, b.fixedLabels);
 }
 bool sameConfigStage2(const SearchConfiguration &a,
                       const SearchConfiguration &b) {
@@ -202,9 +202,9 @@ expandConfigurations(const SearchLevelInput &in) {
       throw std::invalid_argument("parent out of range");
     auto c = in.configurations[in.parentIndices[i]];
     c.slotPermutation = product(in.slotTransversals[i], c.slotPermutation);
-    c.labelPermutation = product(
-        product(in.slotTransversals[i], c.labelPermutation),
-        in.labelTransversals[i]);
+    c.labelPermutation =
+        product(product(in.slotTransversals[i], c.labelPermutation),
+                in.labelTransversals[i]);
     out.push_back(std::move(c));
   }
   return out;
@@ -509,7 +509,8 @@ runPersistentGroupSearch(const PersistentSearchInput &in) {
         it->second = traceRepresentative(orbit, c.point, out.group.degree);
       auto expanded = out.configurations[c.parent];
       expanded.slotPermutation = product(it->second, expanded.slotPermutation);
-      expanded.labelPermutation = product(it->second, expanded.labelPermutation);
+      expanded.labelPermutation =
+          product(it->second, expanded.labelPermutation);
       survivors.push_back(std::move(expanded));
     }
     std::stable_sort(survivors.begin(), survivors.end(), lessConfig);
@@ -564,7 +565,8 @@ Permutation pairRepresentative(int sourceFirst, int sourceSecond,
   Permutation representative = identityPermutation(degree);
   if (sourceFirst == targetFirst && sourceSecond == targetSecond) {
     if (reverse)
-      std::swap(representative[sourceFirst - 1], representative[sourceSecond - 1]);
+      std::swap(representative[sourceFirst - 1],
+                representative[sourceSecond - 1]);
     return representative;
   }
   // Exchange the pairs, reversing ONLY the source pair when requested. Two
@@ -596,7 +598,8 @@ void validateLabelGroups(const std::vector<LabelGroup> &groups, int degree) {
   for (const auto &group : groups) {
     if (group.labels.empty())
       throw std::invalid_argument("empty label group");
-    if (group.type < LabelGroupType::Fixed || group.type > LabelGroupType::Repeated)
+    if (group.type < LabelGroupType::Fixed ||
+        group.type > LabelGroupType::Repeated)
       throw std::invalid_argument("invalid label group type");
     const bool paired = group.type == LabelGroupType::Dummy ||
                         group.type == LabelGroupType::SymmetricMetric ||
@@ -673,7 +676,8 @@ canonicalizeLabel(int sourceLabel, const IntegerRow &fixedLabels,
         continue;
 
       const bool targetIsSecond = group.type == LabelGroupType::Dummy
-          ? sourceIsSecond : targetSecond < targetFirst;
+                                      ? sourceIsSecond
+                                      : targetSecond < targetFirst;
       const bool reverse = sourceIsSecond != targetIsSecond;
       const int mappedFirst = reverse ? targetSecond : targetFirst;
       const int mappedSecond = reverse ? targetFirst : targetSecond;
@@ -1123,12 +1127,13 @@ class LabelNormalizer {
 
 public:
   LabelNormalizer(const std::vector<LabelGroup> &inputGroups, int degree)
-      : realDegree(degree - 2), labelGroup(degree + 1, -1),
-        partner(degree + 1), second(degree + 1), initialMap(degree + 1),
-        labelMap(degree + 1), usedTargets(degree + 1) {
+      : realDegree(degree - 2), labelGroup(degree + 1, -1), partner(degree + 1),
+        second(degree + 1), initialMap(degree + 1), labelMap(degree + 1),
+        usedTargets(degree + 1) {
     std::iota(initialMap.begin(), initialMap.end(), 0);
     for (const auto &input : inputGroups) {
-      if (input.type == LabelGroupType::Fixed || input.type == LabelGroupType::Free)
+      if (input.type == LabelGroupType::Fixed ||
+          input.type == LabelGroupType::Free)
         continue;
       const int groupIndex = static_cast<int>(groups.size());
       Group group{input.type, {}, {}};
@@ -1176,8 +1181,10 @@ public:
         labelMap[source] = group.firstTargets[group.firstCursor++];
         continue;
       }
-      const bool useSecond = group.type == LabelGroupType::Dummy && second[source];
-      const auto &targets = useSecond ? group.secondTargets : group.firstTargets;
+      const bool useSecond =
+          group.type == LabelGroupType::Dummy && second[source];
+      const auto &targets =
+          useSecond ? group.secondTargets : group.firstTargets;
       auto &cursor = useSecond ? group.secondCursor : group.firstCursor;
       while (usedTargets[targets[cursor]])
         ++cursor;
@@ -1293,8 +1300,8 @@ canonicalizeCore(const LegacyCanonicalPermInput &input,
         return false;
     return signOf(generator) < 0;
   };
-  if (std::any_of(augmented.slotGenerators.begin(), augmented.slotGenerators.end(),
-                  isNegativeIdentity))
+  if (std::any_of(augmented.slotGenerators.begin(),
+                  augmented.slotGenerators.end(), isNegativeIdentity))
     return {true, {}};
   StabilizerChainState chain = legacyChain(augmented, selectedSlots);
   // A signed group may contain -identity, including as a product of generators.
@@ -1302,8 +1309,7 @@ canonicalizeCore(const LegacyCanonicalPermInput &input,
   if (std::any_of(chain.strongGenerators.begin(), chain.strongGenerators.end(),
                   isNegativeIdentity))
     return {true, {}};
-  std::vector<Permutation> configurations{
-      normalize(input.permutation)};
+  std::vector<Permutation> configurations{normalize(input.permutation)};
 
   for (std::size_t level = 0; level < selectedSlots.size(); ++level) {
     chain.level = level;
