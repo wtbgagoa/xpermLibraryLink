@@ -1,6 +1,6 @@
 # xPermLibraryLink paclet
 
-The paclet is named `xPermLibraryLink`, initially version `0.1.0`, and provides
+The paclet is named `xPermLibraryLink`, version `0.1.1`, and provides
 the context ``xAct`xPermLibraryLink` ``. It contains the Wolfram Language wrapper
 and a freshly built native library for the selected platform.
 
@@ -22,6 +22,9 @@ ctest --test-dir build --output-on-failure
 privileges are needed. Repeating the target reinstalls the same version so local
 rebuilds take effect. Restart kernels using an earlier version before loading
 the rebuilt package.
+
+When reusing a build directory from version `0.1.0`, explicitly update its cached
+version with `-DXPERM_PACLET_VERSION=0.1.1` in the configuration command.
 
 The package requires an existing xAct installation discoverable through
 `Needs["xAct`xPerm`"]`. It does not download xAct or assume it is distributed as
@@ -49,7 +52,6 @@ In a fresh kernel:
 ```wl
 PacletDataRebuild[]; (* Only if you install this paclet for the first time *)
 Needs["xAct`xPermLibraryLink`"];
-Uninstall@$xpermLink;
 LoadxPermLibraryLink[Automatic, True]
 ```
 
@@ -70,10 +72,19 @@ LoadxPermLibraryLink["/absolute/path/to/libxpermLL.so", True]
 ```
 
 Loading the package alone does not activate the replacement. Activation saves
-xPerm's original private definitions and `$xpermQ` flag, installs the native
-hooks, and sets the flag to enable native dispatch from xTensor.
+xPerm's original private definitions and `$xpermQ` flag, removes those definitions,
+installs the native hooks, and sets the flag to enable native dispatch from xTensor.
 `UnloadxPermLibraryLink[]` restores the saved definitions and flag.
 `xPermLibraryLinkLoadedQ[]` reports whether the native hooks are active.
+
+Version `0.1.1` fixes a dispatch defect in `0.1.0`: a connected xPerm executable
+installs a more specific, eleven-argument `MLCanonicalPerm` definition. The
+previous wrapper left that rule in place, allowing it to take precedence over
+the LibraryLink rule. This could report a successful load while continuing to
+canonicalize through WSTP. Activation now replaces all seven affected private
+functions' value definitions. The original connection remains open but idle,
+allowing unload to restore functioning WSTP definitions; manual `Uninstall` is
+not required with the corrected version.
 
 The previous context ``xPermLibraryLink` `` has moved to
 ``xAct`xPermLibraryLink` ``. Change fully qualified references accordingly.
@@ -92,14 +103,14 @@ native-library path. For installed use, replace the notebook's old `Get` and
 
 For a single-configuration build, the staged directory is
 `build/paclet/xPermLibraryLink` and the archive is
-`build/paclet/xPermLibraryLink-0.1.0.paclet`. Multi-configuration generators add
+`build/paclet/xPermLibraryLink-0.1.1.paclet`. Multi-configuration generators add
 the configuration name below `paclet`; use `--config Release` when building.
 These targets require `BUILD_LIBRARYLINK=ON`, the default.
 
 | CMake setting | Purpose |
 | --- | --- |
 | `WOLFRAM_KERNEL_EXECUTABLE` | Kernel used to create and install archives |
-| `XPERM_PACLET_VERSION` | Version recorded in metadata; default `0.1.0` |
+| `XPERM_PACLET_VERSION` | Version recorded in metadata; default `0.1.1` |
 | `XPERM_WOLFRAM_SYSTEM_ID` | Override the target platform's Wolfram `$SystemID` |
 | `XPERM_PACLET_BASE_DIRECTORY` | Optional alternative paclet repository base; passed as `-pacletbase` |
 
@@ -117,7 +128,7 @@ cmake --build build --target paclet --parallel
 Recipients install it with:
 
 ```wl
-PacletInstall["/absolute/path/to/xPermLibraryLink-0.1.0.paclet"]
+PacletInstall["/absolute/path/to/xPermLibraryLink-0.1.1.paclet"]
 ```
 
 For development, `PacletDirectoryLoad["/absolute/path/to/build/paclet/xPermLibraryLink"]`
@@ -146,6 +157,34 @@ xPerm. To test installation and fresh-session discovery, configure
 `XPERM_PACLET_BASE_DIRECTORY` to that isolated base, build `install-paclet`,
 and run the script with mode `installed` instead of `staged`.
 The test refuses to install into the normal Wolfram user directory.
+
+`tests/wstp_handover.wl` separately tests the case of a functioning, connected
+xPerm executable. It requires local WSTP process communication as well as a
+licensed kernel, and fails if that connection cannot be established. It counts
+calls to both backends, checks that LibraryLink handles the 125-factor ring,
+and verifies that unloading restores the original connection and definitions.
+
+```sh
+WolframKernel -noinit -noprompt \
+  -pacletbase "$PWD/build/paclet-test-base" \
+  -script tests/wstp_handover.wl \
+  "$PWD/build/paclet/xPermLibraryLink" "$PWD/build/paclet-test-base"
+```
+
+### Live WSTP regression, 2026-10-11
+
+The new regression reproduces the failure in the delivered `0.1.0` paclet:
+after activation, its fixed-arity WSTP definition still competes with the
+LibraryLink wrapper. Version `0.1.1` passes with the original xPerm executable
+connected. The test verifies that the 125-factor example returns zero through
+the Niehoff library with no calls to the old WSTP backend, and that unloading,
+failed loading/reloading, and source reload restore the original callable
+connection and definitions. It also checks switching between the two algorithms
+provided by LibraryLink.
+
+The initial validation below did not cover a functioning original WSTP
+connection. Loading xPerm while its executable was unavailable missed the
+competing rule that caused this defect.
 
 ### Validation on 2026-10-10
 

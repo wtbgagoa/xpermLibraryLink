@@ -3,6 +3,19 @@
 A C++17 compiler and CMake 3.15 or newer are required. The default build includes
 both the LibraryLink shared library and the standalone regression tests.
 
+## Install the Wolfram Language paclet
+
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --target install-paclet --parallel
+```
+
+This builds the native library, packages it with the Wolfram wrapper, and installs
+the `xPermLibraryLink` paclet in the current user's Wolfram paclet repository.
+The target requires a licensed Wolfram kernel. `stage-paclet` creates the unpacked
+layout without running a kernel; `paclet` creates the distributable archive
+without installing it. See [PACLET.md](PACLET.md) for the options and usage.
+
 ## Standalone core tests (no Wolfram installation needed)
 
 ```sh
@@ -95,9 +108,10 @@ Studio, build with `cmake --build build --config Release`. Portable binaries
 are the default; optional
 `-DXPERM_NATIVE_ARCH=ON` enables `-march=native` with GCC/Clang for binaries that
 will only run on compatible processors. `-DXPERM_ENABLE_IPO=ON` enables IPO/LTO
-only after CMake verifies compiler support. On macOS, set
-`-DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"` explicitly if a universal binary is
-needed and both architectures are supported by your toolchain.
+only after CMake verifies compiler support. On macOS, build one architecture
+per paclet using `-DCMAKE_OSX_ARCHITECTURES=arm64` or `x86_64`. A universal
+library build requires both toolchains and an explicit
+`XPERM_WOLFRAM_SYSTEM_ID` selecting the platform advertised by the paclet.
 
 Existing `ENABLE_PGO_GENERATE` and `ENABLE_PGO_USE` options are available with
 GCC/Clang. They are mutually exclusive and apply to compilation and linking,

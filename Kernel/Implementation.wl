@@ -218,10 +218,12 @@ LoadxPermLibraryLink[library_:Automatic, Niehoff_:False] :=
 			Message[LoadxPermLibraryLink::load, resolvedLibrary];
 			Return[$Failed]
 		];
-		(* Preserve xPerm's existing WSTP definitions for unload and failed reloads. 
-			*)
+		(* Preserve xPerm's existing WSTP definitions for unload and failed reloads.
+		Do not leave those rules active: the installed, fixed-arity MLCanonicalPerm rule is more 
+		specific than the LibraryLink rest__ rule *)
 		$originalDefinitions = CaptureDefinition /@ $wrappedSymbols;
 		$originalXPermQ = OwnValues[xAct`xPerm`$xpermQ];
+		Scan[RestoreDefinition[#, {{}, {}, {}, {}}]&, $wrappedSymbols];
 		(* Compatibility wrappers expected by xAct/xPerm. *)
 		If[Niehoff,
 			xAct`xPerm`Private`MLCanonicalPerm[perm_List, degree_Integer, rest__] := 
