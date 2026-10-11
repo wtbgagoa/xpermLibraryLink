@@ -35,7 +35,8 @@ bool toInt(mint value, int &result) {
   return true;
 }
 
-bool integerVector(WolframLibraryData libraryData, MTensor tensor, Row &result) {
+bool integerVector(WolframLibraryData libraryData, MTensor tensor,
+                   Row &result) {
   if (!tensor || libraryData->MTensor_getType(tensor) != MType_Integer ||
       libraryData->MTensor_getRank(tensor) != 1)
     return false;
@@ -78,7 +79,8 @@ bool validPoints(const Row &points, int degree) {
     return false;
   std::vector<bool> seen(static_cast<std::size_t>(degree));
   for (int point : points) {
-    if (point < 1 || point > degree || seen[static_cast<std::size_t>(point - 1)])
+    if (point < 1 || point > degree ||
+        seen[static_cast<std::size_t>(point - 1)])
       return false;
     seen[static_cast<std::size_t>(point - 1)] = true;
   }
@@ -87,7 +89,8 @@ bool validPoints(const Row &points, int degree) {
 
 bool validGenerators(const Row &generators, int degree) {
   if (degree <= 0 ||
-      generators.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()) ||
+      generators.size() >
+          static_cast<std::size_t>(std::numeric_limits<int>::max()) ||
       generators.size() % static_cast<std::size_t>(degree) != 0)
     return false;
   std::vector<bool> seen(static_cast<std::size_t>(degree));
@@ -95,7 +98,8 @@ bool validGenerators(const Row &generators, int degree) {
     std::fill(seen.begin(), seen.end(), false);
     for (int point = 0; point < degree; ++point) {
       const int image = generators[offset + static_cast<std::size_t>(point)];
-      if (image < 1 || image > degree || seen[static_cast<std::size_t>(image - 1)])
+      if (image < 1 || image > degree ||
+          seen[static_cast<std::size_t>(image - 1)])
         return false;
       seen[static_cast<std::size_t>(image - 1)] = true;
     }
@@ -153,9 +157,8 @@ int strongGenSetResult(WolframLibraryData libraryData, const Row &base,
   if (!validGenerators(generators, degree))
     return LIBRARY_FUNCTION_ERROR;
 
-  return integerVectorResult(libraryData,
-                             encodeStrongGenSet(degree, base, generators),
-                             result);
+  return integerVectorResult(
+      libraryData, encodeStrongGenSet(degree, base, generators), result);
 }
 
 // A chain is serialized as:
@@ -163,8 +166,7 @@ int strongGenSetResult(WolframLibraryData libraryData, const Row &base,
 //    strongGenSetStream1..., ..., strongGenSetStreamN...}
 // Every embedded stream uses exactly the same format as encodeStrongGenSet.
 int strongGenSetChainResult(WolframLibraryData libraryData,
-                            const std::vector<Row> &streams,
-                            MArgument result) {
+                            const std::vector<Row> &streams, MArgument result) {
   std::size_t totalLength = 1 + streams.size();
   for (const Row &stream : streams)
     totalLength += stream.size();
@@ -182,16 +184,17 @@ int strongGenSetChainResult(WolframLibraryData libraryData,
 } // namespace
 
 EXTERN_C DLLEXPORT int LL_schreier_sims(WolframLibraryData libraryData,
-                                         mint argumentCount,
-                                         MArgument *arguments,
-                                         MArgument result) {
+                                        mint argumentCount,
+                                        MArgument *arguments,
+                                        MArgument result) {
   try {
     if (argumentCount != 3)
       return LIBRARY_FUNCTION_ERROR;
     Row base, generators;
     int degree = 0;
     if (!integerVector(libraryData, MArgument_getMTensor(arguments[0]), base) ||
-        !integerVector(libraryData, MArgument_getMTensor(arguments[1]), generators) ||
+        !integerVector(libraryData, MArgument_getMTensor(arguments[1]),
+                       generators) ||
         !toInt(MArgument_getInteger(arguments[2]), degree) ||
         !validGenerators(generators, degree) || !validPoints(base, degree))
       return LIBRARY_FUNCTION_ERROR;
@@ -205,7 +208,8 @@ EXTERN_C DLLEXPORT int LL_schreier_sims(WolframLibraryData libraryData,
                   &newGeneratorCount, &iterationCount);
     newBase.resize(static_cast<std::size_t>(newBaseLength));
     newGenerators.resize(static_cast<std::size_t>(newGeneratorCount * degree));
-    return strongGenSetResult(libraryData, newBase, newGenerators, degree, result);
+    return strongGenSetResult(libraryData, newBase, newGenerators, degree,
+                              result);
   } catch (const std::bad_alloc &) {
     return LIBRARY_MEMORY_ERROR;
   } catch (const std::exception &) {
@@ -222,14 +226,16 @@ EXTERN_C DLLEXPORT int LL_orbit(WolframLibraryData libraryData,
     int point = 0, degree = 0;
     Row generators;
     if (!toInt(MArgument_getInteger(arguments[0]), point) ||
-        !integerVector(libraryData, MArgument_getMTensor(arguments[1]), generators) ||
+        !integerVector(libraryData, MArgument_getMTensor(arguments[1]),
+                       generators) ||
         !toInt(MArgument_getInteger(arguments[2]), degree) ||
         !validGenerators(generators, degree) || point < 1 || point > degree)
       return LIBRARY_FUNCTION_ERROR;
     Row orbit(static_cast<std::size_t>(degree));
     int orbitLength = 0;
-    one_orbit(point, generators.data(), static_cast<int>(generators.size() / degree),
-              degree, orbit.data(), &orbitLength);
+    one_orbit(point, generators.data(),
+              static_cast<int>(generators.size() / degree), degree,
+              orbit.data(), &orbitLength);
     orbit.resize(static_cast<std::size_t>(orbitLength));
     return integerVectorResult(libraryData, orbit, result);
   } catch (const std::bad_alloc &) {
@@ -248,10 +254,12 @@ EXTERN_C DLLEXPORT int LL_set_stabilizer(WolframLibraryData libraryData,
       return LIBRARY_FUNCTION_ERROR;
     Row points, base, generators;
     int degree = 0;
-    if (!integerVector(libraryData, MArgument_getMTensor(arguments[0]), points) ||
+    if (!integerVector(libraryData, MArgument_getMTensor(arguments[0]),
+                       points) ||
         !toInt(MArgument_getInteger(arguments[1]), degree) ||
         !integerVector(libraryData, MArgument_getMTensor(arguments[2]), base) ||
-        !integerVector(libraryData, MArgument_getMTensor(arguments[3]), generators) ||
+        !integerVector(libraryData, MArgument_getMTensor(arguments[3]),
+                       generators) ||
         !validGenerators(generators, degree) || !validPoints(base, degree) ||
         !validPoints(points, degree))
       return LIBRARY_FUNCTION_ERROR;
@@ -268,8 +276,10 @@ EXTERN_C DLLEXPORT int LL_set_stabilizer(WolframLibraryData libraryData,
            static_cast<int>(generators.size() / degree), degree, 4,
            characteristic.data(), static_cast<int>(points.size()), 1,
            subgroupGenerators, &generatorCount, &iterationCount);
-    subgroupGenerators.resize(static_cast<std::size_t>(generatorCount * degree));
-    return strongGenSetResult(libraryData, base, subgroupGenerators, degree, result);
+    subgroupGenerators.resize(
+        static_cast<std::size_t>(generatorCount * degree));
+    return strongGenSetResult(libraryData, base, subgroupGenerators, degree,
+                              result);
   } catch (const std::bad_alloc &) {
     return LIBRARY_MEMORY_ERROR;
   } catch (const std::exception &) {
@@ -288,8 +298,10 @@ EXTERN_C DLLEXPORT int LL_basechangestabchain(WolframLibraryData libraryData,
     Row base, generators, newBase;
     if (!toInt(MArgument_getInteger(arguments[0]), degree) ||
         !integerVector(libraryData, MArgument_getMTensor(arguments[1]), base) ||
-        !integerVector(libraryData, MArgument_getMTensor(arguments[2]), generators) ||
-        !integerVector(libraryData, MArgument_getMTensor(arguments[3]), newBase) ||
+        !integerVector(libraryData, MArgument_getMTensor(arguments[2]),
+                       generators) ||
+        !integerVector(libraryData, MArgument_getMTensor(arguments[3]),
+                       newBase) ||
         !validGenerators(generators, degree) || !validPoints(base, degree) ||
         !validPoints(newBase, degree))
       return LIBRARY_FUNCTION_ERROR;
@@ -320,8 +332,7 @@ EXTERN_C DLLEXPORT int LL_basechangestabchain(WolframLibraryData libraryData,
                     levelGenerators.data() + destinationOffset);
       }
 
-      streams.push_back(
-          encodeStrongGenSet(degree, levelBase, levelGenerators));
+      streams.push_back(encodeStrongGenSet(degree, levelBase, levelGenerators));
     }
 
     return strongGenSetChainResult(libraryData, streams, result);
@@ -342,8 +353,10 @@ EXTERN_C DLLEXPORT int LL_basechange(WolframLibraryData libraryData,
     Row base, generators, newBase;
     if (!toInt(MArgument_getInteger(arguments[0]), degree) ||
         !integerVector(libraryData, MArgument_getMTensor(arguments[1]), base) ||
-        !integerVector(libraryData, MArgument_getMTensor(arguments[2]), generators) ||
-        !integerVector(libraryData, MArgument_getMTensor(arguments[3]), newBase) ||
+        !integerVector(libraryData, MArgument_getMTensor(arguments[2]),
+                       generators) ||
+        !integerVector(libraryData, MArgument_getMTensor(arguments[3]),
+                       newBase) ||
         !validGenerators(generators, degree) || !validPoints(base, degree) ||
         !validPoints(newBase, degree))
       return LIBRARY_FUNCTION_ERROR;
@@ -357,8 +370,9 @@ EXTERN_C DLLEXPORT int LL_basechange(WolframLibraryData libraryData,
     for (std::size_t k = 0; k < level.size(); ++k)
       std::copy_n(changedGenerators.data() +
                       static_cast<std::size_t>(degree) * level[k],
-                  degree, levelGenerators.data() +
-                              static_cast<std::size_t>(degree) * k);
+                  degree,
+                  levelGenerators.data() +
+                      static_cast<std::size_t>(degree) * k);
     return strongGenSetResult(libraryData, changedBase, levelGenerators, degree,
                               result);
   } catch (const std::bad_alloc &) {
@@ -378,8 +392,10 @@ EXTERN_C DLLEXPORT int LL_stabsgs(WolframLibraryData libraryData,
     Row base, generators, points;
     if (!toInt(MArgument_getInteger(arguments[0]), degree) ||
         !integerVector(libraryData, MArgument_getMTensor(arguments[1]), base) ||
-        !integerVector(libraryData, MArgument_getMTensor(arguments[2]), generators) ||
-        !integerVector(libraryData, MArgument_getMTensor(arguments[3]), points) ||
+        !integerVector(libraryData, MArgument_getMTensor(arguments[2]),
+                       generators) ||
+        !integerVector(libraryData, MArgument_getMTensor(arguments[3]),
+                       points) ||
         !validGenerators(generators, degree) || !validPoints(base, degree) ||
         !validPoints(points, degree))
       return LIBRARY_FUNCTION_ERROR;
@@ -403,9 +419,11 @@ EXTERN_C DLLEXPORT int LL_stabsgs(WolframLibraryData libraryData,
     for (std::size_t k = 0; k < level.size(); ++k)
       std::copy_n(changedGenerators.data() +
                       static_cast<std::size_t>(degree) * level[k],
-                  degree, levelGenerators.data() +
-                              static_cast<std::size_t>(degree) * k);
-    Row stabilizerBase(changedBase.begin() + static_cast<std::ptrdiff_t>(levelIndex),
+                  degree,
+                  levelGenerators.data() +
+                      static_cast<std::size_t>(degree) * k);
+    Row stabilizerBase(changedBase.begin() +
+                           static_cast<std::ptrdiff_t>(levelIndex),
                        changedBase.end());
     return strongGenSetResult(libraryData, stabilizerBase, levelGenerators,
                               degree, result);
@@ -415,7 +433,6 @@ EXTERN_C DLLEXPORT int LL_stabsgs(WolframLibraryData libraryData,
     return LIBRARY_FUNCTION_ERROR;
   }
 }
-
 
 // ============================================================================
 // Niehoff canonicalizer LibraryLink interface
@@ -428,8 +445,7 @@ bool matrix(WolframLibraryData l, MTensor t, std::vector<IntegerRow> &r) {
       l->MTensor_getRank(t) != 2)
     return false;
   const mint *d = l->MTensor_getDimensions(t);
-  if (!d || d[0] < 0 || d[1] < 0 ||
-      d[0] > std::numeric_limits<int>::max() ||
+  if (!d || d[0] < 0 || d[1] < 0 || d[0] > std::numeric_limits<int>::max() ||
       d[1] > std::numeric_limits<int>::max() ||
       (d[1] != 0 && d[0] > std::numeric_limits<int>::max() / d[1]))
     return false;
@@ -454,24 +470,34 @@ bool readCanonicalInput(WolframLibraryData libraryData, MArgument *arguments,
                         LegacyCanonicalPermInput &input) {
   IntegerRow flatGenerators;
   int strongFlag = 0;
-  if (!vector(libraryData, MArgument_getMTensor(arguments[0]), input.permutation) ||
+  if (!vector(libraryData, MArgument_getMTensor(arguments[0]),
+              input.permutation) ||
       !cv(MArgument_getInteger(arguments[1]), input.degree) ||
       !cv(MArgument_getInteger(arguments[2]), strongFlag) ||
       !vector(libraryData, MArgument_getMTensor(arguments[3]), input.base) ||
-      !vector(libraryData, MArgument_getMTensor(arguments[4]), flatGenerators) ||
-      !vector(libraryData, MArgument_getMTensor(arguments[5]), input.freeLabels) ||
-      !vector(libraryData, MArgument_getMTensor(arguments[6]), input.dummySetLengths) ||
-      !vector(libraryData, MArgument_getMTensor(arguments[7]), input.dummyLabels) ||
-      !vector(libraryData, MArgument_getMTensor(arguments[8]), input.metricSymmetries) ||
-      !vector(libraryData, MArgument_getMTensor(arguments[9]), input.repeatedSetLengths) ||
-      !vector(libraryData, MArgument_getMTensor(arguments[10]), input.repeatedLabels) ||
+      !vector(libraryData, MArgument_getMTensor(arguments[4]),
+              flatGenerators) ||
+      !vector(libraryData, MArgument_getMTensor(arguments[5]),
+              input.freeLabels) ||
+      !vector(libraryData, MArgument_getMTensor(arguments[6]),
+              input.dummySetLengths) ||
+      !vector(libraryData, MArgument_getMTensor(arguments[7]),
+              input.dummyLabels) ||
+      !vector(libraryData, MArgument_getMTensor(arguments[8]),
+              input.metricSymmetries) ||
+      !vector(libraryData, MArgument_getMTensor(arguments[9]),
+              input.repeatedSetLengths) ||
+      !vector(libraryData, MArgument_getMTensor(arguments[10]),
+              input.repeatedLabels) ||
       (strongFlag != 0 && strongFlag != 1) ||
       !validGenerators(flatGenerators, input.degree))
     return false;
   input.slotGeneratorsAreStrong = strongFlag == 1;
-  for (std::size_t offset = 0; offset < flatGenerators.size(); offset += input.degree)
+  for (std::size_t offset = 0; offset < flatGenerators.size();
+       offset += input.degree)
     input.slotGenerators.emplace_back(flatGenerators.begin() + offset,
-                                      flatGenerators.begin() + offset + input.degree);
+                                      flatGenerators.begin() + offset +
+                                          input.degree);
   return true;
 }
 bool validSearchData(const IntegerMatrix &slots, const IntegerMatrix &labels,
@@ -535,7 +561,8 @@ EXTERN_C DLLEXPORT int LL_niehoff_persistent_search(WolframLibraryData l,
         !vector(l, MArgument_getMTensor(args[5]), base) ||
         !vector(l, MArgument_getMTensor(args[6]), selected))
       return LIBRARY_FUNCTION_ERROR;
-    if (!validSearchData(slots, labels, signs, metadata, generators, base, selected))
+    if (!validSearchData(slots, labels, signs, metadata, generators, base,
+                         selected))
       return LIBRARY_FUNCTION_ERROR;
     PersistentSearchInput in;
     in.tentativeBase = std::move(base);
@@ -891,23 +918,26 @@ EXTERN_C DLLEXPORT int LL_canonical_perm(WolframLibraryData libraryData,
     if (!readCanonicalInput(libraryData, arguments, input))
       return LIBRARY_FUNCTION_ERROR;
     // The old xPerm routines assume valid permutations, disjoint label groups,
-    // and matching length/metric arrays. Validate before entering those routines.
+    // and matching length/metric arrays. Validate before entering those
+    // routines.
     (void)makeLegacyLabelGroups(input);
     IntegerRow flatGenerators;
     for (const auto &generator : input.slotGenerators)
-      flatGenerators.insert(flatGenerators.end(), generator.begin(), generator.end());
+      flatGenerators.insert(flatGenerators.end(), generator.begin(),
+                            generator.end());
     IntegerRow canonical(static_cast<std::size_t>(input.degree));
     canonical_perm_ext(
         input.permutation.data(), input.degree, input.slotGeneratorsAreStrong,
         input.base.data(), static_cast<int>(input.base.size()),
         flatGenerators.data(), static_cast<int>(input.slotGenerators.size()),
         input.freeLabels.data(), static_cast<int>(input.freeLabels.size()),
-        input.dummySetLengths.data(), static_cast<int>(input.dummySetLengths.size()),
+        input.dummySetLengths.data(),
+        static_cast<int>(input.dummySetLengths.size()),
         input.dummyLabels.data(), static_cast<int>(input.dummyLabels.size()),
-        input.metricSymmetries.data(),
-        input.repeatedSetLengths.data(), static_cast<int>(input.repeatedSetLengths.size()),
-        input.repeatedLabels.data(), static_cast<int>(input.repeatedLabels.size()),
-        canonical.data());
+        input.metricSymmetries.data(), input.repeatedSetLengths.data(),
+        static_cast<int>(input.repeatedSetLengths.size()),
+        input.repeatedLabels.data(),
+        static_cast<int>(input.repeatedLabels.size()), canonical.data());
     return integerVectorResult(libraryData, canonical, result);
   } catch (const std::bad_alloc &) {
     return LIBRARY_MEMORY_ERROR;
@@ -952,8 +982,10 @@ LL_niehoff_canonical_perm_ext(WolframLibraryData libraryData,
     IntegerRow subsetOffsets, subsetSlots, subsetSigns;
     auto &legacy = input.legacy;
     if (!readCanonicalInput(libraryData, arguments, legacy) ||
-        !vector(libraryData, MArgument_getMTensor(arguments[11]), subsetOffsets) ||
-        !vector(libraryData, MArgument_getMTensor(arguments[12]), subsetSlots) ||
+        !vector(libraryData, MArgument_getMTensor(arguments[11]),
+                subsetOffsets) ||
+        !vector(libraryData, MArgument_getMTensor(arguments[12]),
+                subsetSlots) ||
         !vector(libraryData, MArgument_getMTensor(arguments[13]), subsetSigns))
       return LIBRARY_FUNCTION_ERROR;
 
