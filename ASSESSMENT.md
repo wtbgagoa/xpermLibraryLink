@@ -211,4 +211,4 @@ The patch also includes this assessment as `ASSESSMENT.md`, the new tests, and u
 
 ## 7. Correction of the notebook performance regression
 
-The initial patch slowed the sample notebook's `ToCanonical[FProduct[125]]`. The first review did not benchmark this workload before delivery. Revision 2 fixes the repeated normalization work and restores an optimized default build, while retaining the correctness repairs. The measured medians for the original, first patch, and revision 2 are respectively 5.180 s, 8.907 s, 2.141 s under matched Release/native/LTO settings. All return zero. Full measurements, causes, tests, and instructions are in [PERFORMANCE.md](PERFORMANCE.md).
+The initial patch slowed the sample notebook's `ToCanonical[FProduct[125]]`. The first review did not benchmark this workload before delivery. Revision 2 fixes the repeated normalization work and restores an optimized default build, while retaining the correctness repairs. The measured medians for the original, first patch, and revision 2 are respectively 5.180 s, 8.907 s, 2.141 s under matched Release/native/LTO settings. All return zero.
