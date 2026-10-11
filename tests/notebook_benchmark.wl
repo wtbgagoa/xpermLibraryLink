@@ -15,6 +15,7 @@ If[!IntegerQ[factors] || factors < 1 || !IntegerQ[repeats] || repeats < 1, Quit[
 Print["Kernel: ", System`$Version];
 Needs["xAct`xTensor`"];
 Get[FileNameJoin[{DirectoryName[DirectoryName[$InputFileName]], "xPermLibraryLink.m"}]];
+Uninstall@$xpermLink;
 If[xAct`xPermLibraryLink`LoadxPermLibraryLink[library, True] =!= True, Quit[2]];
 (* A successful LibraryLink load must enable xPerm native dispatch even
    when its original WSTP executable is unavailable. *)
