@@ -12,9 +12,11 @@
 *********************************************************************/
 
 #include "NiehoffCanonicalizer.hpp"
+#include "TotalSymmetry.hpp"
 #include "xperm.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cstdlib>
 #include <map>
 #include <numeric>
@@ -1104,107 +1106,6 @@ void multiplySign(Permutation &permutation, int sign) {
   }
 }
 
-// The label classes and target orders are invariant throughout one search.
-// Compile them once, then find first occurrences by scanning slots in order.
-// This is the same greedy label-orbit minimum as sorting occurrences, without
-// rebuilding and sorting several temporary vectors for every candidate.
-class LabelNormalizer {
-  struct Group {
-    LabelGroupType type;
-    IntegerRow firstTargets;
-    IntegerRow secondTargets;
-    std::size_t firstCursor = 0;
-    std::size_t secondCursor = 0;
-  };
-  int realDegree;
-  IntegerRow labelGroup;
-  IntegerRow partner;
-  std::vector<unsigned char> second;
-  IntegerRow initialMap;
-  IntegerRow labelMap;
-  std::vector<unsigned char> usedTargets;
-  std::vector<Group> groups;
-
-public:
-  LabelNormalizer(const std::vector<LabelGroup> &inputGroups, int degree)
-      : realDegree(degree - 2), labelGroup(degree + 1, -1), partner(degree + 1),
-        second(degree + 1), initialMap(degree + 1), labelMap(degree + 1),
-        usedTargets(degree + 1) {
-    std::iota(initialMap.begin(), initialMap.end(), 0);
-    for (const auto &input : inputGroups) {
-      if (input.type == LabelGroupType::Fixed ||
-          input.type == LabelGroupType::Free)
-        continue;
-      const int groupIndex = static_cast<int>(groups.size());
-      Group group{input.type, {}, {}};
-      for (int label : input.labels) {
-        labelGroup[label] = groupIndex;
-        initialMap[label] = 0;
-      }
-      if (input.type == LabelGroupType::Repeated) {
-        group.firstTargets = input.labels;
-      } else {
-        const bool metric = input.type != LabelGroupType::Dummy;
-        for (std::size_t pair = 0; pair < input.labels.size(); pair += 2) {
-          const int first = input.labels[pair], last = input.labels[pair + 1];
-          partner[first] = last;
-          partner[last] = first;
-          second[last] = 1;
-          if (metric) {
-            group.firstTargets.push_back(std::min(first, last));
-          } else {
-            group.firstTargets.push_back(first);
-            group.secondTargets.push_back(last);
-          }
-        }
-      }
-      std::sort(group.firstTargets.begin(), group.firstTargets.end());
-      std::sort(group.secondTargets.begin(), group.secondTargets.end());
-      groups.push_back(std::move(group));
-    }
-  }
-
-  Permutation operator()(const Permutation &configuration) {
-    if (groups.empty())
-      return configuration;
-    labelMap = initialMap;
-    std::fill(usedTargets.begin(), usedTargets.end(), 0);
-    for (auto &group : groups)
-      group.firstCursor = group.secondCursor = 0;
-    int extraSign = 1;
-    for (int slot = 0; slot < realDegree; ++slot) {
-      const int source = configuration[slot];
-      if (labelMap[source] != 0)
-        continue;
-      auto &group = groups[labelGroup[source]];
-      if (group.type == LabelGroupType::Repeated) {
-        labelMap[source] = group.firstTargets[group.firstCursor++];
-        continue;
-      }
-      const bool useSecond =
-          group.type == LabelGroupType::Dummy && second[source];
-      const auto &targets =
-          useSecond ? group.secondTargets : group.firstTargets;
-      auto &cursor = useSecond ? group.secondCursor : group.firstCursor;
-      while (usedTargets[targets[cursor]])
-        ++cursor;
-      const int target = targets[cursor++];
-      labelMap[source] = target;
-      labelMap[partner[source]] = partner[target];
-      usedTargets[target] = usedTargets[partner[target]] = 1;
-      if (group.type == LabelGroupType::AntisymmetricMetric &&
-          second[source] != second[target])
-        extraSign = -extraSign;
-    }
-    Permutation result(configuration.size());
-    for (std::size_t slot = 0; slot < configuration.size(); ++slot)
-      result[slot] = labelMap[configuration[slot]];
-    if (extraSign < 0)
-      std::swap(result[realDegree], result[realDegree + 1]);
-    return result;
-  }
-};
-
 void validateTotalSubsets(const std::vector<TotalSymmetrySubset> &subsets,
                           int realDegree) {
   std::vector<bool> used(static_cast<std::size_t>(realDegree + 1), false);
@@ -1217,19 +1118,6 @@ void validateTotalSubsets(const std::vector<TotalSymmetrySubset> &subsets,
       used[slot] = true;
     }
   }
-}
-
-// Called only after lexicographic sorting. Equal real-slot configurations
-// with different signs are adjacent because the two sign points come last.
-bool oppositeSigns(const std::vector<Permutation> &configurations) {
-  for (std::size_t index = 1; index < configurations.size(); ++index) {
-    const auto &previous = configurations[index - 1];
-    const auto &current = configurations[index];
-    if (previous[previous.size() - 2] != current[current.size() - 2] &&
-        std::equal(previous.begin(), previous.end() - 2, current.begin()))
-      return true;
-  }
-  return false;
 }
 
 StabilizerChainState legacyChain(const LegacyCanonicalPermInput &input,
@@ -1271,14 +1159,378 @@ StabilizerChainState legacyChain(const LegacyCanonicalPermInput &input,
   return chain;
 }
 
+// Incremental Values/Label-Codes (paper B.4). Explicit partner and variance
+// lookups preserve the public API's arbitrary numbering and ordering of pairs.
+class IncrementalLabels {
+  const std::vector<LabelGroup> &groups;
+  int degree;
+  std::vector<unsigned char> second, fixed;
+
+public:
+  IntegerRow value, partner;
+  std::vector<LabelGroupType> type;
+
+  IncrementalLabels(const std::vector<LabelGroup> &input, int n)
+      : groups(input), degree(n), second(n + 1), fixed(n + 1), value(n + 1),
+        partner(n + 1), type(n + 1, LabelGroupType::Fixed) {
+    for (std::size_t index = 0; index < groups.size(); ++index) {
+      const auto &group = groups[index];
+      for (int label : group.labels) {
+        type[label] = group.type;
+        fixed[label] = group.type == LabelGroupType::Fixed ||
+                       group.type == LabelGroupType::Free;
+      }
+      if (group.type == LabelGroupType::Dummy ||
+          group.type == LabelGroupType::SymmetricMetric ||
+          group.type == LabelGroupType::AntisymmetricMetric) {
+        for (std::size_t j = 0; j < group.labels.size(); j += 2) {
+          const int a = group.labels[j], b = group.labels[j + 1];
+          partner[a] = b;
+          partner[b] = a;
+          second[b] = 1;
+        }
+      }
+    }
+    updateValues();
+  }
+
+  bool active(int label) const { return !fixed[label]; }
+
+  void updateValues() {
+    std::iota(value.begin(), value.end(), 0);
+    for (const auto &group : groups) {
+      int least[2] = {degree + 1, degree + 1};
+      for (int label : group.labels)
+        if (!fixed[label]) {
+          const int variance =
+              group.type == LabelGroupType::Dummy ? second[label] : 0;
+          least[variance] = std::min(least[variance], label);
+        }
+      for (int label : group.labels)
+        if (!fixed[label])
+          value[label] =
+              least[group.type == LabelGroupType::Dummy ? second[label] : 0];
+    }
+  }
+
+  void freeze(int label) {
+    fixed[label] = 1;
+    if (partner[label])
+      fixed[partner[label]] = 1;
+    updateValues();
+  }
+
+  Permutation representative(int source) const {
+    const int target = value[source];
+    if (target == source)
+      return identityPermutation(degree);
+    if (!partner[source])
+      return transpositionRepresentative(source, target, degree);
+    const int first = second[source] ? partner[source] : source;
+    const int last = partner[first];
+    const int targetFirst = second[target] ? partner[target] : target;
+    const bool reverse = second[source] != second[target];
+    auto result = pairRepresentative(first, last, targetFirst,
+                                     partner[targetFirst], reverse, degree);
+    if (type[source] == LabelGroupType::AntisymmetricMetric && reverse)
+      multiplySign(result, -1);
+    return result;
+  }
+};
+
+struct PropagatedConfiguration {
+  Permutation labels; // current slot -> label (g)
+  Permutation slots;  // current slot -> original slot (s)
+};
+
+struct LeastInstance {
+  std::size_t parent;
+  int p, q;
+};
+
+// B.2: odd entries describe source subsets; their even partners describe
+// the symmetry transported along dummy contractions. Entries live in original
+// slot coordinates, so they survive slot transversals and label renaming.
+class PropagatedSymmetries {
+  IntegerRow entries;
+  std::vector<unsigned char> consumed;
+  int nextOdd = 1;
+
+public:
+  explicit PropagatedSymmetries(int n) : entries(n + 1), consumed(n + 1) {}
+  int at(const PropagatedConfiguration &configuration, int slot) const {
+    return entries[configuration.slots[slot - 1]];
+  }
+
+  void update(const PropagatedConfiguration &configuration,
+              const std::vector<LeastInstance> &instances, std::size_t begin,
+              std::size_t end, const IncrementalLabels &labels,
+              const IntegerRow &subsets, CanonicalizationStats *statistics) {
+    IntegerRow inverse(configuration.labels.size() + 1);
+    for (std::size_t i = 0; i < configuration.labels.size(); ++i)
+      inverse[configuration.labels[i]] = static_cast<int>(i + 1);
+    std::map<int, IntegerRow> members;
+    for (std::size_t j = begin; j < end; ++j) {
+      const int q = instances[j].q;
+      if (subsets[q] && labels.active(configuration.labels[q - 1]))
+        members[subsets[q]].push_back(q);
+    }
+    std::vector<int> subsetOrder;
+    for (const auto &[subset, slots] : members)
+      subsetOrder.push_back(subset);
+    std::sort(subsetOrder.begin(), subsetOrder.end(), [&](int a, int b) {
+      return *std::min_element(members[a].begin(), members[a].end()) <
+             *std::min_element(members[b].begin(), members[b].end());
+    });
+    for (int subset : subsetOrder) {
+      auto &slots = members[subset];
+      std::sort(slots.begin(), slots.end());
+      slots.erase(std::unique(slots.begin(), slots.end()), slots.end());
+      slots.erase(
+          std::remove_if(slots.begin(), slots.end(),
+                         [&](int q) {
+                           const int original = configuration.slots[q - 1];
+                           return entries[original] != 0 || consumed[original];
+                         }),
+          slots.end());
+      for (int q : slots)
+        consumed[configuration.slots[q - 1]] = 1;
+      if (slots.size() < 2)
+        continue;
+      const int sign = subset < 0 ? -1 : 1;
+      const int source = sign * nextOdd, target = sign * (nextOdd + 1);
+      nextOdd += 2;
+      if (statistics)
+        ++statistics->propagatedGroupsCreated;
+      // All members have the same least Value, hence the same label orbit
+      // (including variance when there is no metric). Install sources together
+      // before partners: an internal contraction
+      // keeps its odd entry and can then trigger the metric sign check.
+      for (int q : slots)
+        entries[configuration.slots[q - 1]] = source;
+      for (int q : slots) {
+        const int partner = labels.partner[configuration.labels[q - 1]];
+        if (!partner)
+          continue;
+        const int original = configuration.slots[inverse[partner] - 1];
+        if (!entries[original])
+          entries[original] = target;
+      }
+    }
+  }
+
+  // B.3 must run BEFORE equivalent subset branches are dropped. A lone
+  // propagated endpoint in an unrelated subset is not a sign conflict.
+  bool zero(const PropagatedConfiguration &configuration,
+            const IncrementalLabels &labels, const IntegerRow &subsets,
+            int realDegree) const {
+    IntegerRow labelSymmetry(configuration.labels.size() + 1);
+    std::set<std::pair<int, int>> seen;
+    for (int p = 1; p <= realDegree; ++p) {
+      const int symmetry = at(configuration, p);
+      if (!symmetry)
+        continue;
+      const int label = configuration.labels[p - 1];
+      labelSymmetry[label] = symmetry;
+      if (labels.type[label] == LabelGroupType::Repeated && symmetry < 0)
+        return true;
+      if (std::abs(symmetry) % 2 == 0 && subsets[p] &&
+          (symmetry < 0) != (subsets[p] < 0) &&
+          !seen.emplace(symmetry, subsets[p]).second)
+        return true;
+    }
+    for (int label = 1; label <= realDegree; ++label) {
+      const int symmetry = labelSymmetry[label];
+      // A dummy's endpoints keep their source/partner provenance even after
+      // an even-class label swap. This is the certificate used by pruning.
+#ifndef NDEBUG
+      if (labels.partner[label]) {
+        const int other = labelSymmetry[labels.partner[label]];
+        const int sign = symmetry < 0 ? -1 : 1;
+        assert((symmetry == 0 && other == 0) ||
+               (symmetry != 0 &&
+                ((std::abs(symmetry) % 2 &&
+                  (other == symmetry || other == symmetry + sign)) ||
+                 (std::abs(symmetry) % 2 == 0 && other == symmetry - sign))));
+      }
+#endif
+      if (symmetry && labels.partner[label] &&
+          labelSymmetry[labels.partner[label]] == symmetry &&
+          ((labels.type[label] == LabelGroupType::SymmetricMetric &&
+            symmetry < 0) ||
+           (labels.type[label] == LabelGroupType::AntisymmetricMetric &&
+            symmetry > 0)))
+        return true;
+    }
+    return false;
+  }
+};
+
+LegacyCanonicalPermResult
+incrementalSearch(const LegacyCanonicalPermInput &input,
+                  const std::vector<LabelGroup> &groups,
+                  StabilizerChainState chain, const IntegerRow &subsets,
+                  CanonicalizationStats *statistics) {
+  const int realDegree = input.degree - 2;
+  IncrementalLabels labels(groups, input.degree);
+  PropagatedSymmetries propagated(input.degree);
+  std::vector<PropagatedConfiguration> configurations{
+      {input.permutation, identityPermutation(input.degree)}};
+  for (int selected = 1; selected <= realDegree; ++selected) {
+    chain.level = static_cast<std::size_t>(selected - 1);
+    const BasicOrbit orbit = currentBasicOrbit(chain);
+    int minimum = input.degree + 1;
+    std::vector<LeastInstance> instances;
+    // B.1: even classes can bring a lower label from outside this slot orbit.
+    for (std::size_t parent = 0; parent < configurations.size(); ++parent) {
+      const auto &configuration = configurations[parent];
+      std::unordered_map<int, int> leastInClass;
+      for (int k = selected; k <= realDegree; ++k) {
+        const int symmetry = propagated.at(configuration, k);
+        if (!symmetry || std::abs(symmetry) % 2)
+          continue;
+        auto [position, inserted] = leastInClass.emplace(symmetry, k);
+        if (!inserted &&
+            labels.value[configuration.labels[k - 1]] <
+                labels.value[configuration.labels[position->second - 1]])
+          position->second = k;
+      }
+      for (int p : orbit.points) {
+        if (p > realDegree)
+          continue;
+        int q = p;
+        const auto found = leastInClass.find(propagated.at(configuration, p));
+        if (found != leastInClass.end() &&
+            labels.value[configuration.labels[found->second - 1]] <
+                labels.value[configuration.labels[p - 1]])
+          q = found->second;
+        const int value = labels.value[configuration.labels[q - 1]];
+        if (value < minimum) {
+          minimum = value;
+          instances.clear();
+        }
+        if (value == minimum)
+          instances.push_back({parent, p, q});
+      }
+    }
+    if (instances.empty())
+      throw std::runtime_error(
+          "incremental canonical search has no least instance");
+    std::unordered_map<int, Permutation> slotRepresentatives,
+        labelRepresentatives;
+    std::vector<PropagatedConfiguration> survivors;
+    for (std::size_t begin = 0; begin < instances.size();) {
+      std::size_t end = begin + 1;
+      while (end < instances.size() &&
+             instances[end].parent == instances[begin].parent)
+        ++end;
+      const auto &configuration = configurations[instances[begin].parent];
+      propagated.update(configuration, instances, begin, end, labels, subsets,
+                        statistics);
+      if (statistics)
+        ++statistics->earlyZeroChecks;
+      if (propagated.zero(configuration, labels, subsets, realDegree)) {
+        if (statistics)
+          statistics->earlyZeroDetected = true;
+        return {true, {}};
+      }
+      IntegerRow inverse(input.degree + 1);
+      for (int p = 1; p <= realDegree; ++p)
+        inverse[configuration.labels[p - 1]] = p;
+      std::set<std::tuple<int, int, bool>> visitedSubsets;
+      for (std::size_t j = begin; j < end; ++j) {
+        const auto &instance = instances[j];
+        // Algorithm 4.2, refined for the API's arbitrary label order and
+        // overlapping contractions. Only a recorded common propagated class
+        // certifies equivalence. An internal pair and an external endpoint
+        // can have different earliest partner positions, so keep both choices.
+        // In particular, never merge a pre-existing even class with a new odd
+        // class (or an unmarked occurrence) merely because their slots agree.
+        const int candidateLabel = configuration.labels[instance.q - 1];
+        const int partner = labels.partner[candidateLabel];
+        const bool internal =
+            partner && subsets[inverse[partner]] == subsets[instance.p];
+        if (subsets[instance.p] && propagated.at(configuration, instance.p) &&
+            !visitedSubsets
+                 .emplace(subsets[instance.p],
+                          propagated.at(configuration, instance.p), internal)
+                 .second) {
+          if (statistics)
+            ++statistics->symmetryEquivalentCandidatesPruned;
+          continue;
+        }
+        if (statistics)
+          ++statistics->candidatesExpanded;
+        auto [slotPosition, slotInserted] =
+            slotRepresentatives.try_emplace(instance.p);
+        if (slotInserted)
+          slotPosition->second =
+              traceRepresentative(orbit, instance.p, input.degree);
+        const int source = configuration.labels[instance.q - 1];
+        const int orbitLabel = configuration.labels[instance.p - 1];
+        auto [labelPosition, labelInserted] =
+            labelRepresentatives.try_emplace(source);
+        if (labelInserted)
+          labelPosition->second = labels.representative(source);
+        const auto &slotAction = slotPosition->second;
+        const auto &labelAction = labelPosition->second;
+        PropagatedConfiguration candidate{Permutation(input.degree),
+                                          Permutation(input.degree)};
+        for (int k = 0; k < input.degree; ++k) {
+          int label = configuration.labels[slotAction[k] - 1];
+          if (instance.p != instance.q) {
+            if (label == source)
+              label = orbitLabel;
+            else if (label == orbitLabel)
+              label = source;
+          }
+          candidate.labels[k] = labelAction[label - 1];
+          candidate.slots[k] = configuration.slots[slotAction[k] - 1];
+        }
+        if (instance.p != instance.q &&
+            propagated.at(configuration, instance.p) < 0)
+          multiplySign(candidate.labels, -1);
+        survivors.push_back(std::move(candidate));
+      }
+      begin = end;
+    }
+    labels.freeze(minimum);
+    std::sort(
+        survivors.begin(), survivors.end(), [](const auto &a, const auto &b) {
+          return std::tie(a.labels, a.slots) < std::tie(b.labels, b.slots);
+        });
+    survivors.erase(std::unique(survivors.begin(), survivors.end(),
+                                [](const auto &a, const auto &b) {
+                                  return a.labels == b.labels;
+                                }),
+                    survivors.end());
+    for (std::size_t j = 1; j < survivors.size(); ++j)
+      if (std::equal(survivors[j - 1].labels.begin(),
+                     survivors[j - 1].labels.end() - 2,
+                     survivors[j].labels.begin()) &&
+          survivors[j - 1].labels[realDegree] !=
+              survivors[j].labels[realDegree])
+        return {true, {}};
+    configurations = std::move(survivors);
+    if (statistics)
+      statistics->survivingConfigurations.push_back(configurations.size());
+  }
+  if (configurations.empty())
+    throw std::runtime_error(
+        "incremental canonical search produced no configuration");
+  return {false, configurations.front().labels};
+}
+
 LegacyCanonicalPermResult
 canonicalizeCore(const LegacyCanonicalPermInput &input,
-                 const std::vector<TotalSymmetrySubset> &subsets) {
+                 const std::vector<TotalSymmetrySubset> &subsets,
+                 CanonicalizationStats *statistics) {
+  if (statistics)
+    *statistics = {};
   const auto groups = makeLegacyLabelGroups(input); // validates the full input
   const int realDegree = input.degree - 2;
   validateTotalSubsets(subsets, realDegree);
   const IntegerRow selectedSlots = realSearchBase(input);
-  LabelNormalizer normalize(groups, input.degree);
   // Subsets declare additional slot symmetries. Include their signed adjacent
   // transpositions in the group so that every search step fixes its prefix.
   // Sorting an entire subset after a step could move previously frozen slots.
@@ -1309,64 +1561,35 @@ canonicalizeCore(const LegacyCanonicalPermInput &input,
   if (std::any_of(chain.strongGenerators.begin(), chain.strongGenerators.end(),
                   isNegativeIdentity))
     return {true, {}};
-  std::vector<Permutation> configurations{normalize(input.permutation)};
-
-  for (std::size_t level = 0; level < selectedSlots.size(); ++level) {
-    chain.level = level;
-    const BasicOrbit orbit = currentBasicOrbit(chain);
-    std::unordered_map<int, Permutation> representatives;
-    std::vector<Permutation> candidates;
-    int minimum = input.degree + 1;
-    const int selected = selectedSlots[level];
-    for (const auto &configuration : configurations) {
-      for (const int orbitPoint : orbit.points) {
-        if (orbitPoint > realDegree)
-          continue;
-        auto [position, inserted] = representatives.try_emplace(orbitPoint);
-        if (inserted)
-          position->second =
-              traceRepresentative(orbit, orbitPoint, input.degree);
-        // Both permutations are already validated/generated inside this search.
-        // Keep validation at the public boundary, not in every composition.
-        Permutation moved(static_cast<std::size_t>(input.degree));
-        for (int slot = 0; slot < input.degree; ++slot)
-          moved[slot] = configuration[position->second[slot] - 1];
-        Permutation candidate = normalize(moved);
-        const int image = candidate[selected - 1];
-        if (image < minimum) {
-          minimum = image;
-          candidates.clear();
-        }
-        if (image == minimum)
-          candidates.push_back(std::move(candidate));
-      }
-    }
-    configurations = std::move(candidates);
-    std::sort(configurations.begin(), configurations.end());
-    configurations.erase(
-        std::unique(configurations.begin(), configurations.end()),
-        configurations.end());
-    if (oppositeSigns(configurations))
-      return {true, {}};
-  }
-  if (configurations.empty())
-    throw std::runtime_error("canonical search produced no configuration");
-  if (oppositeSigns(configurations))
+  const auto totalSymmetry = inferTotalSymmetrySubsets(chain);
+  if (totalSymmetry.zero)
     return {true, {}};
-  return {false,
-          *std::min_element(configurations.begin(), configurations.end())};
+  return incrementalSearch(input, groups, std::move(chain),
+                           totalSymmetry.subsetOfSlot, statistics);
 }
 
 } // namespace
 
 LegacyCanonicalPermResult
 canonicalizeLegacyInput(const LegacyCanonicalPermInput &input) {
-  return canonicalizeCore(input, {});
+  return canonicalizeCore(input, {}, nullptr);
 }
 
 LegacyCanonicalPermResult
 canonicalizeExtendedInput(const ExtendedCanonicalPermInput &input) {
-  return canonicalizeCore(input.legacy, input.totalSymmetrySubsets);
+  return canonicalizeCore(input.legacy, input.totalSymmetrySubsets, nullptr);
+}
+
+LegacyCanonicalPermResult
+canonicalizeLegacyInput(const LegacyCanonicalPermInput &input,
+                        CanonicalizationStats *statistics) {
+  return canonicalizeCore(input, {}, statistics);
+}
+
+LegacyCanonicalPermResult
+canonicalizeExtendedInput(const ExtendedCanonicalPermInput &input,
+                          CanonicalizationStats *statistics) {
+  return canonicalizeCore(input.legacy, input.totalSymmetrySubsets, statistics);
 }
 
 } // namespace xperm::niehoff

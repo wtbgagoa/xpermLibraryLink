@@ -1,6 +1,6 @@
 # xPermLibraryLink paclet
 
-The paclet is named `xPermLibraryLink`, version `0.1.1`, and provides
+The paclet is named `xPermLibraryLink`, version `0.2.0`, and provides
 the context ``xAct`xPermLibraryLink` ``. It contains the Wolfram Language wrapper
 and a freshly built native library for the selected platform.
 
@@ -24,7 +24,7 @@ rebuilds take effect. Restart kernels using an earlier version before loading
 the rebuilt package.
 
 When reusing a build directory from version `0.1.0`, explicitly update its cached
-version with `-DXPERM_PACLET_VERSION=0.1.1` in the configuration command.
+version with `-DXPERM_PACLET_VERSION=0.2.0` in the configuration command.
 
 The package requires an existing xAct installation discoverable through
 `Needs["xAct`xPerm`"]`. It does not download xAct or assume it is distributed as
@@ -103,14 +103,14 @@ native-library path. For installed use, replace the notebook's old `Get` and
 
 For a single-configuration build, the staged directory is
 `build/paclet/xPermLibraryLink` and the archive is
-`build/paclet/xPermLibraryLink-0.1.1.paclet`. Multi-configuration generators add
+`build/paclet/xPermLibraryLink-0.2.0.paclet`. Multi-configuration generators add
 the configuration name below `paclet`; use `--config Release` when building.
 These targets require `BUILD_LIBRARYLINK=ON`, the default.
 
 | CMake setting | Purpose |
 | --- | --- |
 | `WOLFRAM_KERNEL_EXECUTABLE` | Kernel used to create and install archives |
-| `XPERM_PACLET_VERSION` | Version recorded in metadata; default `0.1.1` |
+| `XPERM_PACLET_VERSION` | Version recorded in metadata; default `0.2.0` |
 | `XPERM_WOLFRAM_SYSTEM_ID` | Override the target platform's Wolfram `$SystemID` |
 | `XPERM_PACLET_BASE_DIRECTORY` | Optional alternative paclet repository base; passed as `-pacletbase` |
 
@@ -128,7 +128,7 @@ cmake --build build --target paclet --parallel
 Recipients install it with:
 
 ```wl
-PacletInstall["/absolute/path/to/xPermLibraryLink-0.1.1.paclet"]
+PacletInstall["/absolute/path/to/xPermLibraryLink-0.2.0.paclet"]
 ```
 
 For development, `PacletDirectoryLoad["/absolute/path/to/build/paclet/xPermLibraryLink"]`
@@ -212,3 +212,8 @@ The layout uses Wolfram's documented Kernel and LibraryLink extensions and its
 archive/install functions: [Paclets Overview](https://reference.wolfram.com/language/tutorial/Paclets.html).
 The installation override follows
 [$UserBasePacletsDirectory](https://reference.wolfram.com/language/ref/$UserBasePacletsDirectory.html).
+
+Version `0.2.0` adds the native symmetry-propagation acceleration described in
+[ACCELERATION.md](ACCELERATION.md). The loading and backend-selection API is
+unchanged. Rebuild/reinstall the paclet and use a fresh kernel to run the new
+native code.

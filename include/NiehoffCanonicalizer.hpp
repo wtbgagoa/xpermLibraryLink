@@ -185,6 +185,16 @@ struct LegacyCanonicalPermResult {
   Permutation permutation;
 };
 
+// Optional work counters for correctness/scaling tests; no timing thresholds.
+struct CanonicalizationStats {
+  std::vector<std::size_t> survivingConfigurations;
+  std::size_t candidatesExpanded = 0;
+  std::size_t symmetryEquivalentCandidatesPruned = 0;
+  std::size_t propagatedGroupsCreated = 0;
+  std::size_t earlyZeroChecks = 0;
+  bool earlyZeroDetected = false;
+};
+
 // Stage 1: basic xPerm-backed permutation operations and batch helpers.
 bool isPermutation(const Permutation &permutation);
 Permutation product(const Permutation &first, const Permutation &second);
@@ -259,6 +269,12 @@ LegacyCanonicalPermResult
 canonicalizeLegacyInput(const LegacyCanonicalPermInput &input);
 LegacyCanonicalPermResult
 canonicalizeExtendedInput(const ExtendedCanonicalPermInput &input);
+LegacyCanonicalPermResult
+canonicalizeLegacyInput(const LegacyCanonicalPermInput &input,
+                        CanonicalizationStats *statistics);
+LegacyCanonicalPermResult
+canonicalizeExtendedInput(const ExtendedCanonicalPermInput &input,
+                          CanonicalizationStats *statistics);
 
 } // namespace xperm::niehoff
 

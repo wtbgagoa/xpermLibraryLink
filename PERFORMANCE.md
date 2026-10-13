@@ -78,9 +78,9 @@ First-evaluation times, excluded from the warmed medians, were 6.814 s, 11.919 s
 
 This repair retains the previous correctness fixes. It does not introduce an
 odd-factor shortcut: the same search handles both odd and even rings.
-It also does not implement the paper's missing incremental symmetry propagation;
-the earlier assessment of factorial growth for other highly symmetric families
-still applies.
+That revision did not implement incremental symmetry propagation. The later
+0.2.0 change does; see [ACCELERATION.md](ACCELERATION.md) for a fresh comparison
+against the GitHub baseline that already includes the repair described here.
 
 ## Validation and reproducibility
 

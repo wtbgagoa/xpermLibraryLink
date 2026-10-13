@@ -51,13 +51,14 @@ there is no need to copy its native library onto `$LibraryPath`.
 
 ## Status of the Niehoff branch
 
-The C++ canonicalizer is experimental. It uses xPerm stabilizer chains and
-implicit label normalization, but does **not** yet implement the incremental
-symmetry propagation and redundant-branch pruning in Algorithms 4.1/4.2 and
-B.1-B.4 of Niehoff's *Faster tensor canonicalization*. The standalone Stage 6
-utility enumerates an explicitly supplied signed group; it is not a substitute
-for that algorithm. Highly symmetric contractions can still generate factorially
-many search configurations.
+The C++ canonicalizer implements incremental label orbits, total-slot-symmetry
+inference, dummy-partner propagation, early sign checks, and redundant-instance
+pruning based on Niehoff's *Faster tensor canonicalization*. The formerly
+factorial symmetric-contraction family now retains one configuration per step.
+The code remains experimental: arbitrary groups, including symmetry of whole
+pairs without individual slot swaps, can still require factorial search.
+See [ACCELERATION.md](ACCELERATION.md) for the exact scope, invariants, tests,
+and comparisons with the GitHub baseline.
 
 `canonicalizeLegacyInput` and `LL_niehoff_canonical_perm` use the existing signed
 permutation data layout (the last two points encode the sign). Canonical results
@@ -70,8 +71,9 @@ labels need not be listed in ascending order.
 The extended API treats each total-symmetry subset as an additional declaration
 of symmetric or antisymmetric slot permutations. It combines these with the
 supplied slot generators and rebuilds the group. Subset entries are unordered,
-must be disjoint, and cannot contain sign points. They currently provide
-correct group semantics, not the paper's acceleration.
+must be disjoint, and cannot contain sign points. The production search infers
+valid total subsets from both legacy and extended inputs and uses them for
+propagation and pruning.
 
 Build and run the independent small-group oracle and LibraryLink boundary tests
 without a Wolfram installation:

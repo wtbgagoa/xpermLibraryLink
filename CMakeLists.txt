@@ -34,7 +34,7 @@ if(XPERM_ENABLE_IPO)
 endif()
 
 add_library(xperm STATIC src/xperm.cpp)
-add_library(NiehoffCanonicalizer STATIC src/NiehoffCanonicalizer.cpp)
+add_library(NiehoffCanonicalizer STATIC src/NiehoffCanonicalizer.cpp src/TotalSymmetry.cpp)
 target_link_libraries(NiehoffCanonicalizer PUBLIC xperm)
 
 function(xperm_configure_target target)
@@ -78,6 +78,18 @@ if(BUILD_LIBRARYLINK)
 endif()
 
 if(BUILD_TESTING)
+    add_executable(total_symmetry_tests tests/total_symmetry_tests.cpp)
+    xperm_configure_target(total_symmetry_tests)
+    target_link_libraries(total_symmetry_tests PRIVATE NiehoffCanonicalizer)
+    add_test(NAME total_symmetry_tests COMMAND total_symmetry_tests)
+    set_tests_properties(total_symmetry_tests PROPERTIES TIMEOUT 60)
+
+    add_executable(acceleration_tests tests/acceleration_tests.cpp)
+    xperm_configure_target(acceleration_tests)
+    target_link_libraries(acceleration_tests PRIVATE NiehoffCanonicalizer)
+    add_test(NAME acceleration_tests COMMAND acceleration_tests)
+    set_tests_properties(acceleration_tests PROPERTIES TIMEOUT 120)
+
     add_executable(canonicalizer_tests tests/canonicalizer_tests.cpp)
     xperm_configure_target(canonicalizer_tests)
     target_link_libraries(canonicalizer_tests PRIVATE NiehoffCanonicalizer)

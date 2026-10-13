@@ -1,35 +1,36 @@
 # Assessment of xpermLibraryLink's Niehoff branch
 
-**Review date:** 10 October 2026
+**Updated:** 13 October 2026 (revision 3: central acceleration).
 
-**Revision 2:** Includes the notebook performance correction documented in [PERFORMANCE.md](PERFORMANCE.md).
-**Baseline:** [`Niehoff`, commit `058f072ad1a790b5db574af6b946a1cc38a9e97a`](https://github.com/wtbgagoa/xpermLibraryLink/tree/058f072ad1a790b5db574af6b946a1cc38a9e97a)
-**Reference:** B. E. Niehoff, *Faster tensor canonicalization*, Computer Physics Communications 228 (2018), 123-145, [doi:10.1016/j.cpc.2018.02.014](https://doi.org/10.1016/j.cpc.2018.02.014). The supplied PDF was read, including the rendered Algorithm 4.1 and the related procedures in Section 4 and Appendix B.
+**Current change baseline:** [`Niehoff`, commit `cb1ce2e0aefbf796a829d7a568c89cae10e2155a`](https://github.com/wtbgagoa/xpermLibraryLink/tree/cb1ce2e0aefbf796a829d7a568c89cae10e2155a), freshly retrieved from GitHub. This revision builds on the correctness, performance, and paclet fixes already merged there.
+
+**Historical review baseline:** `058f072ad1a790b5db574af6b946a1cc38a9e97a`. Sections 2-4 and 7 retain the earlier findings and repairs; those defects are not claims about the current GitHub baseline.
+
+**Reference:** B. E. Niehoff, *Faster tensor canonicalization*, Computer Physics Communications 228 (2018), 123-145, [doi:10.1016/j.cpc.2018.02.014](https://doi.org/10.1016/j.cpc.2018.02.014), particularly Algorithms 4.1/4.2 and Appendix B.
 
 ## Overall assessment
 
-**The baseline is an experimental tensor canonicalizer with significant correctness defects; it is not a complete implementation of Niehoff's algorithm.** It has useful foundations: xPerm's permutation-group machinery, explicit structured label classes, a LibraryLink transport layer, and a stabilizer-chain search. However, the characteristic incremental symmetry propagation and branch pruning of the paper are absent from the production canonicalization path.
+**The production canonicalizer now implements the paper's central symmetry-propagation acceleration.** It infers total signed slot subsets, propagates their symmetry through dummy pairs, maintains incremental label orbits, and discards certified redundant choices after checking for sign conflicts. The rank-8 contraction highlighted in the previous assessment now retains one configuration at every step instead of reaching 40,320.
 
-This review supplies a tested correctness and robustness repair, a standalone test build, and documentation of the implementation's actual contract. It does **not** claim to complete the paper's algorithm or reproduce its speedups. The repaired code passes the independent small-group tests described below, but still exhibits factorial configuration growth for a family that Niehoff specifically accelerates.
+The implementation preserves this project's natural-slot/natural-label lexicographic contract, including arbitrary dummy-pair numbering. That broader input contract requires more conservative pruning than the paper's literal subset-only rule: internal and external contractions remain separate choices, and candidates from different propagated classes are never merged solely because their slots share a symmetry.
 
-The baseline's own commit history calls for verification and labels the new algorithm experimental. That assessment was appropriate. The repair is substantially better supported by tests, but further algorithm work is needed before advertising it as the full Niehoff implementation.
+The code remains experimental and does not promise polynomial behavior for every group. Symmetric exchange of whole blocks without individual slot transpositions, among other difficult cases, remains outside the central acceleration. See [ACCELERATION.md](ACCELERATION.md) for invariants, regressions, benchmarks, and reproduction commands.
 
 ## 1. Comparison with the paper
 
-The main entry points `canonicalizeLegacyInput` and `canonicalizeExtendedInput` call `canonicalizeCore` in `src/NiehoffCanonicalizer.cpp`. That core performs a stabilizer-chain search and repeatedly normalizes whole label configurations. The separately exported Stage 2-6 helpers are largely a parallel implementation path; their presence does not mean the production core uses them.
+The main entry points `canonicalizeLegacyInput` and `canonicalizeExtendedInput` call the new incremental search in `src/NiehoffCanonicalizer.cpp`. The LibraryLink and paclet entry points use that same path.
 
-| Mechanism in the paper | Baseline and repaired implementation |
+| Mechanism in the paper | Revision 3 production implementation |
 | --- | --- |
-| Slot-group orbits and Schreier transversals | Present, using xPerm routines. |
-| Progressive least-label selection and duplicate removal | Present in a different formulation. |
-| `Values` and `Label-Codes` arrays, with the progressive updates of B.4 | No equivalent incremental data structures in the production loop. Revision 2 compiles target orders once and normalizes each candidate with a linear scan. |
-| B.1 least-value instances `(p,q)`, including choices reached through propagated symmetries | Absent. |
-| B.2 propagation of total slot symmetries through dummy contractions | Absent. |
-| B.3 early sign-conflict checks before redundant branches are discarded | Absent as a propagation mechanism. The core instead checks opposite signed configurations, and the repair also detects negative identity in the slot group. |
-| Algorithm 4.2 `Visited-Subsets` pruning | Absent. The unsafe subset-sorting shortcut has been replaced with ordinary, correct group operations. |
-| Compact `Propagated-Symmetries` array | Stage 6 explicitly enumerates a supplied signed group, with a size cap. This is not the paper's propagation algorithm and is not used by the production adapter. |
-
-The paper does not promise polynomial behavior for every symmetry group. Its important improvement is avoiding factorial explosion in common contractions with totally symmetric or antisymmetric subsets. That particular improvement remains missing here.
+| Slot-group orbits and Schreier transversals | xPerm stabilizer chains, with a natural real-slot base. |
+| Total symmetric/antisymmetric slot subsets | Inferred from the signed slot group, including transpositions hidden in products of SGS generators. No caller hints are required. |
+| `Values`, label codes, and B.4 | Incremental target minima and frozen labels, with explicit partner/variance tables instead of consecutive-label arithmetic. |
+| B.1 least-value instances `(p,q)` | Implemented, including lower values reached through even propagated classes outside the current slot orbit. |
+| B.2 propagation | Compact signed odd/even classes in original-slot coordinates, accessed through the retained slot action `s`. |
+| B.3 early zero checks | Repeated-label antisymmetry, internal metric-sign conflicts, and multiple propagated endpoints meeting an opposite-sign slot subset; checked before pruning. |
+| Algorithm 4.2 pruning | Implemented with the additional provenance and internal/external distinctions required for arbitrary supported inputs. |
+| Duplicate and opposite-sign detection | Retains a consistent whole `(g,s)` pair when deduplicating equal `g`, and checks both signs. |
+| Standalone Stage 6 helper | Still a bounded explicit group-closure utility. It is not used as the propagation implementation. |
 
 ## 2. Confirmed defects and repairs
 
@@ -168,46 +169,30 @@ WolframKernel -noinit -noprompt -script tests/interface_wolfram.wl \
   "$PWD/build-linux/libxpermLL.so"
 ```
 
-## 5. Performance finding and remaining work
+## 5. Central acceleration: implemented and checked
 
-Consider a fully symmetric rank-k tensor contracted with an otherwise generic rank-k tensor, with a symmetric metric. Use `2k` real slots, dummy pairs `(1,2),(3,4),...`, the configuration `{1,3,...,2k-1,2,4,...,2k}`, and adjacent slot transpositions on the first k slots. Supply that same symmetric subset explicitly to the extended API.
+The reference family is a fully symmetric rank-k tensor contracted with an otherwise generic rank-k tensor, using `2k` real slots, dummy pairs `(1,2),(3,4),...`, configuration `{1,3,...,2k-1,2,4,...,2k}`, and adjacent slot transpositions on the first k slots.
 
-At k=8, instrumentation after each level's duplicate removal recorded the following retained configuration counts:
+At k=8, the previous production loop retained:
 
 ```text
 8, 56, 336, 1680, 6720, 20160, 40320, 40320,
 5040, 720, 120, 24, 6, 2, 1, 1
 ```
 
-The peak is `8! = 40,320`. This occurs in the baseline and remains after the repairs. Consequently, **the paper's central acceleration has not been established or implemented by this patch**. Small timing measurements would not override this direct evidence of factorial growth, and no general speedup claim is made.
+The new loop retains **one configuration at all 16 levels**, expands 16 candidates, prunes 28 equivalent choices, and creates one source/partner propagation group. The same bounded configuration behavior is tested through rank 14, for positive and negative tensor characters and symmetric, antisymmetric, and absent metrics. Larger measured cases and matched timings are recorded in [ACCELERATION.md](ACCELERATION.md).
 
-A faithful next implementation should:
+This establishes the missing acceleration for the tested total-symmetry contraction families, through work counts rather than timing alone. It does not establish a polynomial bound for arbitrary tensor symmetries. General pair-block exchanges, alternating groups, and inputs with many inequivalent configurations can still be expensive. Stabilizer-chain construction is also separate from configuration pruning and can dominate larger examples.
 
-1. Maintain the paper's configuration pair `(g,s)` and incremental `Values` / `Label-Codes` in the production path.
-2. Implement B.1, B.2, and B.4, including propagation through dummy partners and the changing label stabilizer.
-3. Implement B.3's zero checks **before** discarding symmetry-equivalent branches.
-4. Only then enable Algorithm 4.2's redundant-instance pruning. Replacing this step with sorting or unchecked branch deletion risks losing cancellations.
-5. Retain the independent oracle and add scaling families from Section 5 of the paper, covering symmetric, antisymmetric, mixed, repeated-index, no-metric, antisymmetric-metric, and known difficult cases.
-
-Stage 6's explicit group closure should remain clearly identified as a bounded utility, or be removed from the production-facing API if it has no independent use. It should not be presented as the missing incremental mechanism.
+Correctness is checked against independent exhaustive signed double-coset and group-membership oracles. Permanent tests cover internal versus external pairs, overlapping propagated groups, interleaved subsets, arbitrary labels and variances, repeated labels, and early cancellation. The old correctness and notebook regression suites are retained. Validation details are in [ACCELERATION.md](ACCELERATION.md).
 
 ## 6. Compatibility and delivery
 
 The repaired Niehoff API uses natural slot/label lexicographic order. The supplied BSGS base describes the group, rather than defining a different canonical-order convention. This can change representatives returned for nonstandard bases, and it need not reproduce original xPerm's byte-for-byte representative. The old `LL_canonical_perm` entry point remains available; its boundary validation was strengthened.
 
-The extended API now explicitly treats subset declarations as additional symmetries. If a caller intended them only as hints, it should supply only subsets already valid for its tensor. They are not inferred from the tensor, and declaring a false symmetry changes the mathematical problem.
+The extended API now explicitly treats subset declarations as additional symmetries. If a caller intended them only as hints, it should supply only subsets already valid for its tensor. The production search also infers valid total subsets from the supplied slot group; an explicit declaration still augments that group, and declaring a false symmetry changes the mathematical problem.
 
-The delivery consists of this assessment, an apply-ready patch against the baseline commit, and a patched source archive. The archive omits the upstream precompiled binaries so they cannot be mistaken for repaired builds. Rebuild the shared library before use. No changes were pushed to GitHub and no pull request was created.
-
-For an existing clean checkout at the reviewed commit:
-
-```sh
-git switch -c niehoff-review-fixes
-git apply --check /path/to/xpermLibraryLink-Niehoff-fixes-v2.patch
-git apply /path/to/xpermLibraryLink-Niehoff-fixes-v2.patch
-```
-
-The patch also includes this assessment as `ASSESSMENT.md`, the new tests, and updated build documentation.
+The current delivery contains a patch against `cb1ce2e`, updated sources, and paclet version 0.2.0. Rebuild the native library before use; upstream precompiled binaries are not updated by applying a source patch. See [ACCELERATION.md](ACCELERATION.md) and the accompanying `APPLY_PATCH.md` for build and application instructions. No change was pushed to GitHub.
 
 ## 7. Correction of the notebook performance regression
 

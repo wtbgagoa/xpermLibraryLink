@@ -129,3 +129,19 @@ cmake --build build-win --parallel
 
 The resulting library is normally `build-win/libxpermLL.dll`. Windows test
 executables need a Windows runner or a configured cross-compiling emulator.
+
+## Symmetry-propagation checks and scaling
+
+The standard CTest run includes independent signed-group inference tests and
+canonicalization oracles, plus retained-configuration bounds through rank 14.
+To print larger work counts and timings:
+
+```sh
+./build-core/acceleration_tests --benchmark 14 3
+```
+
+The arguments are the maximum rank and repetition count. Both symmetric and
+antisymmetric tensors, all metric characters, and both native APIs are covered.
+These timings include construction of the slot stabilizer chain. Larger ranks
+can spend substantial time in that construction even when only one search
+configuration survives. See [ACCELERATION.md](ACCELERATION.md).
