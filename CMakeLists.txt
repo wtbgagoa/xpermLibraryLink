@@ -108,3 +108,5 @@ if(BUILD_TESTING)
     set_tests_properties(canonicalizer_tests interface_regression
                          notebook_ring_regressions PROPERTIES TIMEOUT 60)
 endif()
+
+include(XPermDocumentation)

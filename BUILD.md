@@ -3,6 +3,42 @@
 A C++17 compiler and CMake 3.15 or newer are required. The default build includes
 both the LibraryLink shared library and the standalone regression tests.
 
+## Generate the algorithm and API documentation
+
+Install Doxygen 1.9.1 or newer; Graphviz is optional. A documentation-only build
+does not need Wolfram Language or its SDK:
+
+```sh
+cmake -S . -B build-docs -DBUILD_LIBRARYLINK=OFF -DBUILD_TESTING=OFF \
+  -DBUILD_DOCUMENTATION=ON
+cmake --build build-docs --target docs
+```
+
+Open `build-docs/documentation/html/index.html`. Generation fails on Doxygen
+warnings by default. `BUILD_DOCUMENTATION` is off for normal builds, so they
+acquire no new tool dependency. For a private Doxygen installation, pass
+`-DDOXYGEN_EXECUTABLE=/absolute/path/to/doxygen` when configuring.
+
+The [guide sources](docs/index.md) cover Butler–Portugal, Niehoff's algorithms
+and their implementation choices. See [documentation maintenance](docs/building.md)
+and the [compiled example](docs/validation.md).
+
+For LaTeX sources, additionally set `-DDOCUMENTATION_LATEX=ON`; the `docs`
+target then writes `build-docs/documentation/latex/refman.tex`. For an automatic
+PDF build, install TeX Live (including `pdflatex` and `makeindex`) and `latexmk`,
+and use:
+
+```sh
+cmake -S . -B build-docs -DBUILD_LIBRARYLINK=OFF -DBUILD_TESTING=OFF \
+  -DBUILD_DOCUMENTATION=ON -DDOCUMENTATION_PDF=ON
+cmake --build build-docs --target docs-pdf
+```
+
+The output is `build-docs/documentation/latex/refman.pdf`. In VS Code, set these
+options in `cmake.configureSettings`, run **CMake: Configure**, then select
+`docs-pdf` with **CMake: Set Build Target** and run **CMake: Build**. A settings
+example and preset instructions are in [the guide](docs/building.md).
+
 ## Install the Wolfram Language paclet
 
 ```sh

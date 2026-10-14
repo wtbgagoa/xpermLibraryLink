@@ -1,3 +1,13 @@
+/**
+ * @file LLInterface.cpp
+ * @brief Validated integer-array transport between Wolfram and native algorithms.
+ *
+ * The adapter deliberately keeps symbolic xAct objects in the Wolfram package
+ * and mathematical searches in the C++ core. Both the original Butler–Portugal
+ * entry point and the production Niehoff entry point accept the same 11-field
+ * wire format, so changing backend does not change the xTensor calling API.
+ * See @ref librarylink_integration, @ref representations, and @ref design_choices.
+ */
 #include "LLInterface.hpp"
 #include "NiehoffCanonicalizer.hpp"
 #include "xperm.h"
@@ -27,6 +37,11 @@ EXTERN_C DLLEXPORT void WolframLibrary_uninitialize(WolframLibraryData) {}
 namespace {
 using Row = std::vector<int>;
 
+/** @brief Reject Wolfram integers that cannot fit the inherited `int` core.
+ *
+ * `mint` may be wider than `int`. Checking before narrowing avoids silently
+ * turning an out-of-range image, dimension, or group count into valid input.
+ */
 bool toInt(mint value, int &result) {
   if (value < std::numeric_limits<int>::min() ||
       value > std::numeric_limits<int>::max())
@@ -35,6 +50,11 @@ bool toInt(mint value, int &result) {
   return true;
 }
 
+/** @brief Copy a borrowed rank-one integer tensor into an owned C++ vector.
+ * @details Empty vectors are valid and do not require a data pointer. The
+ * callback-owned input is never modified or freed, including on validation
+ * failure. Mathematical validation happens after this transport conversion.
+ */
 bool integerVector(WolframLibraryData libraryData, MTensor tensor,
                    Row &result) {
   if (!tensor || libraryData->MTensor_getType(tensor) != MType_Integer ||
@@ -56,6 +76,11 @@ bool integerVector(WolframLibraryData libraryData, MTensor tensor,
   return true;
 }
 
+/** @brief Allocate a result tensor and transfer it to the Wolfram runtime.
+ * @details Until it is placed in `result`, this function owns the new tensor
+ * and frees it if its data pointer cannot be obtained. C++ temporary vectors
+ * remain independently owned and are destroyed normally after the call.
+ */
 int integerVectorResult(WolframLibraryData libraryData, const Row &values,
                         MArgument result) {
   mint dimensions[1] = {static_cast<mint>(values.size())};
@@ -74,6 +99,7 @@ int integerVectorResult(WolframLibraryData libraryData, const Row &values,
   return LIBRARY_NO_ERROR;
 }
 
+/** @brief Check that a point list contains distinct one-based in-range points. */
 bool validPoints(const Row &points, int degree) {
   if (degree <= 0 || points.size() > static_cast<std::size_t>(degree))
     return false;
@@ -87,6 +113,11 @@ bool validPoints(const Row &points, int degree) {
   return true;
 }
 
+/** @brief Validate each consecutive degree-sized block as a permutation.
+ * @details An empty generator list represents the trivial group. The group
+ * utility exports accept ordinary permutations; the stronger signed tensor
+ * contract is checked by makeLegacyLabelGroups() for canonicalization calls.
+ */
 bool validGenerators(const Row &generators, int degree) {
   if (degree <= 0 ||
       generators.size() >
@@ -107,9 +138,12 @@ bool validGenerators(const Row &generators, int degree) {
   return true;
 }
 
-// The legacy base-change routine dereferences base[0] for every nonempty
-// requested base. Complete an omitted base first and handle the trivial group
-// without calling that routine.
+/** @brief Prepare the legacy base-change routine's preconditions.
+ * @details The inherited routine dereferences `base[0]` for a nonempty requested
+ * base. An omitted base is therefore completed with Schreier–Sims before the
+ * change; the trivial group is handled directly. This is an adapter safety
+ * choice, not a different stabilizer-chain algorithm.
+ */
 void changeBase(Row &base, Row &generators, int degree,
                 const Row &requestedBase, StabilizerChain &chain) {
   if (base.empty() && !generators.empty()) {
@@ -136,8 +170,11 @@ void changeBase(Row &base, Row &generators, int degree,
                    static_cast<int>(requestedBase.size()));
 }
 
-// A StrongGenSet is serialized as one integer stream:
-//   {degree, baseLength, generatorCount, base..., flattenedGenerators...}
+/** @brief Encode one strong generating set without constructing Wolfram objects.
+ * @details The stream is `{degree, baseLength, generatorCount, base...,
+ * flattenedGenerators...}`. `DecodeStrongGenSet` in `Kernel/Implementation.wl`
+ * checks this layout and creates the xPerm `StrongGenSet` expression.
+ */
 Row encodeStrongGenSet(int degree, const Row &base, const Row &generators) {
   const std::size_t generatorCount =
       generators.size() / static_cast<std::size_t>(degree);
@@ -152,6 +189,7 @@ Row encodeStrongGenSet(int degree, const Row &base, const Row &generators) {
   return encoded;
 }
 
+/** @brief Validate and export a strong generating set as a rank-one tensor. */
 int strongGenSetResult(WolframLibraryData libraryData, const Row &base,
                        const Row &generators, int degree, MArgument result) {
   if (!validGenerators(generators, degree))
@@ -161,10 +199,12 @@ int strongGenSetResult(WolframLibraryData libraryData, const Row &base,
       libraryData, encodeStrongGenSet(degree, base, generators), result);
 }
 
-// A chain is serialized as:
-//   {streamCount, streamLength1, ..., streamLengthN,
-//    strongGenSetStream1..., ..., strongGenSetStreamN...}
-// Every embedded stream uses exactly the same format as encodeStrongGenSet.
+/** @brief Export a chain using lengths rather than a ragged tensor.
+ * @details The layout is `{streamCount, streamLength1, ..., streamLengthN,
+ * strongGenSetStream1..., ..., strongGenSetStreamN...}`. Every embedded stream
+ * uses encodeStrongGenSet(). A rank-one integer result avoids dependence on
+ * WSTP expression construction and preserves different base lengths per level.
+ */
 int strongGenSetChainResult(WolframLibraryData libraryData,
                             const std::vector<Row> &streams, MArgument result) {
   std::size_t totalLength = 1 + streams.size();
@@ -439,7 +479,13 @@ EXTERN_C DLLEXPORT int LL_stabsgs(WolframLibraryData libraryData,
 // ============================================================================
 
 namespace {
+/** @brief Local alias for checked conversion in the staged-search adapters. */
 bool cv(mint x, int &y) { return toInt(x, y); }
+/** @brief Copy a rectangular integer tensor, guarding the flattened size.
+ * @details The stage helpers use rank-two tensors so each configuration or
+ * tagged result occupies one row. Empty dimensions are accepted here; the
+ * search's semantic validator decides whether they are meaningful.
+ */
 bool matrix(WolframLibraryData l, MTensor t, std::vector<IntegerRow> &r) {
   if (!t || l->MTensor_getType(t) != MType_Integer ||
       l->MTensor_getRank(t) != 2)
@@ -462,10 +508,18 @@ bool matrix(WolframLibraryData l, MTensor t, std::vector<IntegerRow> &r) {
         return false;
   return true;
 }
+/** @brief Share rank-one transport validation with the group utility exports. */
 bool vector(WolframLibraryData l, MTensor t, IntegerRow &r) {
   return integerVector(l, t, r);
 }
 
+/** @brief Decode the common 11-field xPerm-compatible canonicalization input.
+ * @details Only the wire layout, integer ranges, generator permutation format,
+ * and Boolean strong-generator flag are checked here. The canonicalizers then
+ * validate signed permutations and disjoint label sets via
+ * makeLegacyLabelGroups(). Keeping one decoder ensures that backend comparison
+ * tests exercise the same transport contract; see @ref librarylink_canonical_input.
+ */
 bool readCanonicalInput(WolframLibraryData libraryData, MArgument *arguments,
                         LegacyCanonicalPermInput &input) {
   IntegerRow flatGenerators;
@@ -500,6 +554,11 @@ bool readCanonicalInput(WolframLibraryData libraryData, MArgument *arguments,
                                           input.degree);
   return true;
 }
+/** @brief Validate the parallel configuration arrays used by staged helpers.
+ * @details All configurations have one common degree and separate signs
+ * `+1/-1`; this differs from the production ABI's two trailing sign points.
+ * Base and selected slots must be distinct one-based points.
+ */
 bool validSearchData(const IntegerMatrix &slots, const IntegerMatrix &labels,
                      const IntegerRow &signs, const IntegerMatrix &metadata,
                      const IntegerMatrix &generators, const IntegerRow &base,
@@ -520,6 +579,10 @@ bool validSearchData(const IntegerMatrix &slots, const IntegerMatrix &labels,
          validPoints(selectedSlots, static_cast<int>(degree));
 }
 
+/** @brief Export a rectangular staged-search result with runtime ownership.
+ * @details Tags and padding are interpreted by the caller, not by LibraryLink.
+ * Any tensor allocated but not handed to `result` is freed on local failure.
+ */
 int output(WolframLibraryData l, const std::vector<IntegerRow> &m,
            MArgument result) {
   mint rows = m.size(), cols = rows ? m.front().size() : 0;
@@ -542,9 +605,8 @@ int output(WolframLibraryData l, const std::vector<IntegerRow> &m,
   return LIBRARY_NO_ERROR;
 }
 } // namespace
-// slots, labels, signs, metadata, generators, tentative base, selected slots.
-// Tagged rows: 0 configuration, 1 level summary, 2 base, 3 strong generator,
-// 4 chain position list.
+// Historical "Stage 4" export: persistent chain mechanics, not Algorithm 4.2.
+// See librarylink_stages for inputs and the padded tag-0..4 result rows.
 EXTERN_C DLLEXPORT int LL_niehoff_persistent_search(WolframLibraryData l,
                                                     mint argc, MArgument *args,
                                                     MArgument result) {
@@ -761,8 +823,9 @@ LL_niehoff_label_group_search(WolframLibraryData libraryData,
   }
 }
 
-// Stage 6 adds a signed propagated-symmetry generator matrix and an orbit cap.
-// A signed-generator row is {sign, image1, ..., imageN}.
+// Historical "Stage 6" is a bounded explicit orbit helper. It does not use
+// the production IncrementalLabels / PropagatedSymmetries acceleration.
+// It adds rows {sign, image1, ..., imageN} and a positive orbit-size cap.
 EXTERN_C DLLEXPORT int
 LL_niehoff_propagated_symmetry_search(WolframLibraryData libraryData,
                                       mint argumentCount, MArgument *arguments,
@@ -958,6 +1021,8 @@ EXTERN_C DLLEXPORT int LL_niehoff_canonical_perm(WolframLibraryData libraryData,
     if (!readCanonicalInput(libraryData, arguments, input))
       return LIBRARY_FUNCTION_ERROR;
 
+    // "Legacy" names the compatible input schema. This calls the accelerated
+    // Niehoff search, including inferred total symmetries and early zero tests.
     const auto canonical = canonicalizeLegacyInput(input);
     const IntegerRow outputRow =
         canonical.zero ? IntegerRow(static_cast<std::size_t>(input.degree), 0)
@@ -1009,6 +1074,8 @@ LL_niehoff_canonical_perm_ext(WolframLibraryData libraryData,
       }
     }
 
+    // Explicit subsets augment S; supplying one is a mathematical assertion
+    // about the expression, not merely a request for a faster search.
     const auto canonical = canonicalizeExtendedInput(input);
     const IntegerRow outputRow =
         canonical.zero ? IntegerRow(static_cast<std::size_t>(legacy.degree), 0)

@@ -11,6 +11,23 @@
 *********************************************************************
 *********************************************************************/
 
+/**
+ * @file NiehoffCanonicalizer.cpp
+ * @brief Shared search utilities and the production Niehoff canonicalizer.
+ *
+ * The production route is canonicalizeCore() -> inferTotalSymmetrySubsets() ->
+ * incrementalSearch(). It reuses xPerm's Schreier–Sims and orbit machinery but
+ * performs its own signed double-coset search following Niehoff's Algorithm 4.1,
+ * with the pruning of Algorithm 4.2 and bookkeeping of B.1–B.4. The earlier
+ * staged search interfaces in
+ * this file remain independently callable; Stage 6's explicit group closure is
+ * not part of that route. See @ref algorithm_overview and @ref niehoff_algorithm.
+ *
+ * Array convention: a real point i has C++ index i-1, whereas label lookup tables
+ * have an unused entry 0 and are indexed directly by the one-based label. The
+ * two final permutation points encode sign. See @ref representations.
+ */
+
 #include "NiehoffCanonicalizer.hpp"
 #include "TotalSymmetry.hpp"
 #include "xperm.h"
@@ -561,6 +578,14 @@ Permutation transpositionRepresentative(int first, int second, int degree) {
   return representative;
 }
 
+/** @brief Exchange dummy pairs, optionally reversing the source orientation.
+ *
+ * A reversal of one pair followed by a pair exchange can be a four-cycle;
+ * two cross-transpositions would reverse both pairs and miscount the character
+ * of an antisymmetric metric. This helper constructs the unsigned label action.
+ * Stage 5 records that character separately; production embeds it in sign
+ * points via multiplySign(). See @ref design_choices.
+ */
 Permutation pairRepresentative(int sourceFirst, int sourceSecond,
                                int targetFirst, int targetSecond, bool reverse,
                                int degree) {
@@ -791,7 +816,7 @@ LabelGroupSearchResult runLabelGroupSearch(const LabelGroupSearchInput &input) {
 }
 
 // -----------------------------------------------------------------------------
-// Stage 6: propagated signed symmetries
+// Stage 6: bounded explicit signed-group reduction (not production propagation)
 // -----------------------------------------------------------------------------
 namespace {
 
@@ -823,6 +848,13 @@ struct SignedPermutationKey {
   }
 };
 
+/** @brief Enumerate a supplied signed group for the standalone Stage 6 utility.
+ *
+ * Breadth-first closure is deliberately bounded by maximumOrbitSize; crossing
+ * the limit throws rather than returning an incomplete equivalence relation.
+ * Production PropagatedSymmetries uses class identifiers instead of closure
+ * and never calls this function. See @ref staged_helpers.
+ */
 std::vector<SignedOrbitElement>
 signedGroupClosure(const std::vector<SignedPermutation> &generators, int degree,
                    std::size_t maximumOrbitSize) {
@@ -970,6 +1002,13 @@ runPropagatedSymmetrySearch(const PropagatedSymmetryInput &input) {
 // -----------------------------------------------------------------------------
 namespace {
 
+/** @brief Check the signed layout before any low-level xPerm operation.
+ *
+ * Checks permutation validity, sign-point separation, base uniqueness and
+ * flattened pool lengths. Label-pool disjointness and coverage are checked by
+ * makeLegacyLabelGroups(). The caller's assertion that an SGS is strong is a
+ * precondition, not something this validator proves.
+ */
 void validateLegacyInput(const LegacyCanonicalPermInput &input) {
   if (input.degree < 2 ||
       static_cast<int>(input.permutation.size()) != input.degree ||
@@ -1007,6 +1046,14 @@ void validateLegacyInput(const LegacyCanonicalPermInput &input) {
       throw std::invalid_argument("invalid slot generator");
 }
 
+/** @brief Select real slots 1..r in canonical comparison order.
+ *
+ * A BSGS base is a group representation choice; it must not silently change the
+ * output ordering. Production therefore rebases to natural slot order even if
+ * the caller's valid SGS was supplied with another base. This is why comparison
+ * with the old Butler–Portugal backend must allow different representatives of
+ * the same signed double coset. See @ref representations.
+ */
 IntegerRow realSearchBase(const LegacyCanonicalPermInput &input) {
   const int realDegree = input.degree - 2;
   // The base is a group representation detail. The canonical ordering must
@@ -1083,6 +1130,7 @@ makeLegacyLabelGroups(const LegacyCanonicalPermInput &input) {
 
 namespace {
 
+/// Decode the final two points of a signed permutation; reject other layouts.
 int signOf(const Permutation &permutation) {
   const int degree = static_cast<int>(permutation.size());
   if (permutation[degree - 2] == degree - 1 &&
@@ -1094,6 +1142,9 @@ int signOf(const Permutation &permutation) {
   throw std::invalid_argument("invalid xPerm sign points");
 }
 
+/** @brief Multiply a signed permutation's character without moving real labels.
+ * @pre sign is +1 or -1 and permutation has valid separated sign points.
+ */
 void multiplySign(Permutation &permutation, int sign) {
   if (sign == 1)
     return;
@@ -1106,6 +1157,7 @@ void multiplySign(Permutation &permutation, int sign) {
   }
 }
 
+/// Require disjoint subsets of at least two real slots, each with character ±1.
 void validateTotalSubsets(const std::vector<TotalSymmetrySubset> &subsets,
                           int realDegree) {
   std::vector<bool> used(static_cast<std::size_t>(realDegree + 1), false);
@@ -1120,6 +1172,20 @@ void validateTotalSubsets(const std::vector<TotalSymmetrySubset> &subsets,
   }
 }
 
+/** @brief Prepare the slot group's SGS in the production search order.
+ * @details
+ * @anchor niehoff_chain
+ *
+ * A trusted strong input is rebased with xPerm's basechange_chain; an arbitrary
+ * generating set goes through Schreier–Sims. The identity supplies the trivial
+ * group when the input generator list is empty. The returned chain contains
+ * all requested real points before residual sign points, exposing negative
+ * identity in the final real-point stabilizer when it is present.
+ *
+ * This is shared computational group theory with Butler–Portugal, not a second
+ * independent implementation of Schreier–Sims. No full slot-group closure is
+ * constructed. See @ref algorithm_overview.
+ */
 StabilizerChainState legacyChain(const LegacyCanonicalPermInput &input,
                                  const IntegerRow &selectedSlots) {
   PermutationBatch generators = input.slotGenerators;
@@ -1159,17 +1225,34 @@ StabilizerChainState legacyChain(const LegacyCanonicalPermInput &input,
   return chain;
 }
 
-// Incremental Values/Label-Codes (paper B.4). Explicit partner and variance
-// lookups preserve the public API's arbitrary numbering and ordering of pairs.
+/**
+ * @brief Production label stabilizer represented by Values and explicit pair tables.
+ * @ingroup niehoff_api
+ * @details
+ * @anchor niehoff_incremental_labels
+ *
+ * This realizes the Values/Label-Codes bookkeeping of Algorithm 4.1 and B.4,
+ * without generating the label group. `value[a]` is the least label reachable
+ * from a under the current label stabilizer. All surviving configurations share
+ * the selected prefix, so one instance serves the whole search frontier.
+ *
+ * Unlike the paper's convenient consecutive-label coding, the public API
+ * permits descending, sparse and interleaved pair entries. partner and second
+ * preserve declared pairing and variance explicitly. Original type codes stay
+ * immutable for later sign checks; the fixed mask records the changing
+ * stabilizer instead of rewriting those codes. Fixing one endpoint fixes its
+ * partner as well. See @ref representations and @ref design_choices.
+ */
 class IncrementalLabels {
-  const std::vector<LabelGroup> &groups;
-  int degree;
-  std::vector<unsigned char> second, fixed;
+  const std::vector<LabelGroup> &groups; ///< Valid disjoint pools covering the degree.
+  int degree; ///< Full signed permutation degree, including two sign points.
+  std::vector<unsigned char> second, fixed; ///< Declared pair position and fixed-label mask.
 
 public:
-  IntegerRow value, partner;
-  std::vector<LabelGroupType> type;
+  IntegerRow value, partner; ///< Least targets and dummy partners, indexed by label.
+  std::vector<LabelGroupType> type; ///< Immutable original pool type of each label.
 
+  /// Compile pairing/variance lookup tables once and initialize the full label orbits.
   IncrementalLabels(const std::vector<LabelGroup> &input, int n)
       : groups(input), degree(n), second(n + 1), fixed(n + 1), value(n + 1),
         partner(n + 1), type(n + 1, LabelGroupType::Fixed) {
@@ -1194,8 +1277,16 @@ public:
     updateValues();
   }
 
+  /// Whether a label is still available for relabeling and new source propagation.
   bool active(int label) const { return !fixed[label]; }
 
+  /** @brief Recompute Values from the remaining labels in each pool (B.4).
+   * @details
+   * @anchor niehoff_update_values
+   * No-metric pools have two variance orbits. Metric/repeated pools have one;
+   * already fixed labels retain their own values. The scan is linear in the
+   * total number of declared labels and avoids explicit label-group elements.
+   */
   void updateValues() {
     std::iota(value.begin(), value.end(), 0);
     for (const auto &group : groups) {
@@ -1213,6 +1304,10 @@ public:
     }
   }
 
+  /** @brief Advance the label stabilizer after fixing one slot's common minimum (B.4).
+   * @details
+   * @anchor niehoff_freeze_label
+   */
   void freeze(int label) {
     fixed[label] = 1;
     if (partner[label])
@@ -1220,6 +1315,15 @@ public:
     updateValues();
   }
 
+  /** @brief Construct one signed label action taking source to its current Value.
+   * @details
+   * @anchor niehoff_label_representative
+   *
+   * A repeated label uses a transposition; a dummy uses pair exchange and any
+   * permitted orientation reversal. For an antisymmetric metric only, a
+   * reversal exchanges the sign points. This is an ordinary label-group action;
+   * the extra even-class propagated exchange is applied by incrementalSearch().
+   */
   Permutation representative(int source) const {
     const int target = value[source];
     if (target == source)
@@ -1238,30 +1342,83 @@ public:
   }
 };
 
+/**
+ * @brief Production pair `(g,s)` retaining the provenance of each current slot.
+ * @ingroup niehoff_api
+ * @details
+ * @anchor niehoff_configuration
+ *
+ * labels is the signed current configuration. slots records the accumulated
+ * slot action so that propagation entries remain attached to original slots.
+ * A slot representative changes both arrays; a label action changes only
+ * labels. Deduplication uses labels, but retains its matching whole pair.
+ */
 struct PropagatedConfiguration {
-  Permutation labels; // current slot -> label (g)
-  Permutation slots;  // current slot -> original slot (s)
+  Permutation labels; ///< Current slot -> label map g, including sign points.
+  Permutation slots; ///< Current slot -> original slot map s.
 };
 
+/** @brief A least-value occurrence from B.1. @ingroup niehoff_api
+ * @details
+ * @anchor niehoff_least_instance
+ * p is reachable by a slot representative. q is p itself, or a lower-valued
+ * position reachable through p's even propagated class, possibly outside the
+ * slot orbit. All entries in a level's list attain the same global Value.
+ */
 struct LeastInstance {
-  std::size_t parent;
-  int p, q;
+  std::size_t parent; ///< Zero-based configuration index.
+  int p, q; ///< One-based current positions: slot-orbit point and label source.
 };
 
-// B.2: odd entries describe source subsets; their even partners describe
-// the symmetry transported along dummy contractions. Entries live in original
-// slot coordinates, so they survive slot transversals and label renaming.
+/**
+ * @brief Incremental signed propagation classes, implementing B.2 and B.3.
+ * @ingroup niehoff_api
+ * @details
+ * @anchor niehoff_propagated_symmetries
+ *
+ * A signed odd ID marks a source total subset; the corresponding even ID marks
+ * the exchange transported to its contracted partners. Zero means that there
+ * is no recorded certificate. Entries use original-slot coordinates and are
+ * read at `s[p]`; they are not indexed directly by the changing label g[p].
+ * The Symmetric-Subsets lookup instead describes current slot positions.
+ *
+ * Existing entries take precedence. Unmarked sources are processed in slot
+ * order, and consumed singletons cannot be reused to invent a later symmetry.
+ * At least two source occurrences are needed before a class is installed.
+ * These rules make provenance persistent across levels and parents, without
+ * enumerating a propagated group. See @ref niehoff_algorithm.
+ */
 class PropagatedSymmetries {
-  IntegerRow entries;
-  std::vector<unsigned char> consumed;
-  int nextOdd = 1;
+  IntegerRow entries; ///< Signed odd/even IDs indexed by original slot, entry 0 unused.
+  std::vector<unsigned char> consumed; ///< Original sources already examined, including singletons.
+  int nextOdd = 1; ///< Next unused positive source ID; the partner ID is nextOdd+1.
 
 public:
+  /// Initialize an empty propagation certificate for one complete search.
   explicit PropagatedSymmetries(int n) : entries(n + 1), consumed(n + 1) {}
+  /// Pull back the original-slot entry through a configuration's accumulated action s.
   int at(const PropagatedConfiguration &configuration, int slot) const {
     return entries[configuration.slots[slot - 1]];
   }
 
+  /** @brief Extend propagation from one parent's least instances (B.2).
+   * @details
+   * @anchor niehoff_update_propagation
+   *
+   * Sources must be active labels in the same nonzero total subset and attain
+   * the common least Value. That Value identifies one label orbit, including
+   * variance for no-metric pairs. Entries are installed for all sources before
+   * their dummy partners: a contraction internal to the source keeps two odd
+   * entries and can expose a metric sign conflict in zero().
+   *
+   * @param configuration Parent pair `(g,s)` for these least instances.
+   * @param instances Level's globally least occurrences, grouped by parent.
+   * @param begin Inclusive zero-based start for this parent.
+   * @param end Exclusive zero-based end for this parent.
+   * @param labels Current Values, types and explicit pair data.
+   * @param subsets Signed total-subset ID by one-based current slot.
+   * @param statistics Optional count of allocated non-singleton class pairs.
+   */
   void update(const PropagatedConfiguration &configuration,
               const std::vector<LeastInstance> &instances, std::size_t begin,
               std::size_t end, const IncrementalLabels &labels,
@@ -1319,8 +1476,24 @@ public:
     }
   }
 
-  // B.3 must run BEFORE equivalent subset branches are dropped. A lone
-  // propagated endpoint in an unrelated subset is not a sign conflict.
+  /** @brief Detect signed cancellation before dropping equivalent branches (B.3).
+   * @details
+   * @anchor niehoff_zero_check
+   *
+   * Three certificates are checked: an antisymmetric source acting on equal
+   * component occurrences; two equal even-class entries in an opposite-sign
+   * nonzero total subset; and a dummy pair internal to a source whose character
+   * conflicts with the metric. A lone partner in an unrelated subset cannot
+   * certify zero, so the second case explicitly requires two occurrences.
+   *
+   * Debug builds also assert the pairing invariant behind pruning: endpoints
+   * have entries `(0,0)`, `(odd,odd)` or `(odd,matching even)`, with matching
+   * signs and either endpoint order. Ordinary pair relabeling, slot motion and
+   * even-class label exchanges preserve this provenance.
+   *
+   * Negative identity in the slot group and opposite signed surviving
+   * configurations are separate checks outside this method.
+   */
   bool zero(const PropagatedConfiguration &configuration,
             const IncrementalLabels &labels, const IntegerRow &subsets,
             int realDegree) const {
@@ -1366,6 +1539,37 @@ public:
   }
 };
 
+/**
+ * @brief Production Algorithm 4.1, with 4.2 pruning and B.1–B.4 bookkeeping.
+ * @ingroup niehoff_api
+ * @details
+ * @anchor niehoff_search
+ *
+ * For each natural real-slot position, B.1 finds the global least Value among
+ * its slot orbit and any reachable even propagated classes. B.2 extends the
+ * certificate; B.3 checks signs before pruning. Certified representatives are
+ * constructed, then B.4 freezes the selected label and its partner. Equal g
+ * values are deduplicated with a matching s; opposite signs of the same real
+ * configuration yield zero. The canonical prefix is never moved afterwards.
+ *
+ * Algorithm 4.2's slot-subset pruning is refined to respect this API's arbitrary
+ * numeric labels and overlapping contractions: the certificate key also needs
+ * the propagated class and whether the partner is internal to the subset.
+ * A zero entry is not a certificate. This preserves distinct lexicographic
+ * choices that literal subset-only pruning loses; see @ref design_choices.
+ *
+ * Class minima and slot/label representatives are cached within a level.
+ * This removes the factorial equivalent frontier for the central total-tensor
+ * contraction family, but does not bound all groups polynomially. Unrelated
+ * inequivalent configurations may still proliferate; BSGS construction and
+ * total-subset inference also have their own costs. See @ref validation.
+ *
+ * @param input Valid signed tensor input.
+ * @param groups Validated disjoint label pools.
+ * @param chain Complete slot chain with natural real-slot base prefix.
+ * @param subsets Signed total-subset lookup inferred from that same group.
+ * @param statistics Optional work counters, already reset by canonicalizeCore().
+ */
 LegacyCanonicalPermResult
 incrementalSearch(const LegacyCanonicalPermInput &input,
                   const std::vector<LabelGroup> &groups,
@@ -1381,7 +1585,8 @@ incrementalSearch(const LegacyCanonicalPermInput &input,
     const BasicOrbit orbit = currentBasicOrbit(chain);
     int minimum = input.degree + 1;
     std::vector<LeastInstance> instances;
-    // B.1: even classes can bring a lower label from outside this slot orbit.
+    // B.1: cache the least remaining position in each even class. Such a class
+    // supplies a signed exchange bringing a label from outside this slot orbit.
     for (std::size_t parent = 0; parent < configurations.size(); ++parent) {
       const auto &configuration = configurations[parent];
       std::unordered_map<int, int> leastInClass;
@@ -1472,6 +1677,11 @@ incrementalSearch(const LegacyCanonicalPermInput &input,
             labelRepresentatives.try_emplace(source);
         if (labelInserted)
           labelPosition->second = labels.representative(source);
+        // In left-to-right product notation, the new g is t*g*e*d:
+        // t sends selected -> p, e exchanges g[p] and g[q] when needed, and
+        // d sends the original source g[q] to the common minimum. Thus the
+        // selected position gets minimum while earlier positions stay fixed.
+        // In ordinary function notation this is d composed with e, g and t.
         const auto &slotAction = slotPosition->second;
         const auto &labelAction = labelPosition->second;
         PropagatedConfiguration candidate{Permutation(input.degree),
@@ -1494,11 +1704,15 @@ incrementalSearch(const LegacyCanonicalPermInput &input,
       }
       begin = end;
     }
+    // B.4: every surviving candidate shares this minimum, so its label
+    // stabilizer can be advanced once for the whole frontier.
     labels.freeze(minimum);
     std::sort(
         survivors.begin(), survivors.end(), [](const auto &a, const auto &b) {
           return std::tie(a.labels, a.slots) < std::tie(b.labels, b.slots);
         });
+    // Only g determines the canonical candidate, but keep its corresponding s:
+    // propagation lookups in subsequent levels still need that provenance.
     survivors.erase(std::unique(survivors.begin(), survivors.end(),
                                 [](const auto &a, const auto &b) {
                                   return a.labels == b.labels;
@@ -1521,6 +1735,22 @@ incrementalSearch(const LegacyCanonicalPermInput &input,
   return {false, configurations.front().labels};
 }
 
+/**
+ * @brief Common checked entry to the production algorithm.
+ * @ingroup niehoff_api
+ * @details
+ * @anchor niehoff_core
+ *
+ * Validate the legacy representation, add any genuinely declared slot
+ * relations, construct/rebase the SGS, and exclude negative identity before
+ * inference and search. Explicit subsets are generated by adjacent signed
+ * transpositions, so every later transversal respects the fixed base prefix;
+ * sorting an entire subset after a step would violate that invariant.
+ *
+ * Both public APIs take this path. Inference uses the augmented group, while
+ * the original configuration and label pools enter incrementalSearch().
+ * Statistics are reset here and do not include inference/BSGS work.
+ */
 LegacyCanonicalPermResult
 canonicalizeCore(const LegacyCanonicalPermInput &input,
                  const std::vector<TotalSymmetrySubset> &subsets,

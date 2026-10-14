@@ -44,6 +44,21 @@
 *********************************************************************/
 
 
+/**
+ * @file xperm.cpp
+ * @brief Original xPerm group algorithms and Butler-Portugal canonicalization.
+ *
+ * The historical implementation and attribution above are retained. The shared
+ * permutation/Schreier/BSGS primitives also support the new Niehoff search; the
+ * presence of this file in a build does not mean that the old double-coset search
+ * is selected. See @ref butler_portugal for the old call path, @ref
+ * niehoff_algorithm for the new one, and @ref design_choices for their boundary.
+ *
+ * The historical phrase "drummy" means a dummy or repeated label. Tensor
+ * configurations in canonical_perm_ext() and double_coset_rep() map slots to
+ * labels; only canonical_perm() reverses that convention at its boundary.
+ */
+
 /* KP */
 #include "xperm.h"
 
@@ -435,6 +450,12 @@ void product(int *p1, int *p2, int *p, int n)
 
 /* Taken out KP */
 /* TAB1 is an element of S; TAB2 is an element of D */
+/** @ingroup butler_portugal_api
+ * @brief Evaluate a candidate TAB pair as the signed configuration s g d.
+ * @details TAB1 is the accumulated slot action, TAB2 the label action. This
+ * explicit pair is the old counterpart of storing the evolving g and s in the
+ * new search; it is not a propagated-symmetry data structure.
+ */
 void F2(int *TAB1, int *g, int *TAB2, int *sgd, int n)
 	{
     std::vector<int> tmp(n);
@@ -676,6 +697,14 @@ void all_orbits(int *GS, int m, int n, int *orbits)
 * function is spent in the subroutine `position'.
 */
 
+/** @ingroup permutation_groups
+ * @brief Breadth-first orbit and Schreier tree for a flat generating set.
+ * @details orbit has capacity n, nu has n*n entries, and w has n entries.
+ * When init is nonzero, all edge/predecessor data are cleared. A discovered point
+ * stores its predecessor in w and the complete discovering generator in its row
+ * of nu. This costs quadratic storage but makes trace_schreier() independent of
+ * subsequent changes to the generating set.
+ */
 void one_schreier_orbit(int point, int *GS, int m, int n,
                         int *orbit, int *ol, int *nu, int *w, int init)
 	{
@@ -1328,6 +1357,14 @@ void coset_rep(int *p, int n,
 */
 
 /* SGS for a dummyset. List dummies not modified */
+/** @ingroup butler_portugal_api
+ * @brief Generate the label group for one ordered set of dummy pairs.
+ * @details Adjacent whole-pair exchanges always have positive sign. sym=0 adds
+ * no endpoint flips; sym=+1 adds positive flips; sym=-1 adds flips accompanied by
+ * the sign-point transposition. Consequently antisymmetric-metric signs belong
+ * to the label group, independently of any antisymmetric slot generators.
+ * dummies is read only; KD and bD receive generators and their base.
+ */
 void SGSofdummyset(int *dummies, int dl, int sym, int n,
                    int *KD, int *KDl, int *bD, int *bDl)
 	{
@@ -1407,6 +1444,12 @@ void SGSofdummyset(int *dummies, int dl, int sym, int n,
 	}
 
 /* SGS for a repeatedset. List repes not modified */
+/** @ingroup butler_portugal_api
+ * @brief Generate positive adjacent transpositions of repeated-label identifiers.
+ * @details The identifiers remain distinct permutation points even when they
+ * represent indistinguishable component indices. This is a full symmetric
+ * label group, not an additional tensor-slot symmetry declaration.
+ */
 void SGSofrepeatedset(int *repes, int rl, int n,
                       int *KD, int *KDl, int *bD, int *bDl)
 	{
@@ -1446,6 +1489,12 @@ void SGSofrepeatedset(int *repes, int rl, int n,
 	}
 
 /* Move index in a dummyset. List dummies reordered */
+/** @ingroup butler_portugal_api
+ * @brief Reorder a dummy set so firstd starts its first pair, when present.
+ * @details Moving a second endpoint to the front reverses the presentation of
+ * every pair. This changes the base description of D, not the tensor: it does
+ * not by itself apply an endpoint exchange to the configuration.
+ */
 void movedummyset(int firstd, int *dummies, int dl, int)
 	{
 
@@ -1496,6 +1545,9 @@ void movedummyset(int firstd, int *dummies, int dl, int)
 	}
 
 /* Move index in a repeated set. List repes reordered */
+/** @ingroup butler_portugal_api
+ * @brief Put firstd first in a repeated-set presentation, if present.
+ */
 void moverepeatedset(int firstd, int *repes, int rl)
 	{
 
@@ -1527,6 +1579,12 @@ void moverepeatedset(int firstd, int *repes, int rl)
 	}
 
 /* Remove a first-pair from dummies */
+/** @ingroup butler_portugal_api
+ * @brief Remove the selected first dummy pair from the current label stabilizer.
+ * @details SGSD() must first have arranged firstd as a first endpoint. Fixing one
+ * endpoint prevents moving its partner too, so the entire pair is removed from
+ * the mutable D description while the configuration still contains both labels.
+ */
 void dropdummyset(int firstd,
                   int *vds, int vdsl, int *dummies, int *dl)
 	{
@@ -1547,6 +1605,10 @@ void dropdummyset(int firstd,
 	}
 
 /* Remove a first-point from repes */
+/** @ingroup butler_portugal_api
+ * @brief Remove the selected first repeated label from the current D description.
+ * @details Other labels in the same repeated set remain mutually interchangeable.
+ */
 void droprepeatedset(int firstd,
                      int *vrs, int vrsl, int *repes, int *rl)
 	{
@@ -1629,6 +1691,14 @@ void SGSD(int *vds, int vdsl, int *dummies, int dl, int *mQ,
 
 
 /* The class alphastruct has been contributed by the Cadabra project */
+/** @ingroup butler_portugal_api
+ * @brief One node of the inherited ALPHA/TAB search tree.
+ * @details L is the path of intermediate slots, s and d its accumulated actions,
+ * and o maps an extension point to a child index in ALPHA. The representation is
+ * contributed by Cadabra, as recorded above. It retains alternative paths with
+ * the same canonical prefix; these can proliferate factorially when a total slot
+ * symmetry and dummy renaming describe the same choices.
+ */
 class alphastruct {
 	public:
 		alphastruct();
@@ -1637,15 +1707,16 @@ class alphastruct {
 
 		void init(int n);
 
+		/** Intermediate-slot path identifying this node in ALPHA/TAB. */
 		int *L; 	/* We assume that elements of L cannot
 						be repeated. I only have experimental
 							evidence for this */
-		int Ll;
-		int *s;
-		int *d;
-		int *o;
+		int Ll; ///< Number of entries in L (the current prefix depth).
+		int *s; ///< Accumulated degree-nn slot action.
+		int *d; ///< Accumulated degree-nn label action.
+		int *o; ///< For each one-based extension point j, child index is o[j-1].
 
-		int nn;
+		int nn; ///< Allocated permutation degree, including sign points.
 	};
 
 alphastruct::alphastruct()
@@ -1685,6 +1756,9 @@ alphastruct::~alphastruct()
 	}
 
 
+/** @ingroup butler_portugal_api
+ * @brief Follow a path L through ALPHA and retrieve its pair of actions (s,d).
+ */
 void TAB(std::vector<alphastruct>& ALPHA, int *L, int Ll, int *s1, int *d1, int n)
 	{
 	int i;
@@ -1698,6 +1772,12 @@ void TAB(std::vector<alphastruct>& ALPHA, int *L, int Ll, int *s1, int *d1, int 
 	copy_list(ALPHA[l].d, d1, n);
 	}
 
+/** @ingroup butler_portugal_api
+ * @brief Accumulate all attainable label images for a TAB candidate.
+ * @details Evaluates its slot-orbit images under s g d, then adds every label in
+ * each corresponding DeltaD orbit. It is the explicit label-orbit predecessor
+ * of Niehoff's Values lookup; no propagated equivalence pruning occurs here.
+ */
 void F1(std::vector<alphastruct>& ALPHA, int *L, int Ll, int *g, int *list, int *listl, int n, int Deltabl, int *Deltab, int *DeltaD)
 	{
 	int c, c1, c2;
@@ -1743,6 +1823,13 @@ void F1(std::vector<alphastruct>& ALPHA, int *L, int Ll, int *g, int *list, int 
 
 
 /* Consistency check */
+/** @ingroup butler_portugal_api
+ * @brief Return zero when the candidate array contains opposite signs of one tensor.
+ * @details Compares the first n-2 images of positive and negative candidates.
+ * The final two points encode the sign, rather than additional tensor slots.
+ * This checks explicit candidates after expansion; the new search additionally
+ * detects local symmetry/metric sign contradictions before pruning alternatives.
+ */
 int consistency(int *array, int m, int n)
 	{
 	std::vector<int> arrayp(m*n);
@@ -1893,6 +1980,11 @@ void double_coset_rep(int *g, int n, int *base, int bl, int *GS, int m,
 // ALPHAstep is accessed through index i+1 below
 	int *ALPHAstep= new int[n+2]; //new int[n]; 
 
+	/* Butler-Portugal candidate invariant: each live TAB[L]=(s,d) represents
+     * s*g*d and agrees with all previously selected base images. Niehoff's
+     * Algorithm 3.1 presents the same search idea with a different state layout;
+     * Algorithms 4.1/4.2 additionally recognize equivalent total-symmetry choices.
+     */
 	/* Initialize ALPHA to {} and TAB to {id, id} */
 	ALPHAl= 1;
 	std::vector<alphastruct> ALPHA(1);
@@ -2010,6 +2102,9 @@ void double_coset_rep(int *g, int n, int *base, int bl, int *GS, int m,
 		/* If there are no images we have finished */
 		if(IMAGESl==0) continue;
 
+		/* Inherited canonical-order policy: bSsort reflects the chosen slot base.
+         * This is not the natural numeric label order of the Niehoff entry point.
+         */
 		/* Find minimum index */
 		sortB(IMAGES.data(), IMAGESsorted.data(), IMAGESl, bSsort.data(), bSl);
 		p[i-1] = IMAGESsorted[0];
@@ -2037,6 +2132,10 @@ void double_coset_rep(int *g, int n, int *base, int bl, int *GS, int m,
 		std::printf("Looking for digs moving index %d to slot %d\n",	/*PPC*/
 		       p[i-1], b);					/*PPC*/
 #endif								/*PPC*/
+		/* Every NEXT point yields another compatible TAB path. The original
+         * algorithm keeps them all; it has no Symmetric-Subsets or propagated
+         * class data with which to discard equivalent total-symmetry branches.
+         */
 		/* Calculate ALPHA and TAB */
 		ALPHAstep[i+1]=ALPHAstep[i];
 		for(l=ALPHAstep[i-1]; l<ALPHAstep[i]; l++) {
@@ -2154,6 +2253,10 @@ void double_coset_rep(int *g, int n, int *base, int bl, int *GS, int m,
 #endif								/*PPC*/
 			if (!result) break;
 			}
+		/* Updating D by consuming a selected pair/set entry is the older
+         * counterpart of Appendix B.4's incremental label-state update. Here
+         * the next iteration reconstructs D's SGS and orbits explicitly.
+         */
 		/* Find the stabilizers S^(i+1) and D^(i+1) */
 		stabilizer(&bS[i-1], 1, KS.data(), KSl, n, KS.data(), &KSl);
 		dropdummyset(p[i-1], vds, vdsl, dummies, &dl);

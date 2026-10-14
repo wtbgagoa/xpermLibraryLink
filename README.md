@@ -22,7 +22,6 @@ Then, in a fresh Wolfram kernel:
 ```wl
 PacletDataRebuild[]; (* Only if you install this paclet for the first time *)
 Needs["xAct`xPermLibraryLink`"];
-Uninstall@$xpermLink;
 LoadxPermLibraryLink[Automatic, True]
 ```
 
@@ -31,9 +30,36 @@ bundled with this paclet; `True` selects the Niehoff canonicalizer. Use
 `LoadxPermLibraryLink[]` for the original xPerm canonicalizer and
 `UnloadxPermLibraryLink[]` to restore xPerm's previous native definitions and
 availability flag. Loading the package alone does not replace those definitions.
+Manual WSTP uninstallation is unnecessary: activation replaces its definitions
+and preserves them for restoration on unload.
 
 See [PACLET.md](PACLET.md) for prerequisites, installation, archive creation,
 context migration, and integration tests.
+
+# Algorithm and source documentation
+
+The [Doxygen guide](docs/index.md) connects both production backends to their
+papers and explains the implementation choices. Start with the
+[algorithm overview](docs/algorithm_overview.md), then read the
+[permutation conventions](docs/representations.md), the
+[Butler–Portugal walkthrough](docs/butler_portugal.md), and the
+[Niehoff paper-to-code map](docs/niehoff.md). The guide includes a runnable
+symmetry-propagation example, API contracts, source links, and the reasons for
+the pruning refinements.
+
+To generate searchable HTML with Doxygen 1.9.1 or newer (Graphviz optional):
+
+```sh
+cmake -S . -B build-docs -DBUILD_LIBRARYLINK=OFF -DBUILD_TESTING=OFF \
+  -DBUILD_DOCUMENTATION=ON
+cmake --build build-docs --target docs
+```
+
+Open `build-docs/documentation/html/index.html`. This target needs neither
+Wolfram Language nor its SDK. See [documentation build instructions](docs/building.md)
+for configuration and maintenance.
+That guide also explains LaTeX/PDF output (`DOCUMENTATION_PDF=ON`, target
+`docs-pdf`) and selecting the documentation targets in VS Code CMake Tools.
 
 # Prerequisites
 * A working installation of [xAct](http://www.xact.es/).

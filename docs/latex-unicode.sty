@@ -1,0 +1,16 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{latex-unicode}[2026/10/14 Symbols and layout for the xPermLibraryLink guide]
+% Doxygen preserves these Unicode characters in prose and source comments.
+% Map them explicitly for pdfLaTeX, including occurrences in typewriter text.
+\DeclareUnicodeCharacter{2218}{\ensuremath{\circ}}
+\DeclareUnicodeCharacter{2192}{\ensuremath{\rightarrow}}
+% Qualified internal names are too wide for the default two-column index.
+\RequirePackage[columns=1]{idxlayout}
+% Preserve Doxygen's discretionary breaks inside long reference links instead
+% of boxing entire names. providecommand also supports older Doxygen styles
+% that do not define doxymbox. Apply after the generated header is complete.
+\AtBeginDocument{%
+  \providecommand{\doxymbox}[1]{#1}%
+  \renewcommand{\doxymbox}[1]{#1}%
+  \sloppy
+}
