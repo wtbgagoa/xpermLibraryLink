@@ -1,6 +1,50 @@
 (* ::Package:: *)
 
+xAct`xPermLibraryLink`$Version = {"0.2.0", {2026, 10, 15}};
+
+With[
+	{
+		xAct`xPermLibraryLink`Private`xIdealSymbols = 
+			DeleteCases[
+				Join[Names["xAct`xPermLibraryLink`*"], Names["xAct`xPermLibraryLink`Private`*"]], 
+				"$Version" | "xAct`xPermLibraryLink`$Version" | "$xTensorVersionExpected" | 
+				"xAct`xPermLibraryLink`$xTensorVersionExpected"
+			]
+	},
+	Unprotect /@ xAct`xPermLibraryLink`Private`xIdealSymbols;
+	Clear /@ xAct`xPermLibraryLink`Private`xIdealSymbols;
+]
+
+If[Unevaluated[xAct`xCore`Private`$LastPackage] === xAct`xCore`Private`$LastPackage,
+	
+	xAct`xCore`Private`$LastPackage = "xAct`xPermLibraryLink`"
+];
 BeginPackage["xAct`xPermLibraryLink`"];
+
+Print[xAct`xCore`Private`bars]
+
+Print["Package xAct`xPermLibraryLink`  version ", xAct`xPermLibraryLink`$Version[[1]], ", ",
+	 xAct`xPermLibraryLink`$Version[[2]]];
+
+Print["Copyright (C) 2026, Thomas B\[ADoubleDot]ckdahl and Alfonso Garcia-Parrado, under the General Public License."];
+
+Off[General::shdw]
+
+xAct`xPermLibraryLink`Disclaimer[] :=
+	Print[                                                   "These are points 11 and 12 of the General Public License:\n\n
+BECAUSE THE PROGRAM IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE LAW. 
+EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM `AS IS\.b4 
+WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM IS WITH YOU. 
+SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION.\n\n
+IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO 
+MAY MODIFY AND/OR REDISTRIBUTE THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, 
+INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED TO LOSS OF 
+DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A FAILURE OF THE PROGRAM 
+TO OPERATE WITH ANY OTHER PROGRAMS), EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES."
+		]
+
+On[General::shdw]
 
 LoadxPermLibraryLink::usage = "LoadxPermLibraryLink[] loads the xPerm functions from the library bundled with this paclet. " <>
 	 "LoadxPermLibraryLink[Automatic, True] selects the Niehoff canonicalizer. " <>
