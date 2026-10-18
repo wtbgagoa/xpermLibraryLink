@@ -62,42 +62,51 @@ A plain backend string uses xTensor's saved derivative default. These settings
 are scoped to the call, including recursive canonicalization; a one-off method
 does not reload the library or change the session default.
 
-## Why two symbolic arrays represent the problem
+## Formal contractions and the signed double coset
 
-Let `g[i]` be the label at slot `i`. Introduce two distinct symbolic rank-`n`
-arrays, `A` and `B`. Give `A` the signed slot symmetries `S` and give `B` the
-signed label symmetries `D`. Contract slot `i` of `A` with slot `g[i]` of `B`:
+Let `g[i]` be the label at slot `i`. One formal rank-`n` array `A` has exactly
+xPerm's supplied signed slot group `S`. No factorization of this group is
+assumed, so cyclic, coupled and other general signed groups retain their
+original meaning.
+
+For the largest symmetric-metric `DummySet`, the adapter puts ordinary
+contraction edges directly between the corresponding slots of `A`. If a
+label pair is `{a,b}`, the edge is `{g^-1[a],g^-1[b]}`. Reversing an edge or
+reordering these edges is already immaterial to `TensorContract`. These are
+precisely the positive endpoint flips and whole-pair exchanges of this pool.
+Only one pool is represented this way: contracting two distinct pools into
+uncolored edges would incorrectly allow their dummy labels to mix.
+
+The remaining labels attach to auxiliary array factors:
+
+| Label class | Auxiliary representation |
+| --- | --- |
+| Free or unlisted label | A distinct rank-one symbol, fixing that label. |
+| Dummy pool, no metric | Identical rank-two symbols with no internal symmetry; endpoints retain their orientation. |
+| Dummy pool, symmetric metric | Identical symmetric rank-two symbols, unless this is the one directly contracted pool. |
+| Dummy pool, antisymmetric metric | Identical antisymmetric rank-two symbols; endpoint reversal contributes -1. |
+| Repeated-label pool | Identical rank-one symbols within that pool. |
+
+Every auxiliary pool has its own symbol. Exchanges of identical factors in
+the tensor product supply exactly the allowed pair/label permutations. Thus
+internal symmetries of `A` supply `S`, while the direct edges and auxiliary
+factors supply exactly `D`. The scalar network represents the signed double
+coset without introducing numerical components. A common symbolic dimension
+avoids finite-dimensional identities that xPerm did not request.
+
+For the sample antisymmetric ring, all labels belong to one symmetric dummy
+pool, so the expression is simply:
 
 ```text
-TensorContract[TensorProduct[A, B], {{1,n+g[1]}, ..., {n,n+g[n]}}]
+TensorContract[A, {{g^-1[1],g^-1[2]}, ..., {g^-1[n-1],g^-1[n]}}]
 ```
 
-An `S` symmetry moves contraction endpoints on `A`; a `D` symmetry moves
-the endpoints on `B`. Thus the allowed changes to this scalar contraction
-are exactly the signed equivalences of the original configuration. Neither
-array has been assigned numerical components. A common symbolic dimension
-avoids introducing a finite-dimensional tensor identity that xPerm did not
-request.
-
-The label generators implement the existing contracts:
-
-| Label class | Allowed generators on `B` |
-| --- | --- |
-| Free or unlisted label | Fixed; no generator moves it. |
-| Dummy pool, no metric | Exchange whole ordered pairs, preserving their orientation. |
-| Dummy pool, symmetric metric | Exchange whole pairs and reverse a pair with sign +1. |
-| Dummy pool, antisymmetric metric | Exchange whole pairs and reverse a pair with sign -1. |
-| Repeated-label pool | Exchange its labels with sign +1. |
-
-Each pool has its own generators; distinct bundles or repeated classes are
-not merged. Signs on the input configuration and slot generators are kept.
-An opposite-sign equivalence makes the contraction zero.
-
-`TensorReduce` returns zero or a canonical signed contraction. The adapter
-checks that a nonzero result still pairs every slot of `A` with exactly one
-slot of `B`, then reads those pairings as the resulting permutation. Unexpected
-or unevaluated output produces a diagnostic and `$Failed`; it never silently
-switches to another canonicalizer.
+`TensorReduce` returns zero or a signed scalar contraction. The decoder
+validates the factor multiset and every edge. Edges from `A` to an auxiliary
+factor determine their labels directly. The direct `A`–`A` edges are sorted
+and assigned the original dummy pairs; that assignment differs only by the
+permitted positive pair exchanges/flips. An unexpected result produces a
+diagnostic and `$Failed`, with no switch to another canonicalizer.
 
 Rank-zero inputs need no contraction. A supplied negative identity generator
 also gives zero directly: this elementary relation is checked explicitly
@@ -106,6 +115,23 @@ because the kernel's rank-one symbolic-array reduction can miss it.
 The implementation is in `Kernel/TensorReduce.wl`. Public option dispatch and
 restoration are in `Kernel/BackendMethods.wl`, while native loading and the
 seven xPerm private hooks remain in `Kernel/Implementation.wl`.
+
+### Why version 0.3.1 changes the representation
+
+Version 0.3.0 instead put the complete label group `D` on a second rank-`n`
+array and contracted it with `A`. That encoding is mathematically valid but
+computationally unsuitable for this example: with nine factors the actual
+xTensor call exhausted a 512 MiB additional-allocation limit in about 0.47 s.
+Constructing `Arrays` assumptions was cheap; the growth occurred inside
+`TensorReduce`. Splitting the two arrays into smaller factors did not resolve
+it. Removing the redundant dummy-array representation did.
+
+Version 0.3.1 uses the direct-edge construction above. This is a general
+conversion of symmetric dummy pools, not an odd-ring recognition rule.
+No native canonicalizer is called to discover zero or normalize the answer.
+The tests require both nine and 125 factors to return zero within 30 seconds
+and 512 MiB of additional kernel allocation. A timeout or memory-limit result
+fails the test. Nonzero even rings and distinct dummy pools are checked too.
 
 ## Canonical form and scope
 
@@ -121,16 +147,19 @@ metric contraction rules beyond the supplied label symmetries, or a new
 model of tensor derivatives. xTensor still performs expression analysis and
 reconstruction around the chosen permutation backend.
 
-No performance ordering is assumed. Encoding a problem as two large arrays
-has different costs from native permutation search. The Wolfram kernel may
-also change its canonical ordering or performance between versions.
+No universal performance ordering is assumed. On the validation machine,
+the corrected 125-factor xTensor call completed in about one second on Wolfram
+15.0.1. The old 30-second timeout is superseded by this fix. Other symmetry
+patterns, particularly several large auxiliary pools, can still be expensive;
+this change is not a constant-memory guarantee for arbitrary TensorReduce
+problems. The adapter does not impose a hidden production time or memory cap.
+For an exploratory run, explicit bounds can be supplied by the caller:
 
-On the validation machine with Wolfram 15.0.1, the sample notebook's
-125-factor antisymmetric ring exceeded a 30-second limit with this
-TensorReduce adapter. The native Niehoff route returned zero in about
-0.47 seconds. These are individual observations, not benchmark medians or
-portable speed guarantees. TensorReduce is an alternative backend for
-comparison, and does not inherit Niehoff's acceleration.
+```wl
+MemoryConstrained[
+  TimeConstrained[ToCanonical[expr, Method -> "TensorReduce"], 30, $Aborted],
+  512 * 1024^2, $Aborted]
+```
 
 The new option is deliberately limited to `ToCanonical`, `CanonicalPerm`,
 and the paclet loader. `SchreierSims` already has its own unrelated `Method`
@@ -138,6 +167,7 @@ option; orbit and stabilizer operations are not tensor canonicalizers.
 
 See @ref librarylink_integration for activation and ownership,
 @ref validation for differential tests, and the official
-[TensorReduce reference](https://reference.wolfram.com/language/ref/TensorReduce.html)
+[TensorReduce reference](https://reference.wolfram.com/language/ref/TensorReduce.html),
+[TensorContract reference](https://reference.wolfram.com/language/ref/TensorContract.html),
 and [Arrays reference](https://reference.wolfram.com/language/ref/Arrays.html)
 for the symbolic tensor interface used by the adapter.

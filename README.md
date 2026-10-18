@@ -36,7 +36,7 @@ and preserves them for restoration on unload.
 See [PACLET.md](PACLET.md) for prerequisites, installation, archive creation,
 context migration, and integration tests.
 
-Version 0.3.0 adds Mathematica's built-in `TensorReduce` as a third backend,
+Version 0.3.1 provides Mathematica's built-in `TensorReduce` as a third backend,
 with per-call selection:
 
 ```wl

@@ -29,7 +29,7 @@ use fixed seeds; group-size budgets keep enumeration limited to small cases.
 ## Wolfram backend-selection tests
 
 `tests/backend_methods.wl` tests the public `CanonicalPerm` and `ToCanonical`
-interfaces in a fresh licensed kernel. It checks 196 small signed problems
+interfaces in a fresh licensed kernel. It checks 254 small signed problems
 against an independent enumeration of the slot/label double coset, alongside
 native-to-native and TensorReduce comparisons. The oracle compares orbit
 membership and signs, not identical representatives from different algorithms.
@@ -39,8 +39,10 @@ invalid inputs, ambient assumptions, defaults and per-call overrides, actual
 metric-incompatible derivative handling, sums/lists, failure/abort cleanup,
 and restoration of definitions, options and attributes. The test also verifies
 that a selected TensorReduce operation never calls either native canonicalizer.
-The bounded 125-factor attempt reports a timeout explicitly if the kernel
-cannot finish it in 30 seconds. See @ref tensorreduce_backend.
+The nine- and 125-factor rings must return zero within 30 seconds and
+512 MiB of additional kernel allocation. Timeouts and memory-limit results
+fail the test. Nonzero even/disconnected rings and distinct symmetric dummy
+pools also verify that the representation has not introduced false zeros. See @ref tensorreduce_backend.
 
 ```sh
 cmake --build build --target stage-paclet

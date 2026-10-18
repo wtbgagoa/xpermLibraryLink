@@ -1,6 +1,6 @@
 # xPermLibraryLink paclet
 
-The paclet is named `xPermLibraryLink`, version `0.3.0`, and provides
+The paclet is named `xPermLibraryLink`, version `0.3.1`, and provides
 the context ``xAct`xPermLibraryLink` ``. It contains the Wolfram Language wrapper
 and a freshly built native library for the selected platform.
 
@@ -24,7 +24,7 @@ rebuilds take effect. Restart kernels using an earlier version before loading
 the rebuilt package.
 
 When reusing a build directory from an earlier version, explicitly update its cached
-version with `-DXPERM_PACLET_VERSION=0.3.0` in the configuration command.
+version with `-DXPERM_PACLET_VERSION=0.3.1` in the configuration command.
 
 The package requires an existing xAct installation discoverable through
 `Needs["xAct`xPerm`"]`. It does not download xAct or assume it is distributed as
@@ -95,7 +95,7 @@ native-library path. For installed use, replace the notebook's old `Get` and
 
 ## Three canonicalization backends and per-call Method
 
-Version 0.3.0 supports `"xPerm"`, `"Niehoff"`, and `"TensorReduce"`:
+Version 0.3.1 supports `"xPerm"`, `"Niehoff"`, and `"TensorReduce"`:
 
 ```wl
 Needs["xAct`xPermLibraryLink`"];
@@ -138,14 +138,14 @@ fallback. No changes to files in the installed xAct distribution are required.
 
 For a single-configuration build, the staged directory is
 `build/paclet/xPermLibraryLink` and the archive is
-`build/paclet/xPermLibraryLink-0.3.0.paclet`. Multi-configuration generators add
+`build/paclet/xPermLibraryLink-0.3.1.paclet`. Multi-configuration generators add
 the configuration name below `paclet`; use `--config Release` when building.
 These targets require `BUILD_LIBRARYLINK=ON`, the default.
 
 | CMake setting | Purpose |
 | --- | --- |
 | `WOLFRAM_KERNEL_EXECUTABLE` | Kernel used to create and install archives |
-| `XPERM_PACLET_VERSION` | Version recorded in metadata; default `0.3.0` |
+| `XPERM_PACLET_VERSION` | Version recorded in metadata; default `0.3.1` |
 | `XPERM_WOLFRAM_SYSTEM_ID` | Override the target platform's Wolfram `$SystemID` |
 | `XPERM_PACLET_BASE_DIRECTORY` | Optional alternative paclet repository base; passed as `-pacletbase` |
 
@@ -163,7 +163,7 @@ cmake --build build --target paclet --parallel
 Recipients install it with:
 
 ```wl
-PacletInstall["/absolute/path/to/xPermLibraryLink-0.3.0.paclet"]
+PacletInstall["/absolute/path/to/xPermLibraryLink-0.3.1.paclet"]
 ```
 
 For development, `PacletDirectoryLoad["/absolute/path/to/build/paclet/xPermLibraryLink"]`

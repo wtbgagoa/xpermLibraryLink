@@ -144,6 +144,25 @@ Do[
     {6, xAct`xPerm`GenSet[xAct`xPerm`Cycles[{1, 2, 3}]], {2, 5},
       {xAct`xPerm`DummySet[spaceA, {{1, 4}, {3, 6}}, metric]}}
   }], {metric, {-1, 0, 1}}];
+(* These distinguish symmetric dummy pools: merging both into uncolored
+   direct contractions would introduce a forbidden exchange and false zero.
+   Include nonconsecutive/reversed labels, partial free/repeated labels, and
+   an oriented/antisymmetric-only problem that cannot use direct contractions. *)
+cases = Join[cases, {
+  {4, xAct`xPerm`GenSet[-xAct`xPerm`Cycles[{1, 3}, {2, 4}]], {},
+    {xAct`xPerm`DummySet[spaceA, {{1, 2}}, 1],
+     xAct`xPerm`DummySet[spaceB, {{3, 4}}, 1]}},
+  {6, xAct`xPerm`GenSet[xAct`xPerm`Cycles[{1, 2, 3}]], {},
+    {xAct`xPerm`DummySet[spaceA, {{6, 1}, {4, 2}}, 1],
+     xAct`xPerm`DummySet[spaceB, {{3, 5}}, 1]}},
+  {6, xAct`xPerm`GenSet[-xAct`xPerm`Cycles[{1, 3}],
+    -xAct`xPerm`Cycles[{3, 5}], xAct`xPerm`Cycles[{2, 6}]], {},
+    {xAct`xPerm`DummySet[spaceA, {{1, 6}, {3, 2}}, -1],
+     xAct`xPerm`RepeatedSet[{4, 5}]}},
+  {6, xAct`xPerm`GenSet[xAct`xPerm`Cycles[{1, 2, 3}]], {5},
+    {xAct`xPerm`DummySet[spaceA, {{4, 1}}, 1],
+     xAct`xPerm`RepeatedSet[{2, 3, 6}]}}
+}];
 SeedRandom[20261018];
 (* Independent finite double-coset oracle. This enumerates the small problems
    using only array composition; it calls none of the three canonicalizers.
@@ -316,19 +335,34 @@ resetCounters[];
 assert[probe[] === expectedProbe && niehoffCalls > 0 && tensorReduceCalls === 0,
   "failed and aborted calls restore the default backend"];
 
-(* A bounded benchmark protects the original notebook's 125-factor example.
-   A TensorReduce timeout is recorded, rather than disguised as a correctness
-   failure or silently handed to a different canonicalizer. *)
-largeRing = FProduct[125];
-resetCounters[];
-largeTiming = AbsoluteTiming[TimeConstrained[
-  ToCanonical[largeRing, Method -> "TensorReduce"], 30, $Aborted]];
-assert[xPermCalls === 0 && niehoffCalls === 0,
-  "125-factor TensorReduce attempt never falls back to a native canonicalizer"];
-assert[Last[largeTiming] === 0 || Last[largeTiming] === $Aborted,
-  "125-factor TensorReduce result is zero or a reported timeout"];
-Print[<|"Factors" -> 125, "Method" -> "TensorReduce", "Seconds" -> First[largeTiming],
-  "Result" -> Last[largeTiming], "TensorReduceCalls" -> tensorReduceCalls|>];
+(* These are correctness and resource regressions, not optional benchmarks.
+   0.3.0 exhausted 512 MiB on nine factors. A timeout or memory-limit result
+   must now fail, rather than being accepted as successful validation. The
+   memory budget is additional allocation allowed by MemoryConstrained. *)
+Do[
+  largeRing = FProduct[factorCount];
+  resetCounters[];
+  largeTiming = AbsoluteTiming[MemoryConstrained[TimeConstrained[
+    ToCanonical[largeRing, Method -> "TensorReduce"], 30, "time-limit"],
+    512 * 1024^2, "memory-limit"]];
+  assert[xPermCalls === 0 && niehoffCalls === 0 && tensorReduceCalls > 0,
+    "bounded ring uses TensorReduce without native canonicalization"];
+  assert[Last[largeTiming] === 0,
+    ToString[factorCount] <> "-factor ring is zero within 30 seconds and 512 MiB"];
+  Print[<|"Factors" -> factorCount, "Method" -> "TensorReduce",
+    "Seconds" -> First[largeTiming], "Result" -> Last[largeTiming],
+    "AdditionalMemoryBudgetBytes" -> 512 * 1024^2,
+    "TensorReduceCalls" -> tensorReduceCalls|>], {factorCount, {9, 125}}];
+(* Nonzero and disconnected contractions exercise the decoder, preventing a
+   zero-only shortcut from masquerading as a general representation fix. *)
+Do[
+  reducedRing = MemoryConstrained[TimeConstrained[
+    ToCanonical[ring, Method -> "TensorReduce"], 30, $Aborted], 512 * 1024^2, $Aborted];
+  assert[reducedRing =!= 0 && reducedRing =!= $Aborted && reducedRing =!= $Failed,
+    "even/disconnected ring remains nonzero within resource limits"];
+  assert[ToCanonical[reducedRing - ring, Method -> "Niehoff"] === 0,
+    "even/disconnected ring preserves tensor equivalence"],
+  {ring, {FProduct[10], FProduct[4] * ReplaceDummies[FProduct[6]]}}];
 endCounters[];
 
 (* Repeated activation must neither retain old dispatch nor lose definitions. *)

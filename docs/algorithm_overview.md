@@ -47,7 +47,8 @@ throw away.
 
 The paclet additionally offers the Wolfram kernel's TensorReduce algorithm.
 Its adapter encodes the same signed equivalence problem as a contraction of
-two symbolic arrays; it does not call either native search. See
+a symbolic slot array, direct symmetric dummy contractions and auxiliary
+label factors; it does not call either native search. See
 @ref tensorreduce_backend for that encoding and per-call selection.
 
 ## The original Butler–Portugal path

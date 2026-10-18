@@ -26,7 +26,7 @@ contracts; these pages connect those contracts into an algorithm.
 8. @subpage building_documentation — generate, browse, and maintain this guide.
 9. @subpage references — primary references and numbering conventions.
 10. @subpage tensorreduce_backend — per-call Method selection, legacy xTensor
-    derivative options, and the two-array encoding for TensorReduce.
+    derivative options, and the formal contraction encoding for TensorReduce.
 
 ## Jump from a question to the code
 

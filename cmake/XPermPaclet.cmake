@@ -1,7 +1,7 @@
 # Paclet staging needs only the compiler and LibraryLink SDK. The separate
 # archive/install targets invoke a licensed host Wolfram kernel on demand.
 function(xperm_add_paclet_targets)
-    set(XPERM_PACLET_VERSION "0.3.0" CACHE STRING "Version of the xPermLibraryLink paclet")
+    set(XPERM_PACLET_VERSION "0.3.1" CACHE STRING "Version of the xPermLibraryLink paclet")
     set(XPERM_WOLFRAM_SYSTEM_ID "" CACHE STRING "Target Wolfram SystemID (normally inferred from the target OS and architecture)")
     set(XPERM_PACLET_BASE_DIRECTORY "" CACHE PATH "Override the Wolfram paclet base directory for install-paclet; empty uses the normal user repository")
     if(NOT XPERM_PACLET_VERSION MATCHES "^[0-9]+(\\.[0-9]+)+$")

@@ -5,7 +5,7 @@ If[TrueQ[xAct`xPermLibraryLink`xPermLibraryLinkLoadedQ[]],
     xAct`xPermLibraryLink`UnloadxPermLibraryLink[]
 ];
 
-xAct`xPermLibraryLink`$Version = {"0.3.0", {2026, 10, 18}};
+xAct`xPermLibraryLink`$Version = {"0.3.1", {2026, 10, 18}};
 
 With[
 	{
