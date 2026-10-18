@@ -26,6 +26,35 @@ minimum and opposite-sign zero criterion. It does not call the production
 composition, group, label-normalization or pruning routines. Randomized cases
 use fixed seeds; group-size budgets keep enumeration limited to small cases.
 
+## Wolfram backend-selection tests
+
+`tests/backend_methods.wl` tests the public `CanonicalPerm` and `ToCanonical`
+interfaces in a fresh licensed kernel. It checks 196 small signed problems
+against an independent enumeration of the slot/label double coset, alongside
+native-to-native and TensorReduce comparisons. The oracle compares orbit
+membership and signs, not identical representatives from different algorithms.
+
+Further cases cover all metric types, repeated and omitted fixed labels,
+invalid inputs, ambient assumptions, defaults and per-call overrides, actual
+metric-incompatible derivative handling, sums/lists, failure/abort cleanup,
+and restoration of definitions, options and attributes. The test also verifies
+that a selected TensorReduce operation never calls either native canonicalizer.
+The bounded 125-factor attempt reports a timeout explicitly if the kernel
+cannot finish it in 30 seconds. See @ref tensorreduce_backend.
+
+```sh
+cmake --build build --target stage-paclet
+mkdir -p build/backend-test-base
+WolframKernel -noinit -noprompt \
+  -pacletbase "$PWD/build/backend-test-base" \
+  -script tests/backend_methods.wl \
+  "$PWD/build/paclet/xPermLibraryLink" "$PWD/build/backend-test-base" before
+```
+
+Use `after` instead of `before` to load xTensor after the paclet's `Needs`.
+The existing `paclet_wolfram.wl` dependency tests also exercise activation
+without preloading xTensor. Tests use an isolated paclet repository.
+
 ## A complete symmetry-propagation example
 
 The example below constructs the six-real-slot contraction traced in

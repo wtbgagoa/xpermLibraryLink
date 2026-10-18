@@ -1,8 +1,9 @@
 # xPermLibraryLink: algorithms and implementation
 
 This documentation explains **how tensor canonicalization becomes permutation
-code**, and how the two production algorithms differ. It describes the
-accelerated 0.2.0 implementation, including its deliberate departures from
+code**, and how the two native algorithms differ. Version 0.3.0 also provides
+a Wolfram TensorReduce backend. It describes the
+accelerated native implementation, including its deliberate departures from
 literal paper pseudocode. The comments beside the code provide the local
 contracts; these pages connect those contracts into an algorithm.
 
@@ -24,6 +25,8 @@ contracts; these pages connect those contracts into an algorithm.
    run the documentation example, and interpret benchmarks.
 8. @subpage building_documentation — generate, browse, and maintain this guide.
 9. @subpage references — primary references and numbering conventions.
+10. @subpage tensorreduce_backend — per-call Method selection, legacy xTensor
+    derivative options, and the two-array encoding for TensorReduce.
 
 ## Jump from a question to the code
 

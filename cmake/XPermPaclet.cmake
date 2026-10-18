@@ -1,7 +1,7 @@
 # Paclet staging needs only the compiler and LibraryLink SDK. The separate
 # archive/install targets invoke a licensed host Wolfram kernel on demand.
 function(xperm_add_paclet_targets)
-    set(XPERM_PACLET_VERSION "0.2.0" CACHE STRING "Version of the xPermLibraryLink paclet")
+    set(XPERM_PACLET_VERSION "0.3.0" CACHE STRING "Version of the xPermLibraryLink paclet")
     set(XPERM_WOLFRAM_SYSTEM_ID "" CACHE STRING "Target Wolfram SystemID (normally inferred from the target OS and architecture)")
     set(XPERM_PACLET_BASE_DIRECTORY "" CACHE PATH "Override the Wolfram paclet base directory for install-paclet; empty uses the normal user repository")
     if(NOT XPERM_PACLET_VERSION MATCHES "^[0-9]+(\\.[0-9]+)+$")
@@ -83,8 +83,7 @@ function(xperm_add_paclet_targets)
         COMMAND "${CMAKE_COMMAND}" -E remove_directory "${_xperm_paclet_root}"
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${_xperm_paclet_root}/Kernel" "${_xperm_library_dir}"
         COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_CURRENT_BINARY_DIR}/PacletInfo.wl" "${_xperm_paclet_root}/PacletInfo.wl"
-        COMMAND "${CMAKE_COMMAND}" -E copy "${PROJECT_SOURCE_DIR}/Kernel/init.m" "${_xperm_paclet_root}/Kernel/init.m"
-        COMMAND "${CMAKE_COMMAND}" -E copy "${PROJECT_SOURCE_DIR}/Kernel/Implementation.wl" "${_xperm_paclet_root}/Kernel/Implementation.wl"
+        COMMAND "${CMAKE_COMMAND}" -E copy_directory "${PROJECT_SOURCE_DIR}/Kernel" "${_xperm_paclet_root}/Kernel"
         COMMAND "${CMAKE_COMMAND}" -E copy "${PROJECT_SOURCE_DIR}/LICENSE" "${_xperm_paclet_root}/LICENSE"
         COMMAND "${CMAKE_COMMAND}" -E copy "$<TARGET_FILE:xpermLL>" "${_xperm_library_dir}/$<TARGET_FILE_NAME:xpermLL>"
         DEPENDS xpermLL

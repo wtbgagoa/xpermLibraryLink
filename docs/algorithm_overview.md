@@ -1,4 +1,4 @@
-# The canonicalization problem and the two backends {#algorithm_overview}
+# The canonicalization problem and the backends {#algorithm_overview}
 
 ## What is being canonicalized?
 
@@ -31,7 +31,7 @@ zero. This is a **single-term symmetry** problem: these routines do not perform
 multi-term identities such as a full Bianchi reduction, nor do they supply
 dimension-dependent identities merely from knowing a manifold's dimension.
 
-## What both backends share
+## What both native backends share
 
 Both reduce a potentially enormous group action to computations with a base
 and strong generating set (BSGS), point stabilizers, orbits, and Schreier
@@ -44,6 +44,11 @@ image in their chosen ordering, and retain the alternatives that might still
 lead to the final representative. Equal real arrangements with opposite signs
 must be detected, including alternatives that a faster search would otherwise
 throw away.
+
+The paclet additionally offers the Wolfram kernel's TensorReduce algorithm.
+Its adapter encodes the same signed equivalence problem as a contraction of
+two symbolic arrays; it does not call either native search. See
+@ref tensorreduce_backend for that encoding and per-call selection.
 
 ## The original Butler–Portugal path
 

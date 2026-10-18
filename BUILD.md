@@ -181,3 +181,23 @@ antisymmetric tensors, all metric characters, and both native APIs are covered.
 These timings include construction of the slot stabilizer chain. Larger ranks
 can spend substantial time in that construction even when only one search
 configuration survives. See [ACCELERATION.md](ACCELERATION.md).
+
+## Backend selection regressions
+
+After staging the paclet, run the three-backend integration suite in a fresh
+licensed kernel with xAct installed:
+
+```sh
+cmake --build build --target stage-paclet
+mkdir -p build/backend-test-base
+WolframKernel -noinit -noprompt \
+  -pacletbase "$PWD/build/backend-test-base" \
+  -script tests/backend_methods.wl \
+  "$PWD/build/paclet/xPermLibraryLink" "$PWD/build/backend-test-base"
+```
+
+The script exercises method dispatch, signs and zeros, signed equivalence,
+xTensor contractions, defaults, and restoration. It uses the isolated
+paclet repository and does not install into the user's usual repository.
+See [backend semantics](docs/tensorreduce.md) before comparing raw canonical
+representatives from different algorithms.

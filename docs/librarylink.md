@@ -3,7 +3,10 @@
 The native library contains **two canonicalizers**. The Wolfram paclet selects
 one while preserving the calling convention used by xPerm and xTensor. This
 selection is separate from the choice of transport: both backends run through
-LibraryLink when the paclet is activated.
+LibraryLink when the paclet is activated. Since version 0.3.0 the paclet also
+provides a third backend, Mathematica's TensorReduce, implemented in Wolfram
+Language. It has no additional C export. See @ref tensorreduce_backend for
+`Method` selection on the loader, `ToCanonical`, and `CanonicalPerm`.
 
 Read @ref algorithm_overview for the mathematical problem, @ref niehoff_algorithm
 for the accelerated search, and @ref butler_portugal for the inherited algorithm.

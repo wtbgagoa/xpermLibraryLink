@@ -1,6 +1,11 @@
 (* ::Package:: *)
 
-xAct`xPermLibraryLink`$Version = {"0.2.0", {2026, 10, 15}};
+(* Restore active wrappers before clearing private bookkeeping on source reload. *)
+If[TrueQ[xAct`xPermLibraryLink`xPermLibraryLinkLoadedQ[]],
+    xAct`xPermLibraryLink`UnloadxPermLibraryLink[]
+];
+
+xAct`xPermLibraryLink`$Version = {"0.3.0", {2026, 10, 18}};
 
 With[
 	{
@@ -46,10 +51,11 @@ TO OPERATE WITH ANY OTHER PROGRAMS), EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN
 
 On[General::shdw]
 
-LoadxPermLibraryLink::usage = "LoadxPermLibraryLink[] loads the xPerm functions from the library bundled with this paclet. " <>
-	 "LoadxPermLibraryLink[Automatic, True] selects the Niehoff canonicalizer. " <>
-	 "LoadxPermLibraryLink[library, niehoff] accepts an explicit library path or name; " <>
-	 "niehoff defaults to False, selecting the original xPerm canonicalizer.";
+LoadxPermLibraryLink::usage = "LoadxPermLibraryLink[] loads the bundled xPerm functions and selects the original xPerm canonicalizer. " <>
+    "LoadxPermLibraryLink[Method -> method] selects \"xPerm\", \"Niehoff\", or \"TensorReduce\" as the default backend. " <>
+    "LoadxPermLibraryLink[library, options] accepts an explicit library path or name. " <>
+    "The older LoadxPermLibraryLink[library, niehoff] form is retained: True selects Niehoff and False selects xPerm. " <>
+    "CanonicalPerm and ToCanonical accept per-call Method overrides while the library is loaded.";
 
 UnloadxPermLibraryLink::usage = "UnloadxPermLibraryLink[] unloads all native functions loaded by LoadxPermLibraryLink.";
 
@@ -212,7 +218,28 @@ EncodeTotalSymmetrySubsets[subsets_List] :=
 
 Clear[LoadxPermLibraryLink];
 
-LoadxPermLibraryLink[library_:Automatic, Niehoff_:False] :=
+Options[LoadxPermLibraryLink] = {Method -> Automatic};
+
+LoadxPermLibraryLink[options:OptionsPattern[]] :=
+    LoadSelectedBackend[Automatic, False, OptionValue[Method]];
+
+LoadxPermLibraryLink[library:(Automatic | _String), options:OptionsPattern[]] :=
+    LoadSelectedBackend[library, False, OptionValue[Method]];
+
+LoadxPermLibraryLink[library:(Automatic | _String), niehoff:(True | False), options:OptionsPattern[]] :=
+    LoadSelectedBackend[library, niehoff, OptionValue[Method]];
+
+LoadSelectedBackend[library_, niehoff_, requestedMethod_] :=
+    Module[{method},
+        method = If[requestedMethod === Automatic, If[niehoff, "Niehoff", "xPerm"], requestedMethod];
+        If[!MemberQ[{"xPerm", "Niehoff", "TensorReduce"}, method],
+            Message[LoadxPermLibraryLink::method, requestedMethod];
+            Return[$Failed]
+        ];
+        LoadNativeLibrary[library, method]
+    ];
+
+LoadNativeLibrary[library_, method_] :=
 	Module[{resolvedLibrary, loaded},
 		resolvedLibrary =
 			If[library === Automatic,
@@ -269,7 +296,7 @@ LoadxPermLibraryLink[library_:Automatic, Niehoff_:False] :=
 		$originalXPermQ = OwnValues[xAct`xPerm`$xpermQ];
 		Scan[RestoreDefinition[#, {{}, {}, {}, {}}]&, $wrappedSymbols];
 		(* Compatibility wrappers expected by xAct/xPerm. *)
-		If[Niehoff,
+		If[method === "Niehoff",
 			xAct`xPerm`Private`MLCanonicalPerm[perm_List, degree_Integer, rest__] := 
 				xAct`xPerm`Private`ToSign[
 					xAct`xPerm`Images[$llNiehoffCanonicalPerm[perm, degree, rest]], degree - 2]
@@ -296,6 +323,8 @@ LoadxPermLibraryLink[library_:Automatic, Niehoff_:False] :=
    original WSTP executable could not connect. Restore it on unload. 
 	*)
 		xAct`xPerm`$xpermQ = True;
+        CheckAbort[InstallBackendMethods[method],
+            UnloadxPermLibraryLink[]; Abort[]];
 		True
 	];
 
@@ -308,6 +337,7 @@ Clear[UnloadxPermLibraryLink];
 
 UnloadxPermLibraryLink[] :=
 	Module[{},
+        RestoreBackendMethods[];
 		Scan[Quiet[LibraryFunctionUnload[#]]&, $loadedFunctions];
 		$loadedFunctions = {};
 		$library = None;
@@ -322,6 +352,10 @@ UnloadxPermLibraryLink[] :=
 		$originalXPermQ = None;
 		True
 	];
+
+(* These files share this private context; loading them does not activate hooks. *)
+Get[FileNameJoin[{$packageDirectory, "TensorReduce.wl"}]];
+Get[FileNameJoin[{$packageDirectory, "BackendMethods.wl"}]];
 
 End[];
 

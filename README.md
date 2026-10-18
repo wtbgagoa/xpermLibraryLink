@@ -36,6 +36,20 @@ and preserves them for restoration on unload.
 See [PACLET.md](PACLET.md) for prerequisites, installation, archive creation,
 context migration, and integration tests.
 
+Version 0.3.0 adds Mathematica's built-in `TensorReduce` as a third backend,
+with per-call selection:
+
+```wl
+LoadxPermLibraryLink[Method -> "Niehoff"];
+ToCanonical[expr, Method -> "TensorReduce"]
+ToCanonical[expr, Method -> "xPerm"]
+```
+
+`CanonicalPerm` accepts the same backend names. Existing boolean loader calls
+remain supported. See [backend selection](docs/tensorreduce.md) for defaults,
+xTensor's existing derivative `Method`, and how the symbolic tensor adapter
+represents the signed permutation problem.
+
 # Algorithm and source documentation
 
 The [Doxygen guide](docs/index.md) connects both production backends to their

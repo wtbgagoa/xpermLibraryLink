@@ -1,6 +1,6 @@
 # xPermLibraryLink paclet
 
-The paclet is named `xPermLibraryLink`, version `0.2.0`, and provides
+The paclet is named `xPermLibraryLink`, version `0.3.0`, and provides
 the context ``xAct`xPermLibraryLink` ``. It contains the Wolfram Language wrapper
 and a freshly built native library for the selected platform.
 
@@ -23,8 +23,8 @@ privileges are needed. Repeating the target reinstalls the same version so local
 rebuilds take effect. Restart kernels using an earlier version before loading
 the rebuilt package.
 
-When reusing a build directory from version `0.1.0`, explicitly update its cached
-version with `-DXPERM_PACLET_VERSION=0.2.0` in the configuration command.
+When reusing a build directory from an earlier version, explicitly update its cached
+version with `-DXPERM_PACLET_VERSION=0.3.0` in the configuration command.
 
 The package requires an existing xAct installation discoverable through
 `Needs["xAct`xPerm`"]`. It does not download xAct or assume it is distributed as
@@ -93,6 +93,41 @@ Existing unqualified calls work after loading the new context. The source-root
 native-library path. For installed use, replace the notebook's old `Get` and
 `FindLibrary` setup with the two lines above.
 
+## Three canonicalization backends and per-call Method
+
+Version 0.3.0 supports `"xPerm"`, `"Niehoff"`, and `"TensorReduce"`:
+
+```wl
+Needs["xAct`xPermLibraryLink`"];
+LoadxPermLibraryLink[Method -> "Niehoff"];
+ToCanonical[expr, Method -> "TensorReduce"]
+ToCanonical[expr, Method -> "xPerm"]
+```
+
+The loader chooses the default. A per-call method overrides it without
+reloading the native library. `CanonicalPerm` accepts the same option.
+Existing boolean loader arguments remain supported. Explicit methods take
+precedence over `MathLink`; with automatic selection, `MathLink -> False`
+retains the old Wolfram-language xPerm path.
+
+To support either package load order, activation also loads xTensor when it
+is available. The paclet's initial `Needs` still requires only xPerm.
+Unload restores the public canonicalizers' definitions and options as well
+as the private native hooks. Activation preserves the original live WSTP
+connection for that restoration.
+
+xTensor's existing derivative `Method` values continue to work. To choose
+both a backend and a derivative strategy, use
+`Method -> {"TensorReduce", "DerivativeMethod" -> Implode}`. See the
+[backend guide](docs/tensorreduce.md) for default scoping, the mathematical
+encoding, examples and limitations. TensorReduce computes its own canonical
+representative; it need not match xPerm's or Niehoff's raw permutation.
+
+The existing library remains part of the paclet and is loaded for group
+utilities. The third canonicalization backend itself runs through
+Mathematica's built-in ``System`TensorReduce``, without native canonicalization
+fallback. No changes to files in the installed xAct distribution are required.
+
 ## CMake targets and configuration
 
 | Target | Result | Licensed kernel needed |
@@ -103,14 +138,14 @@ native-library path. For installed use, replace the notebook's old `Get` and
 
 For a single-configuration build, the staged directory is
 `build/paclet/xPermLibraryLink` and the archive is
-`build/paclet/xPermLibraryLink-0.2.0.paclet`. Multi-configuration generators add
+`build/paclet/xPermLibraryLink-0.3.0.paclet`. Multi-configuration generators add
 the configuration name below `paclet`; use `--config Release` when building.
 These targets require `BUILD_LIBRARYLINK=ON`, the default.
 
 | CMake setting | Purpose |
 | --- | --- |
 | `WOLFRAM_KERNEL_EXECUTABLE` | Kernel used to create and install archives |
-| `XPERM_PACLET_VERSION` | Version recorded in metadata; default `0.2.0` |
+| `XPERM_PACLET_VERSION` | Version recorded in metadata; default `0.3.0` |
 | `XPERM_WOLFRAM_SYSTEM_ID` | Override the target platform's Wolfram `$SystemID` |
 | `XPERM_PACLET_BASE_DIRECTORY` | Optional alternative paclet repository base; passed as `-pacletbase` |
 
@@ -128,7 +163,7 @@ cmake --build build --target paclet --parallel
 Recipients install it with:
 
 ```wl
-PacletInstall["/absolute/path/to/xPermLibraryLink-0.2.0.paclet"]
+PacletInstall["/absolute/path/to/xPermLibraryLink-0.3.0.paclet"]
 ```
 
 For development, `PacletDirectoryLoad["/absolute/path/to/build/paclet/xPermLibraryLink"]`
