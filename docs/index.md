@@ -27,6 +27,8 @@ contracts; these pages connect those contracts into an algorithm.
 9. @subpage references — primary references and numbering conventions.
 10. @subpage tensorreduce_backend — per-call Method selection, legacy xTensor
     derivative options, and the formal contraction encoding for TensorReduce.
+    Its @ref tensorreduce_implementation "implementation walkthrough" includes
+    a source map, worked conversion, decoding rules and memory-design rationale.
 
 ## Jump from a question to the code
 
@@ -34,6 +36,7 @@ contracts; these pages connect those contracts into an algorithm.
 | --- | --- |
 | Where does the original backend start? | @ref LL_canonical_perm and @ref canonical_perm_ext |
 | Where does the accelerated backend start? | @ref LL_niehoff_canonical_perm and @ref xperm::niehoff::canonicalizeLegacyInput |
+| How does TensorReduce fit the permutation interface? | @ref tensorreduce_call_path and @ref tensorreduce_worked_example in the implementation walkthrough. |
 | Where is the accelerated main loop? | @ref niehoff_search "incrementalSearch" in `src/NiehoffCanonicalizer.cpp` |
 | Where are total slot subsets discovered? | @ref xperm::niehoff::inferTotalSymmetrySubsets |
 | How are dummy partners and their signs represented? | @ref niehoff_incremental_labels "IncrementalLabels" and @ref representations |

@@ -6,6 +6,11 @@ signed double-coset problem into symbolic arrays, calls ``System`TensorReduce``,
 and translates its answer back into xPerm's signed permutation notation.
 It does not run a native canonicalizer to obtain or normalize that answer.
 
+For a function-by-function explanation of the corrected 0.3.1 backend, read
+@subpage tensorreduce_implementation. It follows a concrete permutation through
+the tensor encoding and decoder, explains the coding choices, and relates
+this route to the native Butler–Portugal and Niehoff algorithms.
+
 ## Select a backend
 
 After installing the updated paclet, start a fresh kernel:
