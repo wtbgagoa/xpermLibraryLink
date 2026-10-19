@@ -9,15 +9,15 @@ xAct`xPermLibraryLink`$Version = {"0.3.1", {2026, 10, 18}};
 
 With[
 	{
-		xAct`xPermLibraryLink`Private`xIdealSymbols = 
+		xAct`xPermLibraryLink`Private`xPermLibraryLinkSymbols = 
 			DeleteCases[
 				Join[Names["xAct`xPermLibraryLink`*"], Names["xAct`xPermLibraryLink`Private`*"]], 
 				"$Version" | "xAct`xPermLibraryLink`$Version" | "$xTensorVersionExpected" | 
 				"xAct`xPermLibraryLink`$xTensorVersionExpected"
 			]
 	},
-	Unprotect /@ xAct`xPermLibraryLink`Private`xIdealSymbols;
-	Clear /@ xAct`xPermLibraryLink`Private`xIdealSymbols;
+	Unprotect /@ xAct`xPermLibraryLink`Private`xPermLibraryLinkSymbols;
+	Clear /@ xAct`xPermLibraryLink`Private`xPermLibraryLinkSymbols;
 ]
 
 If[Unevaluated[xAct`xCore`Private`$LastPackage] === xAct`xCore`Private`$LastPackage,
