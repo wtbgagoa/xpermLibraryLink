@@ -2,102 +2,131 @@
 This is a fork of xperm C-sources used in the [xAct](http://www.xact.es/xPerm/index.html) project. The purpose of this fork is to
 replace the [WSTP](https://www.wolfram.com/wstp/) connection used by the original xperm C-source by a newer and faster
 [LibraryLink](https://reference.wolfram.com/language/guide/LibraryLink.html) connection. This is a shared library that is loaded
-on-demand when required.
+on-demand when required. This branch also contains an experimental canonicalizer
+inspired by [Ben Niehoff's work](https://github.com/bniehoff/tensor-canonicalizer);
+see the implementation status below.
 
+
+# Wolfram Language paclet
+
+The wrapper is available as the **xPermLibraryLink** paclet in the
+``xAct`xPermLibraryLink` `` context. Build and install it for the current user:
+
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --target install-paclet --parallel
+```
+
+Then, in a fresh Wolfram kernel:
+
+```wl
+PacletDataRebuild[]; (* Only if you install this paclet for the first time *)
+Needs["xAct`xPermLibraryLink`"];
+LoadxPermLibraryLink[Automatic, True]
+```
+
+`Needs` loads xPerm when necessary. `LoadxPermLibraryLink` uses the native library
+bundled with this paclet; `True` selects the Niehoff canonicalizer. Use
+`LoadxPermLibraryLink[]` for the original xPerm canonicalizer and
+`UnloadxPermLibraryLink[]` to restore xPerm's previous native definitions and
+availability flag. Loading the package alone does not replace those definitions.
+Manual WSTP uninstallation is unnecessary: activation replaces its definitions
+and preserves them for restoration on unload.
+
+See [PACLET.md](PACLET.md) for prerequisites, installation, archive creation,
+context migration, and integration tests.
+
+Version 0.3.1 provides Mathematica's built-in `TensorReduce` as a third backend,
+with per-call selection:
+
+```wl
+LoadxPermLibraryLink[Method -> "Niehoff"];
+ToCanonical[expr, Method -> "TensorReduce"]
+ToCanonical[expr, Method -> "xPerm"]
+```
+
+`CanonicalPerm` accepts the same backend names. Existing boolean loader calls
+remain supported. See [backend selection](docs/tensorreduce.md) for defaults,
+xTensor's existing derivative `Method`, and how the symbolic tensor adapter
+represents the signed permutation problem.
+
+# Algorithm and source documentation
+
+The [Doxygen guide](docs/index.md) connects both production backends to their
+papers and explains the implementation choices. Start with the
+[algorithm overview](docs/algorithm_overview.md), then read the
+[permutation conventions](docs/representations.md), the
+[Butler–Portugal walkthrough](docs/butler_portugal.md), and the
+[Niehoff paper-to-code map](docs/niehoff.md). The guide includes a runnable
+symmetry-propagation example, API contracts, source links, and the reasons for
+the pruning refinements.
+
+To generate searchable HTML with Doxygen 1.9.1 or newer (Graphviz optional):
+
+```sh
+cmake -S . -B build-docs -DBUILD_LIBRARYLINK=OFF -DBUILD_TESTING=OFF \
+  -DBUILD_DOCUMENTATION=ON
+cmake --build build-docs --target docs
+```
+
+Open `build-docs/documentation/html/index.html`. This target needs neither
+Wolfram Language nor its SDK. See [documentation build instructions](docs/building.md)
+for configuration and maintenance.
+That guide also explains LaTeX/PDF output (`DOCUMENTATION_PDF=ON`, target
+`docs-pdf`) and selecting the documentation targets in VS Code CMake Tools.
 
 # Prerequisites
 * A working installation of [xAct](http://www.xact.es/).
-* cmake >= 3.0 (only for building from source).
+* Wolfram Language 12.1 or newer for the paclet format, with a licensed kernel
+  for the `paclet` and `install-paclet` targets. Runtime validation is described
+  in [PACLET.md](PACLET.md).
+* CMake >= 3.15 (only for building from source).
 * A C\C++ compiler (only for building from source).
 
 # Precompiled libraries
-If you just want a ready to use compiled library you can simply download it from the `binaries`
-folder of this repository (choose the library suitable for your platform). You should then copy the library to one
-of the directories that is in the `$LibraryPath` variable (this is a Mathematica variable that you can
-check from within a Mathematica session).
+The original libraries under `binaries/` predate the fixes on this branch.
+Build the paclet to include the current native library. A distributed `.paclet`
+archive can be installed with `PacletInstall["/absolute/path/to/archive.paclet"]`;
+there is no need to copy its native library onto `$LibraryPath`.
 
+## Status of the Niehoff branch
 
-# General build and installation instructions
-## Linux and MacOS
-This follows the standard `cmake` procedure and as a result a shared library is built.
-We explain the build procedure for Unix operating systems (it should work for other operating systems by doing
-suitable changes).
+The C++ canonicalizer implements incremental label orbits, total-slot-symmetry
+inference, dummy-partner propagation, early sign checks, and redundant-instance
+pruning based on Niehoff's *Faster tensor canonicalization*. The formerly
+factorial symmetric-contraction family now retains one configuration per step.
+The code remains experimental: arbitrary groups, including symmetry of whole
+pairs without individual slot swaps, can still require factorial search.
+See [ACCELERATION.md](ACCELERATION.md) for the exact scope, invariants, tests,
+and comparisons with the GitHub baseline.
 
-* Change to the folder `xpermLibraryLink` and inside it create a build directory:
-```
-$cd xpermLibraryLink
-$mkdir build
-```
-* Change to the build directory and use `cmake`
-```
-$cd build
-$cmake -DCMAKE_INSTALL_PREFIX=your_install_dir ..
-```
-`your_install_dir` must be one of the directories contained in the variable `$LibraryPath`
-(this is a Mathematica variable that you can check from within your
-[xAct](http://www.xact.es/xPerm/index.html) session).
+`canonicalizeLegacyInput` and `LL_niehoff_canonical_perm` use the existing signed
+permutation data layout (the last two points encode the sign). Canonical results
+are lexicographically minimal in natural slot/label order, independently of the
+supplied stabilizer-chain base. This convention can differ from the original
+xPerm canonical representative. Unlisted real labels are fixed. Dummy pairs
+preserve their listed variance when there is no metric; pairs and repeated
+labels need not be listed in ascending order.
 
-* If you have several *Mathematica* installations you can select one of them by using the following
-`cmake`switch:
-```
-$cmake -DWolframLanguage_INSTALL_DIR=/usr/local/Wolfram/Mathematica/13.1 -DCMAKE_INSTALL_PREFIX=your_install_dir ..
-```
-Here we selected the `Mathematica 13.1` installation directory. If you wish to select another one please change
-accordingly.
+The extended API treats each total-symmetry subset as an additional declaration
+of symmetric or antisymmetric slot permutations. It combines these with the
+supplied slot generators and rebuilds the group. Subset entries are unordered,
+must be disjoint, and cannot contain sign points. The production search infers
+valid total subsets from both legacy and extended inputs and uses them for
+propagation and pruning.
 
-* If `cmake` reports no errors then you can build and install without changing directory:
-```
-$make
-$make install
-```
-* If the previous step succeeds then you can test your installation using the notebook
-[xpermLibraryLinkSample.nb](./xpermLibraryLinkSample.nb) that you can find in the root
-folder of this project.
+Build and run the independent small-group oracle and LibraryLink boundary tests
+without a Wolfram installation:
 
-# Windows
-We explain the compilation procedure using the development tools included in
-[Visual Studio community edition](https://visualstudio.microsoft.com/vs/community/).
-When [installing Visual Studio](https://learn.microsoft.com/en-us/visualstudio/install/install-visual-studio?view=vs-2022) you
-need to choose in step 4 the "Desktop & Mobile workloads" (that brings the C\C++ compilers) and in step 5 (Individual Components)
-you need to tick manually CMake. Since we are going to build the xperm library using the system terminal we need to tell the shell
-interpreter where the cmake executable is. To that end please go to Windows "Advanced system settings" and click on the button
-"Environment Variables". There, you need to look for the `Path` variable and add the route where the `cmake` executable was installed.
-This should be
-
-```
-C:\Program Files\microsoft Visual Studio\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin
-
-```
-After this you can start the build procedure:
-
-* Open a terminal (Windows PowerShell) change to the project directory `xpermLibraryLink`, create the `build` directory
-and change to it
-
-```
-PS C:\Users\username\xpermLibraryLink> mkdir build
-
-PS C:\Users\username\xpermLibraryLink> cd build
-
-```
-Next use `cmake` in the following way
-
-```
-PS C:\Users\username\xpermLibraryLink\build> cmake -DCMAKE_INSTALL_PREFIX=C:\Users\username\AppData\Roaming\Mathematica\SystemFiles\LibraryResources\Windows-x86-64 ..
-
+```sh
+cmake -S . -B build-tests -DBUILD_LIBRARYLINK=OFF -DCMAKE_BUILD_TYPE=Release
+cmake --build build-tests --parallel
+ctest --test-dir build-tests --output-on-failure
 ```
 
-Here, we told `cmake` to install the library in one of the directories stored in the variable
-`$LibraryPath` using the `CMAKE_INSTALL_PREFIX` switch. After this we can compile and install the library:
+See [BUILD.md](BUILD.md) for shared-library and sanitizer builds. Existing files
+under `binaries/` are upstream artifacts and are not rebuilt by source changes;
+rebuild the library to use these fixes.
 
-
-```
-PS C:\Users\username\xpermLibraryLink\build> cmake --build .
-
-PS C:\Users\username\xpermLibraryLink\build> cmake --build . --target install
-
-```
-
-
-
-
-
+See [ASSESSMENT.md](ASSESSMENT.md) for the paper comparison, confirmed defects,
+repairs, validation results, and remaining algorithmic work.

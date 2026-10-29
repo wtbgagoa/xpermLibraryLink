@@ -1,31 +1,112 @@
-cmake_minimum_required(VERSION 3.0)
-
-set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64")
+cmake_minimum_required(VERSION 3.15)
 project(xperm-LL LANGUAGES C CXX)
-set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
-include(FindWolframLanguage)
-include(FindWSTP)
-include(FindWolframLibrary)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+# A plain single-configuration build is the normal LibraryLink installation
+# path. Keep it optimized while still honoring explicit Debug and other modes.
+if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Build configuration" FORCE)
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
+                 Debug Release RelWithDebInfo MinSizeRel)
+endif()
 
+list(PREPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+include(CTest)
+include(CheckIPOSupported)
 
-#=============================================
-#== xperm Target LibraryLink shared library ========
-#=============================================
+option(BUILD_LIBRARYLINK "Build the Wolfram LibraryLink shared library" ON)
+option(XPERM_NATIVE_ARCH "Optimize for this build machine (nonportable binaries)" OFF)
+option(XPERM_ENABLE_IPO "Enable interprocedural optimization when supported" OFF)
+option(ENABLE_PGO_GENERATE "Generate PGO profile" OFF)
+option(ENABLE_PGO_USE "Use PGO profile" OFF)
 
-add_library(xperm STATIC ${CMAKE_CURRENT_SOURCE_DIR}/src/xperm.cpp)
+if(ENABLE_PGO_GENERATE AND ENABLE_PGO_USE)
+    message(FATAL_ERROR "Choose either PGO generation or PGO use, not both")
+endif()
+if((ENABLE_PGO_GENERATE OR ENABLE_PGO_USE OR XPERM_NATIVE_ARCH)
+   AND NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    message(FATAL_ERROR "Native architecture and PGO options require GCC or Clang")
+endif()
+if(XPERM_ENABLE_IPO)
+    check_ipo_supported(RESULT XPERM_IPO_SUPPORTED OUTPUT XPERM_IPO_ERROR)
+    if(NOT XPERM_IPO_SUPPORTED)
+        message(FATAL_ERROR "IPO unavailable: ${XPERM_IPO_ERROR}")
+    endif()
+endif()
 
-add_library(xpermLL SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/LLInterface.cpp)
+add_library(xperm STATIC src/xperm.cpp)
+add_library(NiehoffCanonicalizer STATIC src/NiehoffCanonicalizer.cpp src/TotalSymmetry.cpp)
+target_link_libraries(NiehoffCanonicalizer PUBLIC xperm)
 
-#=============================================
-#===== Linking xperm to WSTP and LibraryLink
-#=============================================
+function(xperm_configure_target target)
+    target_compile_features(${target} PUBLIC cxx_std_17)
+    target_include_directories(${target} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(XPERM_NATIVE_ARCH)
+        target_compile_options(${target} PRIVATE -march=native)
+    endif()
+    if(XPERM_ENABLE_IPO)
+        set_property(TARGET ${target} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+    endif()
+    if(ENABLE_PGO_GENERATE)
+        target_compile_options(${target} PRIVATE -fprofile-generate)
+        target_link_options(${target} PUBLIC -fprofile-generate)
+    elseif(ENABLE_PGO_USE)
+        target_compile_options(${target} PRIVATE -fprofile-use)
+        target_link_options(${target} PUBLIC -fprofile-use)
+        if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+            target_compile_options(${target} PRIVATE -fprofile-correction)
+        endif()
+    endif()
+endfunction()
 
+xperm_configure_target(xperm)
+xperm_configure_target(NiehoffCanonicalizer)
+set_target_properties(xperm NiehoffCanonicalizer PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-target_link_libraries(xpermLL WSTP::WSTP WolframLibrary::WolframLibrary xperm)
+if(BUILD_LIBRARYLINK)
+    include(FindWolframLanguage)
+    find_package(WolframLibrary REQUIRED)
+    add_library(xpermLL SHARED src/LLInterface.cpp)
+    xperm_configure_target(xpermLL)
+    target_link_libraries(xpermLL PRIVATE NiehoffCanonicalizer WolframLibrary::WolframLibrary)
+    if(MINGW)
+        target_link_options(xpermLL PRIVATE -static-libgcc -static-libstdc++)
+    endif()
+    install(TARGETS xpermLL LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}"
+                           RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}")
+    include(XPermPaclet)
+    xperm_add_paclet_targets()
+endif()
 
-#=============================================
-#===== Install targets  ========
-#=============================================
-install(TARGETS xpermLL DESTINATION ${CMAKE_INSTALL_PREFIX})
+if(BUILD_TESTING)
+    add_executable(total_symmetry_tests tests/total_symmetry_tests.cpp)
+    xperm_configure_target(total_symmetry_tests)
+    target_link_libraries(total_symmetry_tests PRIVATE NiehoffCanonicalizer)
+    add_test(NAME total_symmetry_tests COMMAND total_symmetry_tests)
+    set_tests_properties(total_symmetry_tests PROPERTIES TIMEOUT 60)
+
+    add_executable(acceleration_tests tests/acceleration_tests.cpp)
+    xperm_configure_target(acceleration_tests)
+    target_link_libraries(acceleration_tests PRIVATE NiehoffCanonicalizer)
+    add_test(NAME acceleration_tests COMMAND acceleration_tests)
+    set_tests_properties(acceleration_tests PROPERTIES TIMEOUT 120)
+
+    add_executable(canonicalizer_tests tests/canonicalizer_tests.cpp)
+    xperm_configure_target(canonicalizer_tests)
+    target_link_libraries(canonicalizer_tests PRIVATE NiehoffCanonicalizer)
+    add_test(NAME canonicalizer_tests COMMAND canonicalizer_tests)
+
+    add_executable(interface_regression tests/interface_regression.cpp src/LLInterface.cpp)
+    xperm_configure_target(interface_regression)
+    target_include_directories(interface_regression PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/windows-lib")
+    target_link_libraries(interface_regression PRIVATE NiehoffCanonicalizer)
+    add_test(NAME interface_regression COMMAND interface_regression)
+
+    add_executable(notebook_performance tests/notebook_performance.cpp)
+    xperm_configure_target(notebook_performance)
+    target_link_libraries(notebook_performance PRIVATE NiehoffCanonicalizer)
+    add_test(NAME notebook_ring_regressions COMMAND notebook_performance)
+    set_tests_properties(canonicalizer_tests interface_regression
+                         notebook_ring_regressions PROPERTIES TIMEOUT 60)
+endif()
+
+include(XPermDocumentation)

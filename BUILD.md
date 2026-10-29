@@ -1,0 +1,203 @@
+# Building and testing
+
+A C++17 compiler and CMake 3.15 or newer are required. The default build includes
+both the LibraryLink shared library and the standalone regression tests.
+
+## Generate the algorithm and API documentation
+
+Install Doxygen 1.9.1 or newer; Graphviz is optional. A documentation-only build
+does not need Wolfram Language or its SDK:
+
+```sh
+cmake -S . -B build-docs -DBUILD_LIBRARYLINK=OFF -DBUILD_TESTING=OFF \
+  -DBUILD_DOCUMENTATION=ON
+cmake --build build-docs --target docs
+```
+
+Open `build-docs/documentation/html/index.html`. Generation fails on Doxygen
+warnings by default. `BUILD_DOCUMENTATION` is off for normal builds, so they
+acquire no new tool dependency. For a private Doxygen installation, pass
+`-DDOXYGEN_EXECUTABLE=/absolute/path/to/doxygen` when configuring.
+
+The [guide sources](docs/index.md) cover Butler–Portugal, Niehoff's algorithms
+and their implementation choices. See [documentation maintenance](docs/building.md)
+and the [compiled example](docs/validation.md).
+
+For LaTeX sources, additionally set `-DDOCUMENTATION_LATEX=ON`; the `docs`
+target then writes `build-docs/documentation/latex/refman.tex`. For an automatic
+PDF build, install TeX Live (including `pdflatex` and `makeindex`) and `latexmk`,
+and use:
+
+```sh
+cmake -S . -B build-docs -DBUILD_LIBRARYLINK=OFF -DBUILD_TESTING=OFF \
+  -DBUILD_DOCUMENTATION=ON -DDOCUMENTATION_PDF=ON
+cmake --build build-docs --target docs-pdf
+```
+
+The output is `build-docs/documentation/latex/refman.pdf`. In VS Code, set these
+options in `cmake.configureSettings`, run **CMake: Configure**, then select
+`docs-pdf` with **CMake: Set Build Target** and run **CMake: Build**. A settings
+example and preset instructions are in [the guide](docs/building.md).
+
+## Install the Wolfram Language paclet
+
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --target install-paclet --parallel
+```
+
+This builds the native library, packages it with the Wolfram wrapper, and installs
+the `xPermLibraryLink` paclet in the current user's Wolfram paclet repository.
+The target requires a licensed Wolfram kernel. `stage-paclet` creates the unpacked
+layout without running a kernel; `paclet` creates the distributable archive
+without installing it. See [PACLET.md](PACLET.md) for the options and usage.
+
+## Standalone core tests (no Wolfram installation needed)
+
+```sh
+cmake -S . -B build-core -DBUILD_LIBRARYLINK=OFF -DCMAKE_BUILD_TYPE=Release
+cmake --build build-core --parallel
+ctest --test-dir build-core --output-on-failure
+```
+
+The canonicalizer tests independently enumerate small signed slot and label
+groups and every element of their double coset. They check the resulting
+minimum and whether opposite signs imply zero. Coverage includes every input
+permutation through four tensor slots for representative groups, fixed-seed
+random cases through five slots, arbitrary base and label orderings, supplied
+strong generating sets, and symmetric/antisymmetric total subsets. The oracle
+does not call the canonicalizer's permutation, normalization, group, or pruning
+helpers. Separate LibraryLink tests use mock tensor callbacks and the bundled
+SDK header; they do not require a running Wolfram kernel.
+
+For an AddressSanitizer/UndefinedBehaviorSanitizer build with GCC or Clang:
+
+```sh
+cmake -S . -B build-sanitize -DBUILD_LIBRARYLINK=OFF -DCMAKE_BUILD_TYPE=Debug \
+  -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" \
+  -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
+cmake --build build-sanitize --parallel
+ctest --test-dir build-sanitize --output-on-failure
+```
+
+## LibraryLink on Linux
+
+Configure with the LibraryLink SDK include directory if it is not automatically
+found in your Wolfram installation:
+
+```sh
+cmake -S . -B build-linux -DCMAKE_BUILD_TYPE=Release \
+  -DWOLFRAM_LIBRARY_PATH=/path/to/Wolfram/SystemFiles/IncludeFiles/C
+cmake --build build-linux --parallel
+ctest --test-dir build-linux --output-on-failure
+```
+
+The shared library is `build-linux/libxpermLL.so`. Place it in a directory on
+Wolfram's `$LibraryPath`, for example
+`~/.Wolfram/SystemFiles/LibraryResources/Linux-x86-64`, and locate it with
+`FindLibrary["libxpermLL"]`. Mock interface tests exercise the C boundary; loading
+and running the library with an actual Wolfram kernel is a separate integration
+check. With a licensed Wolfram kernel available, run:
+
+```sh
+WolframKernel -noinit -noprompt -script tests/interface_wolfram.wl \
+  "$PWD/build-linux/libxpermLL.so"
+```
+
+This script also tests the xAct wrapper when xAct is installed.
+
+## Notebook performance regression
+
+The antisymmetric tensor ring from `xpermLibraryLinkSample.nb` has a dedicated
+benchmark. It checks that odd products vanish and even products do not, and
+asserts that the native LibraryLink path was actually called. Run each library
+in a fresh kernel and compare the median of warmed runs:
+
+```sh
+WolframKernel -noinit -noprompt -script tests/notebook_benchmark.wl \
+  "$PWD/build-linux/libxpermLL.so" 125 3
+```
+
+For comparable optimization settings to the original branch's local build,
+configure with `-DCMAKE_BUILD_TYPE=Release -DXPERM_NATIVE_ARCH=ON
+-DXPERM_ENABLE_IPO=ON`. Use identical compiler settings for comparisons, and
+avoid other CPU-heavy work during measurement. Do not compare timings from
+different machines to the output saved inside a notebook.
+
+A standalone equivalent is also available when `BUILD_TESTING` is enabled:
+
+```sh
+./build-core/notebook_performance 125 3
+```
+
+This uses the exact native permutation captured from `FProduct[125]` and
+generates its slot symmetry group and dummy labels. Without arguments it checks
+the odd/even results for one through ten factors; that mode is part of CTest.
+Neither benchmark has a machine-dependent timing assertion. See
+[PERFORMANCE.md](PERFORMANCE.md) for the measured regression and repair.
+
+Use `-DBUILD_TESTING=OFF` to omit test executables. Single-configuration generators
+(such as Unix Makefiles and Ninja) default to `Release` when no build type is
+specified. Explicit `Debug`, `RelWithDebInfo`, and other build types retain their
+usual compiler flags. With a multi-configuration generator such as Visual
+Studio, build with `cmake --build build --config Release`. Portable binaries
+are the default; optional
+`-DXPERM_NATIVE_ARCH=ON` enables `-march=native` with GCC/Clang for binaries that
+will only run on compatible processors. `-DXPERM_ENABLE_IPO=ON` enables IPO/LTO
+only after CMake verifies compiler support. On macOS, build one architecture
+per paclet using `-DCMAKE_OSX_ARCHITECTURES=arm64` or `x86_64`. A universal
+library build requires both toolchains and an explicit
+`XPERM_WOLFRAM_SYSTEM_ID` selecting the platform advertised by the paclet.
+
+Existing `ENABLE_PGO_GENERATE` and `ENABLE_PGO_USE` options are available with
+GCC/Clang. They are mutually exclusive and apply to compilation and linking,
+including standalone executables. Run the intended workload with generation
+enabled before rebuilding with profile use enabled, keeping the same compiler
+and profile locations.
+
+## Cross compiling for Windows on Linux
+
+```sh
+cmake -S . -B build-win -DCMAKE_TOOLCHAIN_FILE=cmake/mingw64.cmake \
+  -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
+cmake --build build-win --parallel
+```
+
+The resulting library is normally `build-win/libxpermLL.dll`. Windows test
+executables need a Windows runner or a configured cross-compiling emulator.
+
+## Symmetry-propagation checks and scaling
+
+The standard CTest run includes independent signed-group inference tests and
+canonicalization oracles, plus retained-configuration bounds through rank 14.
+To print larger work counts and timings:
+
+```sh
+./build-core/acceleration_tests --benchmark 14 3
+```
+
+The arguments are the maximum rank and repetition count. Both symmetric and
+antisymmetric tensors, all metric characters, and both native APIs are covered.
+These timings include construction of the slot stabilizer chain. Larger ranks
+can spend substantial time in that construction even when only one search
+configuration survives. See [ACCELERATION.md](ACCELERATION.md).
+
+## Backend selection regressions
+
+After staging the paclet, run the three-backend integration suite in a fresh
+licensed kernel with xAct installed:
+
+```sh
+cmake --build build --target stage-paclet
+mkdir -p build/backend-test-base
+WolframKernel -noinit -noprompt \
+  -pacletbase "$PWD/build/backend-test-base" \
+  -script tests/backend_methods.wl \
+  "$PWD/build/paclet/xPermLibraryLink" "$PWD/build/backend-test-base"
+```
+
+The script exercises method dispatch, signs and zeros, signed equivalence,
+xTensor contractions, defaults, and restoration. It uses the isolated
+paclet repository and does not install into the user's usual repository.
+See [backend semantics](docs/tensorreduce.md) before comparing raw canonical
+representatives from different algorithms.
